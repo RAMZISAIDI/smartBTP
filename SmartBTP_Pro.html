@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartBTP — منصة إدارة مشاريع البناء الجزائرية</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap">
+<style>
+:root {
+  --gold:#E8B84B; --gold2:#C49030; --gold3:#F5D07A;
+  --gold-dim:rgba(232,184,75,0.1); --gold-glow:rgba(232,184,75,0.35);
+  --bg:#060A10; --bg2:#0C1220; --bg3:#0F1828; --bg4:#141E2E;
+  --border:rgba(255,255,255,0.06); --border2:rgba(255,255,255,0.1);
+  --text:#EDF2F7; --muted:#8892A4; --dim:#4A5B7A;
+  --green:#34C38F; --blue:#4A90E2; --red:#F04E6A; --purple:#9B6DFF; --orange:#FF7043;
+  --sidebar-w:240px; --radius:12px; --radius-lg:18px;
+  --shadow:0 8px 32px rgba(0,0,0,0.3);
+  --transition:all 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:3px}
+.mono{font-family:'JetBrains Mono',monospace}
+.app-shell{display:flex;min-height:100vh}
+.main-wrap{margin-right:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.page-content{flex:1;padding:1.8rem;max-width:1400px;width:100%}
+
+/* ===== SIDEBAR ===== */
+.sidebar{width:var(--sidebar-w);background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;right:0;height:100vh;z-index:200;transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);overflow:hidden}
+.sidebar::before{content:'';position:absolute;top:0;left:0;right:0;height:180px;background:radial-gradient(ellipse at 50% -20%,rgba(232,184,75,0.08),transparent 70%);pointer-events:none}
+.sidebar-logo{padding:1.2rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.7rem}
+.sidebar-logo-icon{width:36px;height:36px;background:linear-gradient(135deg,#E8B84B,#C49030);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.sidebar-logo-text{font-size:1rem;font-weight:900;color:var(--gold)}
+.sidebar-logo-sub{font-size:0.65rem;color:var(--dim)}
+.sidebar-nav{flex:1;overflow-y:auto;padding:0.8rem 0.7rem}
+.nav-section-label{font-size:0.62rem;font-weight:800;color:var(--dim);letter-spacing:1px;padding:0.6rem 0.7rem 0.3rem;text-transform:uppercase}
+.nav-link{display:flex;align-items:center;gap:0.6rem;padding:0.55rem 0.8rem;border-radius:var(--radius);color:var(--muted);text-decoration:none;font-size:0.84rem;font-weight:600;transition:var(--transition);cursor:pointer;border:none;background:none;width:100%;font-family:'Tajawal',sans-serif}
+.nav-link:hover{background:rgba(255,255,255,0.05);color:var(--text)}
+.nav-link.active{background:var(--gold-dim);color:var(--gold)}
+.nav-link-icon{width:18px;text-align:center;font-size:0.95rem}
+.nav-badge{font-size:0.58rem;padding:2px 7px;border-radius:20px;font-weight:800;margin-right:auto}
+.sidebar-footer{padding:0.8rem;border-top:1px solid var(--border)}
+.tenant-chip{display:flex;align-items:center;gap:0.6rem;padding:0.6rem 0.8rem;background:rgba(255,255,255,0.03);border-radius:var(--radius);margin-bottom:0.5rem}
+.tenant-avatar{width:32px;height:32px;border-radius:50%;background:var(--gold-dim);border:1px solid rgba(232,184,75,0.3);display:flex;align-items:center;justify-content:center;font-size:1rem}
+.tenant-name{font-size:0.8rem;font-weight:700;color:var(--text)}
+.tenant-plan{font-size:0.65rem;color:var(--dim)}
+.nav-link.logout{color:var(--red);margin-top:0.3rem}
+.nav-link.logout:hover{background:rgba(240,78,106,0.1)}
+
+/* ===== TOPBAR ===== */
+.topbar{height:58px;background:rgba(6,10,16,0.8);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 1.8rem;position:sticky;top:0;z-index:100}
+.topbar-breadcrumb{font-size:0.82rem;color:var(--muted)}
+.topbar-user{display:flex;align-items:center;gap:0.5rem}
+.topbar-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#E8B84B,#C49030);display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:900;color:#09120A;cursor:pointer}
+.hamburger{display:none;background:none;border:none;cursor:pointer;color:var(--muted);font-size:1.3rem;padding:4px}
+
+/* ===== BUTTONS ===== */
+.btn{display:inline-flex;align-items:center;gap:0.4rem;padding:0.5rem 1rem;border-radius:var(--radius);border:none;font-family:'Tajawal',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;text-decoration:none;transition:var(--transition);user-select:none}
+.btn:active{transform:scale(0.97)}
+.btn-gold{background:linear-gradient(135deg,#E8B84B,#C49030);color:#09120A;box-shadow:0 3px 14px rgba(232,184,75,0.3)}
+.btn-gold:hover{box-shadow:0 6px 22px rgba(232,184,75,0.45);transform:translateY(-1px)}
+.btn-blue{background:rgba(74,144,226,0.12);border:1px solid rgba(74,144,226,0.3);color:#60A5FA}
+.btn-blue:hover{background:rgba(74,144,226,0.22);transform:translateY(-1px)}
+.btn-red{background:rgba(240,78,106,0.1);border:1px solid rgba(240,78,106,0.3);color:#F79FA9}
+.btn-red:hover{background:rgba(240,78,106,0.2);transform:translateY(-1px)}
+.btn-green{background:rgba(52,195,143,0.12);border:1px solid rgba(52,195,143,0.3);color:#34C38F}
+.btn-green:hover{background:rgba(52,195,143,0.22);transform:translateY(-1px)}
+.btn-ghost{background:rgba(255,255,255,0.05);border:1px solid var(--border2);color:var(--muted)}
+.btn-ghost:hover{background:rgba(255,255,255,0.1);color:var(--text)}
+.btn-sm{padding:0.3rem 0.7rem;font-size:0.78rem;border-radius:8px}
+.btn-lg{padding:0.75rem 1.4rem;font-size:1rem}
+.btn-outline-gold{background:transparent;border:2px solid var(--gold);color:var(--gold)}
+.btn-outline-gold:hover{background:var(--gold);color:#09120A}
+
+/* ===== FORMS ===== */
+.form-group{margin-bottom:1rem}
+.form-label{display:block;font-size:0.78rem;font-weight:700;color:var(--muted);margin-bottom:0.35rem}
+.form-input,.form-select,.form-textarea{width:100%;padding:0.68rem 1rem;background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-family:'Tajawal',sans-serif;font-size:0.88rem;outline:none;transition:border-color 0.2s,box-shadow 0.2s}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(232,184,75,0.12)}
+.form-input::placeholder{color:var(--dim)}
+.form-select option{background:#1a2535}
+.form-textarea{resize:vertical;min-height:70px}
+.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem}
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem}
+
+/* ===== MODAL ===== */
+.modal-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.72);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;animation:overlayIn 0.2s ease}
+.modal-overlay.show{display:flex}
+@keyframes overlayIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:1.8rem;width:90%;max-width:560px;max-height:90vh;overflow-y:auto;animation:modalIn 0.32s cubic-bezier(0.34,1.56,0.64,1);box-shadow:0 24px 80px rgba(0,0,0,0.5)}
+.modal-lg{max-width:680px}
+@keyframes modalIn{from{opacity:0;transform:scale(0.88) translateY(24px)}to{opacity:1;transform:none}}
+.modal-title{font-size:1.15rem;font-weight:900;margin-bottom:1.3rem;padding-bottom:0.8rem;border-bottom:1px solid var(--border)}
+.modal-footer{display:flex;gap:0.6rem;margin-top:1.3rem;padding-top:1rem;border-top:1px solid var(--border)}
+
+/* ===== TABLE ===== */
+.table-wrap{overflow-x:auto;border-radius:var(--radius-lg);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse}
+thead th{padding:0.85rem 1rem;font-size:0.73rem;font-weight:800;color:var(--dim);background:rgba(255,255,255,0.02);border-bottom:1px solid var(--border);white-space:nowrap;text-align:right}
+tbody td{padding:0.78rem 1rem;font-size:0.84rem;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--text);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:rgba(255,255,255,0.03)}
+
+/* ===== BADGES ===== */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;white-space:nowrap}
+.badge-active{background:rgba(52,195,143,0.12);color:#34C38F;border:1px solid rgba(52,195,143,0.25)}
+.badge-completed{background:rgba(74,144,226,0.12);color:#60A5FA;border:1px solid rgba(74,144,226,0.25)}
+.badge-delayed{background:rgba(240,78,106,0.12);color:#F79FA9;border:1px solid rgba(240,78,106,0.25)}
+.badge-revenue{background:rgba(52,195,143,0.12);color:#34C38F;border:1px solid rgba(52,195,143,0.25)}
+.badge-expense{background:rgba(240,78,106,0.12);color:#F79FA9;border:1px solid rgba(240,78,106,0.25)}
+
+/* ===== CARDS ===== */
+.card{background:rgba(255,255,255,0.025);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.3rem;transition:var(--transition)}
+.card:hover{border-color:rgba(255,255,255,0.12);transform:translateY(-2px);box-shadow:var(--shadow)}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0.8rem;margin-bottom:1.5rem}
+.stat-card{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.2rem;transition:var(--transition)}
+.stat-card:hover{border-color:rgba(255,255,255,0.14);transform:translateY(-2px)}
+.stat-icon{font-size:1.4rem;margin-bottom:0.4rem}
+.stat-value{font-size:1.6rem;font-weight:900;font-family:'JetBrains Mono',monospace}
+.stat-label{font-size:0.72rem;color:var(--dim);margin-top:3px}
+.grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem}
+
+/* ===== PROGRESS ===== */
+.progress-bar{height:6px;border-radius:4px;background:rgba(255,255,255,0.07);overflow:hidden}
+.progress-fill{height:100%;border-radius:4px;transition:width 1.2s cubic-bezier(0.34,1.56,0.64,1)}
+
+/* ===== PAGE HEADER ===== */
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.page-title{font-size:1.5rem;font-weight:900;margin-bottom:0.2rem}
+.page-sub{font-size:0.82rem;color:var(--dim)}
+.page-actions{display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap}
+
+/* ===== EMPTY STATE ===== */
+.empty{text-align:center;padding:4rem 1rem}
+.empty-icon{font-size:3.5rem;margin-bottom:1rem;opacity:0.4}
+.empty-title{font-size:1.1rem;font-weight:800;color:var(--muted);margin-bottom:0.5rem}
+.empty-text{font-size:0.85rem;color:var(--dim);line-height:1.7}
+
+/* ===== TOAST ===== */
+.toast-container{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;display:flex;flex-direction:column;gap:0.5rem}
+.toast{display:flex;align-items:center;gap:0.6rem;padding:0.75rem 1.1rem;border-radius:var(--radius);font-size:0.87rem;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,0.4);animation:toastIn 0.4s cubic-bezier(0.34,1.56,0.64,1);max-width:340px;backdrop-filter:blur(12px)}
+@keyframes toastIn{from{opacity:0;transform:translateX(30px) scale(0.9)}to{opacity:1;transform:none}}
+.toast-success{background:rgba(52,195,143,0.15);border:1px solid rgba(52,195,143,0.4);color:#6eddb5}
+.toast-error{background:rgba(240,78,106,0.15);border:1px solid rgba(240,78,106,0.4);color:#f79fa9}
+.toast-info{background:rgba(74,144,226,0.15);border:1px solid rgba(74,144,226,0.4);color:#60A5FA}
+
+/* ===== ALERTS ===== */
+.alert{padding:0.78rem 1rem;border-radius:var(--radius);font-size:0.87rem;margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem}
+.alert-success{background:rgba(52,195,143,0.1);border:1px solid rgba(52,195,143,0.3);color:#6eddb5}
+.alert-error{background:rgba(240,78,106,0.1);border:1px solid rgba(240,78,106,0.3);color:#f79fa9}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
+@keyframes slideUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes floatUp{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes shimmer{0%{background-position:200% center}100%{background-position:-200% center}}
+.animate-fade{animation:fadeIn 0.5s ease both}
+.animate-up{animation:slideUp 0.4s ease both}
+
+/* ===== COLOR OPTIONS ===== */
+.color-options{display:flex;flex-wrap:wrap;gap:0.5rem}
+.color-option{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all 0.2s}
+.color-option:hover{transform:scale(1.2)}
+.color-option.selected{border-color:#fff;transform:scale(1.25);box-shadow:0 0 0 3px rgba(255,255,255,0.2)}
+
+/* ===== LANDING PAGE ===== */
+.landing-page{min-height:100vh;background:var(--bg);overflow-x:hidden}
+
+/* Landing Navbar */
+.land-nav{position:fixed;top:0;left:0;right:0;z-index:500;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;background:rgba(6,10,16,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);transition:all 0.3s}
+.land-nav-logo{display:flex;align-items:center;gap:0.7rem}
+.land-nav-logo-icon{width:38px;height:38px;background:linear-gradient(135deg,#E8B84B,#C49030);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;box-shadow:0 4px 14px rgba(232,184,75,0.35)}
+.land-nav-logo-text{font-size:1.1rem;font-weight:900;color:var(--gold)}
+.land-nav-links{display:flex;align-items:center;gap:0.3rem}
+.land-nav-link{padding:0.45rem 0.85rem;border-radius:8px;color:var(--muted);font-size:0.85rem;font-weight:600;cursor:pointer;transition:var(--transition);border:none;background:none;font-family:'Tajawal',sans-serif;text-decoration:none}
+.land-nav-link:hover{color:var(--text);background:rgba(255,255,255,0.06)}
+.land-nav-actions{display:flex;align-items:center;gap:0.6rem}
+
+/* Hero Section */
+.hero{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:6rem 2rem 4rem;overflow:hidden}
+.hero-bg{position:absolute;inset:0;z-index:0}
+.hero-bg-img{position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1920&q=80') center/cover no-repeat;opacity:0.12;filter:saturate(0.5)}
+.hero-bg-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(232,184,75,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(232,184,75,0.03) 1px,transparent 1px);background-size:50px 50px}
+.hero-bg-glow{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(232,184,75,0.08) 0%,transparent 60%)}
+.hero-content{position:relative;z-index:1;max-width:860px;margin:0 auto}
+.hero-badge{display:inline-flex;align-items:center;gap:0.5rem;background:rgba(232,184,75,0.1);border:1px solid rgba(232,184,75,0.25);border-radius:30px;padding:0.4rem 1rem;font-size:0.78rem;font-weight:700;color:var(--gold);margin-bottom:1.5rem;animation:slideDown 0.6s ease}
+.hero-title{font-size:clamp(2rem,5vw,3.8rem);font-weight:900;line-height:1.15;margin-bottom:1.2rem;animation:slideUp 0.7s ease 0.1s both}
+.hero-title span{background:linear-gradient(135deg,#E8B84B,#F5D07A,#C49030);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;background-size:200%;animation:shimmer 3s linear infinite}
+.hero-sub{font-size:clamp(1rem,2vw,1.2rem);color:var(--muted);max-width:580px;margin:0 auto 2.5rem;line-height:1.7;animation:slideUp 0.7s ease 0.2s both}
+.hero-actions{display:flex;align-items:center;justify-content:center;gap:1rem;flex-wrap:wrap;animation:slideUp 0.7s ease 0.3s both}
+.hero-stats{display:flex;align-items:center;justify-content:center;gap:2.5rem;margin-top:3rem;flex-wrap:wrap;animation:slideUp 0.7s ease 0.4s both}
+.hero-stat{text-align:center}
+.hero-stat-val{font-size:1.8rem;font-weight:900;color:var(--gold);font-family:'JetBrains Mono',monospace}
+.hero-stat-label{font-size:0.72rem;color:var(--dim);margin-top:2px}
+.hero-divider{width:1px;height:40px;background:var(--border)}
+
+/* Features Section */
+.section{padding:5rem 2rem}
+.section-center{text-align:center;max-width:700px;margin:0 auto 3.5rem}
+.section-tag{display:inline-block;background:rgba(74,144,226,0.1);border:1px solid rgba(74,144,226,0.25);border-radius:20px;padding:0.3rem 0.9rem;font-size:0.75rem;font-weight:800;color:#60A5FA;margin-bottom:0.8rem;letter-spacing:1px;text-transform:uppercase}
+.section-title{font-size:clamp(1.6rem,3.5vw,2.5rem);font-weight:900;margin-bottom:0.8rem}
+.section-sub{font-size:0.95rem;color:var(--muted);line-height:1.7}
+
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;max-width:1200px;margin:0 auto}
+.feature-card{background:rgba(255,255,255,0.025);border:1px solid var(--border);border-radius:20px;padding:1.8rem;transition:all 0.3s;position:relative;overflow:hidden}
+.feature-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0;transition:opacity 0.3s}
+.feature-card:hover{border-color:rgba(232,184,75,0.2);transform:translateY(-4px);box-shadow:0 20px 50px rgba(0,0,0,0.3)}
+.feature-card:hover::before{opacity:1}
+.feature-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:1.2rem}
+.feature-icon.blue{background:rgba(74,144,226,0.12);border:1px solid rgba(74,144,226,0.2)}
+.feature-icon.gold{background:rgba(232,184,75,0.12);border:1px solid rgba(232,184,75,0.2)}
+.feature-icon.green{background:rgba(52,195,143,0.12);border:1px solid rgba(52,195,143,0.2)}
+.feature-icon.purple{background:rgba(155,109,255,0.12);border:1px solid rgba(155,109,255,0.2)}
+.feature-icon.red{background:rgba(240,78,106,0.12);border:1px solid rgba(240,78,106,0.2)}
+.feature-icon.orange{background:rgba(255,112,67,0.12);border:1px solid rgba(255,112,67,0.2)}
+.feature-title{font-size:1rem;font-weight:800;margin-bottom:0.5rem}
+.feature-desc{font-size:0.85rem;color:var(--muted);line-height:1.6}
+
+/* Projects Showcase */
+.projects-showcase{padding:5rem 2rem;background:linear-gradient(180deg,transparent,rgba(255,255,255,0.01),transparent)}
+.projects-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem;max-width:1200px;margin:0 auto}
+.project-img-card{border-radius:20px;overflow:hidden;border:1px solid var(--border);transition:all 0.3s;position:relative}
+.project-img-card:hover{transform:translateY(-5px);box-shadow:0 25px 60px rgba(0,0,0,0.4);border-color:rgba(232,184,75,0.2)}
+.project-img-card img{width:100%;height:220px;object-fit:cover;display:block;filter:saturate(0.85) brightness(0.9)}
+.project-img-card:hover img{filter:saturate(1) brightness(1)}
+.project-img-info{padding:1.2rem;background:var(--bg3)}
+.project-img-title{font-size:0.95rem;font-weight:800;margin-bottom:0.3rem}
+.project-img-meta{font-size:0.75rem;color:var(--dim)}
+.project-img-overlay{position:absolute;top:0.7rem;right:0.7rem}
+
+/* Pricing Section */
+.pricing-section{padding:5rem 2rem;background:rgba(255,255,255,0.01)}
+.pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;max-width:1000px;margin:0 auto}
+.pricing-card{background:var(--bg3);border:1px solid var(--border2);border-radius:24px;padding:2rem;transition:all 0.3s;position:relative;overflow:hidden}
+.pricing-card.popular{border-color:rgba(232,184,75,0.4);box-shadow:0 0 50px rgba(232,184,75,0.08)}
+.pricing-popular-badge{position:absolute;top:-1px;right:50%;transform:translateX(50%);background:linear-gradient(135deg,#E8B84B,#C49030);color:#09120A;font-size:0.7rem;font-weight:900;padding:0.3rem 1rem;border-radius:0 0 12px 12px}
+.pricing-name{font-size:1rem;font-weight:900;color:var(--muted);margin-bottom:0.5rem}
+.pricing-price{font-size:2.5rem;font-weight:900;color:var(--text);font-family:'JetBrains Mono',monospace;line-height:1}
+.pricing-price span{font-size:0.85rem;font-weight:400;color:var(--dim);font-family:'Tajawal',sans-serif}
+.pricing-period{font-size:0.75rem;color:var(--dim);margin-bottom:1.5rem}
+.pricing-features{list-style:none;margin-bottom:1.8rem}
+.pricing-features li{display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;color:var(--muted);padding:0.4rem 0;border-bottom:1px solid rgba(255,255,255,0.03)}
+.pricing-features li:last-child{border-bottom:none}
+.pricing-features li .check{color:var(--green);font-size:0.8rem;flex-shrink:0}
+.pricing-features li .x{color:var(--dim);font-size:0.8rem;flex-shrink:0}
+
+/* CTA Section */
+.cta-section{padding:5rem 2rem;text-align:center;position:relative;overflow:hidden}
+.cta-section::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(232,184,75,0.06),transparent 60%);pointer-events:none}
+.cta-box{max-width:680px;margin:0 auto;position:relative;z-index:1}
+.cta-title{font-size:clamp(1.8rem,4vw,3rem);font-weight:900;margin-bottom:1rem}
+.cta-sub{font-size:1rem;color:var(--muted);margin-bottom:2rem;line-height:1.7}
+
+/* Landing Footer */
+.land-footer{padding:2rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:gap;background:var(--bg2)}
+.land-footer-logo{display:flex;align-items:center;gap:0.7rem}
+.land-footer-text{font-size:0.78rem;color:var(--dim)}
+
+/* ===== LOGIN PAGE ===== */
+.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);position:relative;overflow:hidden}
+.login-page::before{content:'';position:fixed;inset:0;background:url('https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1920&q=80') center/cover no-repeat;opacity:0.06;filter:saturate(0.3) blur(2px);pointer-events:none}
+.login-page::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px);background-size:50px 50px;pointer-events:none}
+.login-wrap{display:grid;grid-template-columns:1fr 1fr;width:100%;max-width:1000px;z-index:1;margin:2rem;border-radius:28px;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,0.5);border:1px solid var(--border2)}
+.login-left{position:relative;padding:3rem;background:linear-gradient(135deg,var(--bg3),var(--bg4));display:flex;flex-direction:column;justify-content:center}
+.login-left-bg{position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&q=80') center/cover no-repeat;opacity:0.12;filter:saturate(0.4)}
+.login-left-overlay{position:absolute;inset:0;background:linear-gradient(135deg,rgba(6,10,16,0.7),rgba(12,18,32,0.85))}
+.login-left-content{position:relative;z-index:1}
+.login-left-logo{display:flex;align-items:center;gap:0.8rem;margin-bottom:2.5rem}
+.login-left-logo-icon{width:44px;height:44px;background:linear-gradient(135deg,#E8B84B,#C49030);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 6px 20px rgba(232,184,75,0.35)}
+.login-left-logo-text{font-size:1.3rem;font-weight:900;color:var(--gold)}
+.login-left-title{font-size:1.8rem;font-weight:900;margin-bottom:0.8rem}
+.login-left-sub{font-size:0.9rem;color:var(--muted);line-height:1.7;margin-bottom:2rem}
+.login-left-features{display:flex;flex-direction:column;gap:0.7rem}
+.login-left-feat{display:flex;align-items:center;gap:0.7rem;font-size:0.85rem;color:var(--muted)}
+.login-left-feat-icon{width:28px;height:28px;border-radius:8px;background:rgba(232,184,75,0.1);border:1px solid rgba(232,184,75,0.2);display:flex;align-items:center;justify-content:center;font-size:0.85rem;flex-shrink:0}
+.login-right{background:var(--bg3);padding:3rem}
+.login-tabs{display:flex;gap:0.5rem;background:rgba(255,255,255,0.04);border-radius:12px;padding:0.3rem;margin-bottom:1.8rem}
+.login-tab{flex:1;padding:0.5rem;border-radius:9px;border:none;font-family:'Tajawal',sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer;transition:all 0.2s;color:var(--dim);background:none}
+.login-tab.active{background:var(--bg);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+.login-right-logo{margin-bottom:2rem}
+.login-right-title{font-size:1.5rem;font-weight:900;margin-bottom:0.4rem}
+.login-right-sub{font-size:0.82rem;color:var(--dim);margin-bottom:1.8rem}
+.login-demo-box{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius);padding:0.85rem 1rem;margin-top:1rem}
+.login-demo-title{font-size:0.72rem;color:var(--dim);font-weight:700;margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:0.5px}
+.login-demo-row{font-size:0.77rem;color:var(--muted);margin-bottom:0.25rem;display:flex;align-items:center;gap:0.4rem}
+.login-back-btn{position:fixed;top:1.2rem;right:1.5rem;z-index:600;background:rgba(255,255,255,0.06);border:1px solid var(--border2);border-radius:10px;padding:0.5rem 1rem;color:var(--muted);font-size:0.82rem;font-weight:700;cursor:pointer;font-family:'Tajawal',sans-serif;transition:var(--transition);display:flex;align-items:center;gap:0.4rem}
+.login-back-btn:hover{background:rgba(255,255,255,0.1);color:var(--text)}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+  .sidebar{transform:translateX(100%)}
+  .sidebar.open{transform:translateX(0);box-shadow:-20px 0 60px rgba(0,0,0,0.5)}
+  .main-wrap{margin-right:0}
+  .hamburger{display:block}
+  .page-content{padding:1rem}
+  .form-grid-2,.form-grid-3{grid-template-columns:1fr}
+  .grid-cards{grid-template-columns:1fr}
+  .login-wrap{grid-template-columns:1fr;max-width:480px}
+  .login-left{display:none}
+  .land-nav-links{display:none}
+  .hero-stats{gap:1.2rem}
+  .hero-divider{display:none}
+}
+@media(max-width:480px){
+  .stats-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+'use strict';
+
+/* ══════════════════════════════════════════════════════
+   DATABASE — localStorage
+══════════════════════════════════════════════════════ */
+const DB = {
+  get(key) {
+    try { return JSON.parse(localStorage.getItem('sbtp_' + key)) || []; } catch { return []; }
+  },
+  set(key, val) { localStorage.setItem('sbtp_' + key, JSON.stringify(val)); },
+  nextId(key) {
+    const items = this.get(key);
+    return items.length ? Math.max(...items.map(i => i.id)) + 1 : 1;
+  },
+  init() {
+    if (this.get('initialized').length) return;
+    this.set('plans', [
+      { id:1, slug:'starter',    name:'المبتدئ',   price:2900,  max_projects:3,  max_workers:15,  max_equipment:0  },
+      { id:2, slug:'pro',        name:'الاحترافي', price:7900,  max_projects:20, max_workers:100, max_equipment:50 },
+      { id:3, slug:'enterprise', name:'المؤسسي',   price:19900, max_projects:-1, max_workers:-1,  max_equipment:-1 },
+    ]);
+    this.set('tenants', [
+      { id:1, name:'مؤسسة الجزائر للبناء', plan_id:2, wilaya:'الجزائر', subscription_status:'active', is_active:true }
+    ]);
+    this.set('users', [
+      { id:1, tenant_id:null, full_name:'مسؤول النظام', email:'admin@smartbtp.dz', password:'Admin@SmartBTP2025', role:'admin', is_admin:true, is_active:true },
+      { id:2, tenant_id:1, full_name:'محمد الأمين بوعلام', email:'demo@algerie-construction.dz', password:'Demo@1234', role:'admin', is_admin:false, is_active:true },
+    ]);
+    this.set('projects', [
+      { id:1, tenant_id:1, name:'بناء عمارة R+5 حيدرة', wilaya:'الجزائر', client_name:'عبد القادر بن علي', budget:45000000, total_spent:18500000, progress:42, status:'active', color:'#4A90E2', phase:'الهيكل الخرساني', start_date:'2024-03-01', end_date:'2025-12-31', is_archived:false },
+      { id:2, tenant_id:1, name:'فيلا سكنية دار البيضاء', wilaya:'البليدة', client_name:'سمير حمادة', budget:12500000, total_spent:12800000, progress:98, status:'completed', color:'#34C38F', phase:'الاستلام النهائي', start_date:'2023-06-01', end_date:'2024-11-30', is_archived:false },
+      { id:3, tenant_id:1, name:'مستودع تجاري وهران', wilaya:'وهران', client_name:'شركة لوجيستيك', budget:22000000, total_spent:8900000, progress:35, status:'active', color:'#E8B84B', phase:'البناء والجدران', start_date:'2024-08-15', end_date:'2025-08-14', is_archived:false },
+      { id:4, tenant_id:1, name:'مدرسة ابتدائية بجاية', wilaya:'بجاية', client_name:'بلدية بجاية', budget:31000000, total_spent:5200000, progress:15, status:'delayed', color:'#F04E6A', phase:'أعمال الحفر والأساسات', start_date:'2024-01-10', end_date:'2025-06-30', is_archived:false },
+    ]);
+    this.set('workers', [
+      { id:1, tenant_id:1, project_id:1, full_name:'محمد الأمين زروق', role:'بنّاء رئيسي', phone:'0550 111 222', daily_salary:3500, contract_type:'daily', hire_date:'2024-03-01', color:'#4A90E2' },
+      { id:2, tenant_id:1, project_id:1, full_name:'كريم بن عزيز', role:'حداد', phone:'0661 333 444', daily_salary:4000, contract_type:'daily', hire_date:'2024-03-15', color:'#34C38F' },
+      { id:3, tenant_id:1, project_id:1, full_name:'يوسف شريف', role:'كهربائي', phone:'0770 555 666', daily_salary:4500, contract_type:'monthly', hire_date:'2024-04-01', color:'#E8B84B' },
+      { id:4, tenant_id:1, project_id:3, full_name:'فريد بوزيدي', role:'سباك', phone:'0555 777 888', daily_salary:4200, contract_type:'daily', hire_date:'2024-05-01', color:'#9B6DFF' },
+      { id:5, tenant_id:1, project_id:3, full_name:'عمر حمزة', role:'مساعد بنّاء', phone:'0660 999 111', daily_salary:2500, contract_type:'daily', hire_date:'2024-06-01', color:'#FF7043' },
+    ]);
+    this.set('equipment', [
+      { id:1, tenant_id:1, project_id:1, name:'حفارة كاتربيلر', model:'CAT 320', plate_number:'16-1234-16', icon:'🚜', status:'active', purchase_price:8500000, notes:'' },
+      { id:2, tenant_id:1, project_id:1, name:'شاحنة خلط الخرسانة', model:'Mercedes 3344', plate_number:'16-5678-16', icon:'🚛', status:'active', purchase_price:4200000, notes:'' },
+      { id:3, tenant_id:1, project_id:3, name:'رافعة برجية 50T', model:'Potain MCT 88', plate_number:'', icon:'🏗️', status:'maintenance', purchase_price:12000000, notes:'صيانة دورية' },
+    ]);
+    this.set('transactions', [
+      { id:1, tenant_id:1, project_id:1, type:'revenue', category:'دفعة مقدمة', amount:10000000, description:'دفعة مقدمة مشروع حيدرة', date:'2024-03-05', payment_method:'bank' },
+      { id:2, tenant_id:1, project_id:1, type:'expense', category:'مواد البناء', amount:4500000, description:'حديد تسليح وأسمنت', date:'2024-03-15', payment_method:'cash' },
+      { id:3, tenant_id:1, project_id:1, type:'expense', category:'رواتب العمال', amount:2800000, description:'رواتب شهر مارس', date:'2024-03-31', payment_method:'bank' },
+      { id:4, tenant_id:1, project_id:2, type:'revenue', category:'استلام نهائي', amount:12500000, description:'دفعة الاستلام النهائي فيلا دار البيضاء', date:'2024-11-30', payment_method:'bank' },
+      { id:5, tenant_id:1, project_id:3, type:'expense', category:'اكراءات المعدات', amount:1200000, description:'إيجار شاحنات لنقل مواد البناء', date:'2024-09-10', payment_method:'cash' },
+    ]);
+    this.set('attendance', []);
+    this.set('initialized', [true]);
+  }
+};
+
+/* ══════════════════════════════════════════════════════
+   AUTH
+══════════════════════════════════════════════════════ */
+const Auth = {
+  currentUser: null,
+  login(email, password, type) {
+    const users = DB.get('users');
+    const user = users.find(u => u.email === email.trim().toLowerCase() && u.is_active);
+    if (!user || user.password !== password) return false;
+    if (type === 'admin' && !user.is_admin) return false;
+    if (type === 'tenant' && (user.is_admin || !user.tenant_id)) return false;
+    if (type === 'tenant' && user.tenant_id) {
+      const tenant = DB.get('tenants').find(t => t.id === user.tenant_id);
+      if (!tenant || !tenant.is_active) return false;
+    }
+    this.currentUser = user;
+    sessionStorage.setItem('sbtp_user', JSON.stringify(user));
+    return true;
+  },
+  logout() { this.currentUser = null; sessionStorage.removeItem('sbtp_user'); App.navigate('landing'); },
+  load() { const u = sessionStorage.getItem('sbtp_user'); if (u) this.currentUser = JSON.parse(u); },
+  getUser() { return this.currentUser; },
+  getTenant() {
+    if (!this.currentUser || !this.currentUser.tenant_id) return null;
+    return DB.get('tenants').find(t => t.id === this.currentUser.tenant_id) || null;
+  },
+  getPlan() {
+    const t = this.getTenant(); if (!t) return null;
+    return DB.get('plans').find(p => p.id === t.plan_id) || null;
+  }
+};
+
+/* ══════════════════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════════════════ */
+const Toast = {
+  show(msg, type='info') {
+    const icons = { success:'✅', error:'❌', info:'ℹ️' };
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = `toast toast-${type}`;
+    t.innerHTML = `<span>${icons[type]||'💬'}</span><span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(() => t.remove(), 4000);
+  },
+  success: m => Toast.show(m,'success'),
+  error: m => Toast.show(m,'error'),
+  info: m => Toast.show(m,'info')
+};
+
+/* ══════════════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════════════ */
+function fmt(n) { return Number(n||0).toLocaleString('fr-DZ'); }
+function fmtDate(d) { if (!d) return '—'; return new Date(d).toLocaleDateString('ar-DZ'); }
+function statusBadge(s) {
+  const map = { active:'badge-active نشط', completed:'badge-completed مكتمل', delayed:'badge-delayed متأخر', paused:'badge-paused متوقف' };
+  const [cls, label] = (map[s]||'badge-paused —').split(' ');
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+function statusLabel(s) { return {active:'نشط',completed:'مكتمل',delayed:'متأخر',paused:'متوقف'}[s]||s; }
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+
+const WILAYAS = ["أدرار","الشلف","الأغواط","أم البواقي","باتنة","بجاية","بسكرة","بشار","البليدة","البويرة","تمنراست","تبسة","تلمسان","تيارت","تيزي وزو","الجزائر","الجلفة","جيجل","سطيف","سعيدة","سكيكدة","سيدي بلعباس","عنابة","قالمة","قسنطينة","المدية","مستغانم","المسيلة","معسكر","ورقلة","وهران","البيض","إليزي","برج بوعريريج","بومرداس","الطارف","تندوف","تيسمسيلت","الوادي","خنشلة","سوق أهراس","تيبازة","ميلة","عين الدفلى","النعامة","عين تموشنت","غرداية","غليزان"];
+const PHASES = ["تصميم ودراسة","أعمال الحفر والأساسات","الهيكل الخرساني","البناء والجدران","التسقيف","أعمال الكهرباء","أعمال السباكة","التشطيبات الداخلية","التشطيبات الخارجية","الاستلام النهائي"];
+const COLORS = ['#4A90E2','#34C38F','#E8B84B','#F04E6A','#9B6DFF','#FF7043','#26C6DA','#AB47BC'];
+
+/* ══════════════════════════════════════════════════════
+   ROUTER
+══════════════════════════════════════════════════════ */
+const App = {
+  currentPage: 'landing',
+  params: {},
+  navigate(page, params={}) {
+    this.currentPage = page; this.params = params; this.render();
+    window.scrollTo(0,0);
+  },
+  render() {
+    const app = document.getElementById('app');
+    const user = Auth.getUser();
+    if (!user && !['landing','login'].includes(this.currentPage)) this.currentPage = 'landing';
+    if (user && this.currentPage === 'login') this.currentPage = user.is_admin ? 'admin' : 'dashboard';
+    if (user && this.currentPage === 'landing') this.currentPage = user.is_admin ? 'admin' : 'dashboard';
+    const pages = { landing:Pages.landing, login:Pages.login, dashboard:Pages.dashboard,
+      projects:Pages.projects, workers:Pages.workers, equipment:Pages.equipment,
+      transactions:Pages.transactions, attendance:Pages.attendance, reports:Pages.reports,
+      settings:Pages.settings, admin:Pages.admin };
+    const render = pages[this.currentPage];
+    if (render) { app.innerHTML = render(); this.bindEvents(); this.animateBars(); }
+  },
+  bindEvents() {
+    document.querySelectorAll('[data-nav]').forEach(el => {
+      el.addEventListener('click', e => { e.preventDefault(); App.navigate(el.dataset.nav); });
+    });
+    document.querySelectorAll('[data-modal-open]').forEach(el => {
+      el.addEventListener('click', () => { const m = document.getElementById(el.dataset.modalOpen); if(m) m.classList.add('show'); });
+    });
+    document.querySelectorAll('[data-modal-close]').forEach(el => {
+      el.addEventListener('click', () => { const m = el.closest('.modal-overlay'); if(m) m.classList.remove('show'); });
+    });
+    document.querySelectorAll('.modal-overlay').forEach(el => {
+      el.addEventListener('click', e => { if(e.target===el) el.classList.remove('show'); });
+    });
+    const ham = document.querySelector('.hamburger');
+    if(ham) ham.addEventListener('click', () => document.getElementById('sidebar')?.classList.toggle('open'));
+    document.querySelectorAll('[data-logout]').forEach(el => {
+      el.addEventListener('click', () => Auth.logout());
+    });
+    document.querySelectorAll('[data-color]').forEach(el => {
+      el.addEventListener('click', () => {
+        const target = document.getElementById(el.dataset.target);
+        if(target) target.value = el.dataset.color;
+        el.closest('.color-options')?.querySelectorAll('.color-option').forEach(o => o.classList.remove('selected'));
+        el.classList.add('selected');
+      });
+    });
+  },
+  animateBars() {
+    setTimeout(() => {
+      document.querySelectorAll('.progress-fill[data-width]').forEach(el => {
+        el.style.width = (el.dataset.width||0) + '%';
+      });
+    }, 100);
+  }
+};
+
+/* ══════════════════════════════════════════════════════
+   SHARED LAYOUT
+══════════════════════════════════════════════════════ */
+function sidebarHTML(active) {
+  const user = Auth.getUser();
+  const tenant = Auth.getTenant();
+  const plan = Auth.getPlan();
+  const isAdmin = user?.is_admin;
+  const links = isAdmin ? [] : [
+    { id:'dashboard', icon:'📊', label:'لوحة التحكم', section:'الرئيسية' },
+    { id:'projects', icon:'🏗️', label:'المشاريع', section:'الإدارة' },
+    { id:'workers', icon:'👷', label:'العمال' },
+    { id:'equipment', icon:'🚜', label:'المعدات' },
+    { id:'attendance', icon:'📅', label:'الحضور والغياب', badge:'جديد', badgeColor:'rgba(74,144,226,.15)', badgeTextColor:'#60A5FA' },
+    { id:'transactions', icon:'💰', label:'المعاملات المالية', section:'المالية' },
+    { id:'reports', icon:'📈', label:'التقارير', badge:'جديد', badgeColor:'rgba(155,109,255,.15)', badgeTextColor:'#9B6DFF' },
+    { id:'settings', icon:'⚙️', label:'الإعدادات', section:'الحساب' },
+  ];
+  let nav = '';
+  links.forEach(l => {
+    if(l.section) nav += `<div class="nav-section-label">${l.section}</div>`;
+    nav += `<button class="nav-link${active===l.id?' active':''}" data-nav="${l.id}">
+      <span class="nav-link-icon">${l.icon}</span>${l.label}
+      ${l.badge?`<span class="nav-badge" style="background:${l.badgeColor};color:${l.badgeTextColor}">${l.badge}</span>`:''}
+    </button>`;
+  });
+  return `<aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">🏗️</div>
+      <div><div class="sidebar-logo-text">SmartBTP</div><div class="sidebar-logo-sub">${isAdmin?'لوحة الإدارة':'إدارة مشاريع البناء'}</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      ${isAdmin?`<div class="nav-section-label">الإدارة</div>
+        <button class="nav-link active"><span class="nav-link-icon">🏢</span> المؤسسات</button>
+        <button class="nav-link" data-nav="landing" style="margin-top:0.5rem"><span class="nav-link-icon">🌐</span> الصفحة الرئيسية</button>
+      `:nav}
+    </nav>
+    <div class="sidebar-footer">
+      <div class="tenant-chip">
+        <div class="tenant-avatar">${isAdmin?'👑':'🏢'}</div>
+        <div><div class="tenant-name">${escHtml(isAdmin?'مسؤول النظام':tenant?.name||'مؤسستك')}</div>
+        <div class="tenant-plan">${isAdmin?'Admin':escHtml(plan?.name||'—')}</div></div>
+      </div>
+      <button class="nav-link logout" data-logout><span class="nav-link-icon">🚪</span> تسجيل الخروج</button>
+    </div>
+  </aside>`;
+}
+
+function topbarHTML(breadcrumb) {
+  const user = Auth.getUser();
+  const initial = (user?.full_name||'U')[0].toUpperCase();
+  return `<header class="topbar">
+    <div style="display:flex;align-items:center;gap:.8rem">
+      <button class="hamburger">☰</button>
+      <div class="topbar-breadcrumb">SmartBTP <span style="opacity:.3">›</span> ${breadcrumb}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:.6rem">
+      <button class="btn btn-ghost btn-sm" data-nav="landing" style="font-size:.78rem">🌐 الموقع</button>
+      <div class="topbar-user">
+        <div class="topbar-avatar" title="${escHtml(user?.full_name||'')}">${initial}</div>
+        <span style="font-size:.82rem;color:var(--muted)">${escHtml((user?.full_name||'').split(' ')[0])}</span>
+      </div>
+    </div>
+  </header>`;
+}
+
+function layoutHTML(active, breadcrumb, content) {
+  return `<div class="app-shell">${sidebarHTML(active)}
+  <div class="main-wrap">
+    ${topbarHTML(breadcrumb)}
+    <main class="page-content animate-fade">${content}</main>
+    <footer style="padding:.8rem 1.8rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem">
+      <span style="font-size:.7rem;color:var(--dim)">© 2025 SmartBTP — منصة إدارة مشاريع البناء الجزائرية</span>
+      <span style="font-size:.7rem;color:var(--dim)">v4.0 Pro Edition</span>
+    </footer>
+  </div></div>`;
+}
+
+/* ══════════════════════════════════════════════════════
+   PAGES
+══════════════════════════════════════════════════════ */
+const Pages = {};
+
+/* ─── LANDING PAGE ─── */
+Pages.landing = function() {
+  const user = Auth.getUser();
+  return `<div class="landing-page">
+    <!-- NAVBAR -->
+    <nav class="land-nav">
+      <div class="land-nav-logo">
+        <div class="land-nav-logo-icon">🏗️</div>
+        <div class="land-nav-logo-text">SmartBTP</div>
+      </div>
+      <div class="land-nav-links">
+        <a class="land-nav-link" href="#features">الميزات</a>
+        <a class="land-nav-link" href="#projects">المشاريع</a>
+        <a class="land-nav-link" href="#pricing">الأسعار</a>
+        <a class="land-nav-link" href="#contact">التواصل</a>
+      </div>
+      <div class="land-nav-actions">
+        ${user
+          ? `<button class="btn btn-gold btn-sm" data-nav="${user.is_admin?'admin':'dashboard'}">→ لوحة التحكم</button>`
+          : `<button class="btn btn-ghost btn-sm" data-nav="login">تسجيل الدخول</button>
+             <button class="btn btn-gold btn-sm" data-nav="login">ابدأ مجاناً</button>`
+        }
+      </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-bg">
+        <div class="hero-bg-img"></div>
+        <div class="hero-bg-grid"></div>
+        <div class="hero-bg-glow"></div>
+      </div>
+      <div class="hero-content">
+        <div class="hero-badge">🇩🇿 منصة جزائرية متخصصة في قطاع BTP</div>
+        <h1 class="hero-title">
+          أدِر مشاريع البناء<br>بكفاءة <span>احترافية</span> عالية
+        </h1>
+        <p class="hero-sub">
+          SmartBTP منصة متكاملة لإدارة مشاريع البناء الجزائرية — تتبع المشاريع، العمال، المعدات، والمعاملات المالية في مكان واحد.
+        </p>
+        <div class="hero-actions">
+          <button class="btn btn-gold btn-lg" data-nav="login">🚀 ابدأ تجربتك المجانية</button>
+          <button class="btn btn-ghost btn-lg" href="#features">تعرف على الميزات ↓</button>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat"><div class="hero-stat-val">+500</div><div class="hero-stat-label">مؤسسة مشتركة</div></div>
+          <div class="hero-divider"></div>
+          <div class="hero-stat"><div class="hero-stat-val">+2000</div><div class="hero-stat-label">مشروع مُدار</div></div>
+          <div class="hero-divider"></div>
+          <div class="hero-stat"><div class="hero-stat-val">48</div><div class="hero-stat-label">ولاية جزائرية</div></div>
+          <div class="hero-divider"></div>
+          <div class="hero-stat"><div class="hero-stat-val">99%</div><div class="hero-stat-label">رضا المستخدمين</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="section" id="features">
+      <div class="section-center">
+        <div class="section-tag">الميزات الرئيسية</div>
+        <h2 class="section-title">كل ما تحتاجه لإدارة مشاريعك</h2>
+        <p class="section-sub">نظام شامل يغطي جميع جوانب إدارة مشاريع البناء من البداية حتى التسليم النهائي</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon blue">🏗️</div>
+          <div class="feature-title">إدارة المشاريع</div>
+          <div class="feature-desc">تتبع تقدم مشاريعك بشكل لحظي مع نظام بطاقات ذكي يعرض الميزانية والتقدم والحالة في نظرة واحدة.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon gold">👷</div>
+          <div class="feature-title">إدارة العمال</div>
+          <div class="feature-desc">سجّل عمالك وتتبع حضورهم وغيابهم ورواتبهم مع تصدير التقارير بصيغة CSV بضغطة واحدة.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon green">💰</div>
+          <div class="feature-title">المحاسبة المالية</div>
+          <div class="feature-desc">تتبع جميع الإيرادات والمصاريف لكل مشروع مع حسابات آلية للربح الصافي وتنبيهات تجاوز الميزانية.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon purple">🚜</div>
+          <div class="feature-title">إدارة المعدات</div>
+          <div class="feature-desc">سجّل معداتك ومركباتك وتتبع حالتها وصيانتها وتوزيعها على المشاريع المختلفة.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon red">📅</div>
+          <div class="feature-title">الحضور والغياب</div>
+          <div class="feature-desc">نظام متكامل لتسجيل الحضور اليومي مع حساب تلقائي للتكاليف اليومية وملفات الأجور الشهرية.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon orange">📈</div>
+          <div class="feature-title">التقارير والإحصاء</div>
+          <div class="feature-desc">تقارير تحليلية احترافية توضح أداء مشاريعك وتحليل المصاريف واتجاهات الربحية بمرور الوقت.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROJECTS SHOWCASE -->
+    <section class="projects-showcase" id="projects">
+      <div class="section-center">
+        <div class="section-tag" style="background:rgba(52,195,143,0.1);border-color:rgba(52,195,143,0.25);color:#34C38F">مشاريع حقيقية</div>
+        <h2 class="section-title">مشاريع أنجزها عملاؤنا</h2>
+        <p class="section-sub">نماذج من المشاريع التي يديرها عملاؤنا عبر منصة SmartBTP في مختلف أنحاء الجزائر</p>
+      </div>
+      <div class="projects-grid">
+        <div class="project-img-card">
+          <img src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600&q=80" alt="مشروع بناء عمارة">
+          <div class="project-img-info">
+            <div class="project-img-title">بناء عمارة R+7 — الجزائر العاصمة</div>
+            <div class="project-img-meta">📍 حيدرة • 45,000,000 دج • 🏗️ نشط</div>
+          </div>
+          <div class="project-img-overlay"><span class="badge badge-active">نشط</span></div>
+        </div>
+        <div class="project-img-card">
+          <img src="https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?w=600&q=80" alt="مشروع فيلا">
+          <div class="project-img-info">
+            <div class="project-img-title">فيلا سكنية فاخرة — البليدة</div>
+            <div class="project-img-meta">📍 دار البيضاء • 12,500,000 دج • ✅ مكتمل</div>
+          </div>
+          <div class="project-img-overlay"><span class="badge badge-completed">مكتمل</span></div>
+        </div>
+        <div class="project-img-card">
+          <img src="https://images.unsplash.com/photo-1590859808308-3d2d9c515b1a?w=600&q=80" alt="مشروع تجاري">
+          <div class="project-img-info">
+            <div class="project-img-title">مستودع تجاري صناعي — وهران</div>
+            <div class="project-img-meta">📍 وهران • 22,000,000 دج • 🏗️ نشط</div>
+          </div>
+          <div class="project-img-overlay"><span class="badge badge-active">نشط</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="section" style="background:rgba(255,255,255,0.01)">
+      <div class="section-center">
+        <div class="section-tag" style="background:rgba(155,109,255,0.1);border-color:rgba(155,109,255,0.25);color:#9B6DFF">كيف يعمل</div>
+        <h2 class="section-title">ابدأ خلال 3 دقائق فقط</h2>
+        <p class="section-sub">إعداد بسيط وسريع دون الحاجة إلى خبرة تقنية</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.5rem;max-width:900px;margin:0 auto;text-align:center">
+        ${[
+          {n:'01',icon:'📝',t:'أنشئ حسابك',d:'سجّل مؤسستك ببيانات بسيطة في أقل من دقيقتين'},
+          {n:'02',icon:'🏗️',t:'أضف مشاريعك',d:'أدخل تفاصيل مشاريعك مع الميزانية والعمال والمراحل'},
+          {n:'03',icon:'📊',t:'تابع وتحكم',d:'راقب التقدم وأدر المالية وصدّر التقارير في أي وقت'},
+        ].map(s=>`<div style="padding:2rem 1.5rem;background:rgba(255,255,255,0.025);border:1px solid var(--border);border-radius:20px;position:relative;transition:all 0.3s" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform=''">
+          <div style="position:absolute;top:-1px;right:50%;transform:translateX(50%);background:linear-gradient(135deg,#E8B84B,#C49030);color:#09120A;font-size:.7rem;font-weight:900;padding:.2rem .8rem;border-radius:0 0 10px 10px;font-family:'JetBrains Mono',monospace">${s.n}</div>
+          <div style="font-size:2.5rem;margin-bottom:1rem;margin-top:.5rem">${s.icon}</div>
+          <div style="font-size:1rem;font-weight:800;margin-bottom:.5rem">${s.t}</div>
+          <div style="font-size:.85rem;color:var(--muted)">${s.d}</div>
+        </div>`).join('')}
+      </div>
+    </section>
+
+    <!-- PRICING -->
+    <section class="pricing-section" id="pricing">
+      <div class="section-center">
+        <div class="section-tag">خطط الاشتراك</div>
+        <h2 class="section-title">أسعار تناسب جميع المؤسسات</h2>
+        <p class="section-sub">اختر الخطة المناسبة لحجم مؤسستك — جميع الخطط تشمل الدعم الفني المجاني</p>
+      </div>
+      <div class="pricing-grid">
+        <div class="pricing-card">
+          <div class="pricing-name">المبتدئ</div>
+          <div class="pricing-price">2,900<span> دج</span></div>
+          <div class="pricing-period">/ شهرياً — مناسب للمقاولين الأفراد</div>
+          <ul class="pricing-features">
+            <li><span class="check">✓</span> 3 مشاريع نشطة</li>
+            <li><span class="check">✓</span> 15 عامل كحد أقصى</li>
+            <li><span class="check">✓</span> متابعة الحضور</li>
+            <li><span class="check">✓</span> التقارير الأساسية</li>
+            <li><span class="x">—</span> إدارة المعدات</li>
+            <li><span class="x">—</span> دعم API</li>
+          </ul>
+          <button class="btn btn-ghost" style="width:100%;justify-content:center" data-nav="login">ابدأ مجاناً</button>
+        </div>
+        <div class="pricing-card popular">
+          <div class="pricing-popular-badge">⭐ الأكثر مبيعاً</div>
+          <div class="pricing-name">الاحترافي</div>
+          <div class="pricing-price">7,900<span> دج</span></div>
+          <div class="pricing-period">/ شهرياً — مثالي للشركات الصغيرة والمتوسطة</div>
+          <ul class="pricing-features">
+            <li><span class="check">✓</span> 20 مشروع نشط</li>
+            <li><span class="check">✓</span> 100 عامل</li>
+            <li><span class="check">✓</span> 50 معدة</li>
+            <li><span class="check">✓</span> تقارير متقدمة</li>
+            <li><span class="check">✓</span> تصدير CSV وPDF</li>
+            <li><span class="check">✓</span> دعم ذو أولوية</li>
+          </ul>
+          <button class="btn btn-gold" style="width:100%;justify-content:center" data-nav="login">اشترك الآن</button>
+        </div>
+        <div class="pricing-card">
+          <div class="pricing-name">المؤسسي</div>
+          <div class="pricing-price">19,900<span> دج</span></div>
+          <div class="pricing-period">/ شهرياً — للشركات الكبيرة بلا حدود</div>
+          <ul class="pricing-features">
+            <li><span class="check">✓</span> مشاريع غير محدودة</li>
+            <li><span class="check">✓</span> عمال غير محدودون</li>
+            <li><span class="check">✓</span> معدات غير محدودة</li>
+            <li><span class="check">✓</span> لوحة تحكم متعددة المستخدمين</li>
+            <li><span class="check">✓</span> API كامل</li>
+            <li><span class="check">✓</span> دعم مخصص على مدار الساعة</li>
+          </ul>
+          <button class="btn btn-outline-gold" style="width:100%;justify-content:center" data-nav="login">تواصل معنا</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section" id="contact">
+      <div class="cta-box">
+        <div style="font-size:3rem;margin-bottom:1rem;animation:floatUp 3s ease infinite">🏗️</div>
+        <h2 class="cta-title">ابدأ إدارة مشاريعك اليوم</h2>
+        <p class="cta-sub">انضم إلى أكثر من 500 مؤسسة جزائرية تستخدم SmartBTP لإدارة مشاريعها بكفاءة واحترافية</p>
+        <div style="display:flex;align-items:center;justify-content:center;gap:1rem;flex-wrap:wrap">
+          <button class="btn btn-gold btn-lg" data-nav="login">🚀 ابدأ تجربتك المجانية</button>
+          <button class="btn btn-ghost btn-lg">📞 اتصل بنا</button>
+        </div>
+        <div style="margin-top:1.5rem;font-size:0.8rem;color:var(--dim)">✅ لا يلزم بطاقة ائتمان &nbsp;•&nbsp; ✅ إلغاء في أي وقت &nbsp;•&nbsp; ✅ دعم باللغة العربية</div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="land-footer">
+      <div class="land-footer-logo">
+        <div class="land-nav-logo-icon" style="width:30px;height:30px;font-size:0.9rem">🏗️</div>
+        <div style="font-weight:900;color:var(--gold);font-size:0.9rem">SmartBTP</div>
+      </div>
+      <div class="land-footer-text">© 2025 SmartBTP — منصة إدارة مشاريع البناء الجزائرية</div>
+      <div style="display:flex;gap:.5rem">
+        <button class="btn btn-ghost btn-sm" data-nav="login">تسجيل الدخول</button>
+      </div>
+    </footer>
+  </div>`;
+};
+
+/* ─── LOGIN PAGE ─── */
+Pages.login = function() {
+  return `<div class="login-page">
+    <button class="login-back-btn" data-nav="landing">← العودة للموقع</button>
+    <div class="login-wrap">
+      <!-- Left Panel -->
+      <div class="login-left">
+        <div class="login-left-bg"></div>
+        <div class="login-left-overlay"></div>
+        <div class="login-left-content">
+          <div class="login-left-logo">
+            <div class="login-left-logo-icon">🏗️</div>
+            <div class="login-left-logo-text">SmartBTP</div>
+          </div>
+          <div class="login-left-title">أدِر مشاريعك<br>باحترافية</div>
+          <div class="login-left-sub">منصة إدارة مشاريع البناء الجزائرية — متكاملة وسهلة الاستخدام</div>
+          <div class="login-left-features">
+            <div class="login-left-feat"><div class="login-left-feat-icon">🏗️</div> متابعة تقدم المشاريع لحظياً</div>
+            <div class="login-left-feat"><div class="login-left-feat-icon">👷</div> إدارة العمال والحضور</div>
+            <div class="login-left-feat"><div class="login-left-feat-icon">💰</div> محاسبة مالية متكاملة</div>
+            <div class="login-left-feat"><div class="login-left-feat-icon">📈</div> تقارير وإحصاءات دقيقة</div>
+            <div class="login-left-feat"><div class="login-left-feat-icon">🔒</div> بيانات آمنة ومشفرة</div>
+          </div>
+        </div>
+      </div>
+      <!-- Right Panel -->
+      <div class="login-right">
+        <div class="login-right-logo">
+          <div style="font-size:1.4rem;font-weight:900;color:var(--gold)">مرحباً بك 👋</div>
+        </div>
+        <div class="login-right-title">تسجيل الدخول</div>
+        <div class="login-right-sub">أدخل بياناتك للوصول إلى لوحة التحكم</div>
+        <div class="login-tabs">
+          <button class="login-tab active" id="tabTenant" onclick="switchTab('tenant')">🏢 مؤسسة</button>
+          <button class="login-tab" id="tabAdmin" onclick="switchTab('admin')">👑 مسؤول النظام</button>
+        </div>
+        <div id="loginError" style="display:none" class="alert alert-error">❌ البريد الإلكتروني أو كلمة المرور غير صحيحة</div>
+        <div class="form-group">
+          <label class="form-label">البريد الإلكتروني</label>
+          <input class="form-input" id="loginEmail" type="email" placeholder="example@company.dz" dir="ltr">
+        </div>
+        <div class="form-group">
+          <label class="form-label">كلمة المرور</label>
+          <div style="position:relative">
+            <input class="form-input" id="loginPass" type="password" placeholder="••••••••" dir="ltr" style="padding-left:2.5rem">
+            <button onclick="togglePass()" style="position:absolute;left:.6rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--dim);font-size:1rem">👁️</button>
+          </div>
+        </div>
+        <button class="btn btn-gold" style="width:100%;justify-content:center;padding:.85rem;font-size:1rem;margin-top:.5rem" onclick="doLogin()">
+          تسجيل الدخول →
+        </button>
+        <div class="login-demo-box">
+          <div class="login-demo-title">بيانات تجريبية للاختبار</div>
+          <div class="login-demo-row">👑 مسؤول: <span dir="ltr" style="color:var(--gold);font-family:monospace;font-size:.75rem">admin@smartbtp.dz / Admin@SmartBTP2025</span></div>
+          <div class="login-demo-row">🏢 مؤسسة: <span dir="ltr" style="color:var(--blue);font-family:monospace;font-size:.75rem">demo@algerie-construction.dz / Demo@1234</span></div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+};
+
+/* ─── DASHBOARD ─── */
+Pages.dashboard = function() {
+  const user = Auth.getUser();
+  const tid = user.tenant_id;
+  const projects = DB.get('projects').filter(p => p.tenant_id===tid && !p.is_archived);
+  const workers  = DB.get('workers').filter(w => w.tenant_id===tid);
+  const equip    = DB.get('equipment').filter(e => e.tenant_id===tid);
+  const txs      = DB.get('transactions').filter(t => t.tenant_id===tid);
+  const revenue  = txs.filter(t=>t.type==='revenue').reduce((s,t)=>s+Number(t.amount),0);
+  const expense  = txs.filter(t=>t.type==='expense').reduce((s,t)=>s+Number(t.amount),0);
+  const totalBudget = projects.reduce((s,p)=>s+Number(p.budget),0);
+  const totalSpent  = projects.reduce((s,p)=>s+Number(p.total_spent),0);
+  const recent = [...projects].sort((a,b)=>b.id-a.id).slice(0,4);
+  const plan = Auth.getPlan();
+
+  return layoutHTML('dashboard','لوحة التحكم',`
+    <div class="page-header">
+      <div><div class="page-title">👋 أهلاً، ${escHtml(user.full_name.split(' ')[0])}</div>
+        <div class="page-sub">${new Date().toLocaleDateString('ar-DZ',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
+      </div>
+      <div class="page-actions">
+        <span style="font-size:.78rem;background:rgba(52,195,143,.1);border:1px solid rgba(52,195,143,.2);border-radius:8px;padding:5px 12px;color:#34C38F;font-weight:700">✅ ${plan?.name||''}</span>
+        <button class="btn btn-gold btn-sm" data-nav="projects">+ مشروع جديد</button>
+      </div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-icon">🏗️</div><div class="stat-value" style="color:var(--blue)">${projects.filter(p=>p.status==='active').length}</div><div class="stat-label">مشاريع نشطة</div></div>
+      <div class="stat-card"><div class="stat-icon">👷</div><div class="stat-value" style="color:var(--green)">${workers.length}</div><div class="stat-label">عمال مسجلون</div></div>
+      <div class="stat-card"><div class="stat-icon">🚜</div><div class="stat-value" style="color:var(--purple)">${equip.length}</div><div class="stat-label">معدات</div></div>
+      <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value" style="color:${revenue-expense>=0?'var(--green)':'var(--red)'};font-size:1.1rem">${fmt(revenue-expense)}</div><div class="stat-label">صافي الربح (دج)</div></div>
+      <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value" style="color:var(--gold)">${totalBudget>0?Math.round(totalSpent/totalBudget*100):0}%</div><div class="stat-label">استهلاك الميزانية</div><div class="progress-bar" style="margin-top:.5rem"><div class="progress-fill" style="background:var(--gold)" data-width="${totalBudget>0?Math.min(Math.round(totalSpent/totalBudget*100),100):0}"></div></div></div>
+      <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value" style="color:var(--green)">${projects.filter(p=>p.status==='completed').length}</div><div class="stat-label">مشاريع مكتملة</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+      <div class="card">
+        <div style="font-size:.9rem;font-weight:800;margin-bottom:1rem">💰 الملخص المالي</div>
+        <div style="display:flex;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--dim);font-size:.84rem">إجمالي الإيرادات</span>
+          <span style="color:var(--green);font-weight:700;font-family:monospace">${fmt(revenue)} دج</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--dim);font-size:.84rem">إجمالي المصاريف</span>
+          <span style="color:var(--red);font-weight:700;font-family:monospace">${fmt(expense)} دج</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:.6rem 0">
+          <span style="color:var(--dim);font-size:.84rem">الربح الصافي</span>
+          <span style="color:${revenue-expense>=0?'var(--green)':'var(--red)'};font-weight:900;font-family:monospace">${fmt(revenue-expense)} دج</span>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-size:.9rem;font-weight:800;margin-bottom:1rem">🏗️ حالة المشاريع</div>
+        ${['active','completed','delayed'].map(s=>{
+          const cnt=projects.filter(p=>p.status===s).length;
+          const pct=projects.length?Math.round(cnt/projects.length*100):0;
+          const col=s==='active'?'var(--green)':s==='completed'?'var(--blue)':'var(--red)';
+          return `<div style="margin-bottom:.7rem"><div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:4px"><span style="color:var(--muted)">${statusLabel(s)}</span><span style="color:${col};font-weight:700">${cnt}</span></div><div class="progress-bar"><div class="progress-fill" style="background:${col}" data-width="${pct}"></div></div></div>`;
+        }).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div style="font-size:.9rem;font-weight:800">🏗️ آخر المشاريع</div>
+        <button class="btn btn-ghost btn-sm" data-nav="projects">عرض الكل ←</button>
+      </div>
+      <div class="grid-cards">
+        ${recent.map(p=>`
+          <div style="background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.07);border-radius:14px;overflow:hidden;transition:all .2s" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+            <div style="height:3px;background:${p.color}"></div>
+            <div style="padding:1rem">
+              <div style="font-weight:800;font-size:.9rem;margin-bottom:.3rem">${escHtml(p.name)}</div>
+              <div style="font-size:.75rem;color:var(--dim);margin-bottom:.7rem">${escHtml(p.wilaya||'')} ${p.client_name?'• '+escHtml(p.client_name):''}</div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:.4rem"><span style="font-size:.75rem;color:var(--dim)">التقدم</span><span style="font-size:.75rem;font-weight:700">${p.progress}%</span></div>
+              <div class="progress-bar"><div class="progress-fill" style="background:${p.color}" data-width="${p.progress}"></div></div>
+              <div style="margin-top:.7rem">${statusBadge(p.status)}</div>
+            </div>
+          </div>`).join('')||'<div class="empty"><div class="empty-icon">🏗️</div><div class="empty-title">لا توجد مشاريع بعد</div></div>'}
+      </div>
+    </div>
+  `);
+};
+
+/* ─── PROJECTS ─── */
+Pages.projects = function() {
+  const tid = Auth.getUser().tenant_id;
+  const plan = Auth.getPlan();
+  const projects = DB.get('projects').filter(p=>p.tenant_id===tid && !p.is_archived);
+  const workers  = DB.get('workers');
+  const total=projects.length, active=projects.filter(p=>p.status==='active').length;
+  const completed=projects.filter(p=>p.status==='completed').length, delayed=projects.filter(p=>p.status==='delayed').length;
+
+  const cards = projects.map(p=>{
+    const wCount=workers.filter(w=>w.project_id===p.id).length;
+    return `<div style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:16px;overflow:hidden;transition:all .28s cubic-bezier(.34,1.56,.64,1)" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform=''">
+      <div style="height:3px;background:${p.color}"></div>
+      <div style="padding:1.1rem 1.2rem">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.5rem">
+          <div style="font-weight:800;font-size:.95rem;flex:1">${escHtml(p.name)}</div>${statusBadge(p.status)}
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.8rem">
+          ${p.wilaya?`<span style="font-size:.72rem;color:var(--dim)">📍 ${escHtml(p.wilaya)}</span>`:''}
+          ${p.client_name?`<span style="font-size:.72rem;color:var(--dim)">👤 ${escHtml(p.client_name)}</span>`:''}
+          ${wCount?`<span style="font-size:.72rem;color:var(--dim)">👷 ${wCount}</span>`:''}
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:4px"><span style="color:var(--dim)">التقدم</span><span style="font-weight:700">${p.progress}%</span></div>
+        <div class="progress-bar" style="margin-bottom:.8rem"><div class="progress-fill" style="background:${p.color}" data-width="${p.progress}"></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;font-size:.75rem;margin-bottom:.8rem">
+          <div><div style="color:var(--dim)">الميزانية</div><div style="font-weight:700;font-family:monospace">${fmt(p.budget)}</div></div>
+          <div><div style="color:var(--dim)">المُنفَق</div><div style="font-weight:700;color:${p.total_spent>p.budget?'var(--red)':'var(--green)'};font-family:monospace">${fmt(p.total_spent)}</div></div>
+        </div>
+        <div style="display:flex;gap:.4rem">
+          <button class="btn btn-blue btn-sm" style="flex:1" onclick="editProject(${p.id})">✏️ تعديل</button>
+          <button class="btn btn-red btn-sm" onclick="deleteProject(${p.id},'${escHtml(p.name)}')">🗑️</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('')||`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🏗️</div><div class="empty-title">لا توجد مشاريع بعد</div><div class="empty-text">أضف مشروعك الأول للبدء</div></div>`;
+
+  return layoutHTML('projects','المشاريع',`
+    <div class="page-header">
+      <div><div class="page-title">🏗️ المشاريع</div><div class="page-sub">${total} مشروع</div></div>
+      <div class="page-actions"><button class="btn btn-gold" data-modal-open="addProjectModal">+ مشروع جديد</button></div>
+    </div>
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat-card"><div class="stat-value" style="color:var(--blue)">${total}</div><div class="stat-label">الإجمالي</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--green)">${active}</div><div class="stat-label">نشطة</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--blue)">${completed}</div><div class="stat-label">مكتملة</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--red)">${delayed}</div><div class="stat-label">متأخرة</div></div>
+    </div>
+    <div class="grid-cards">${cards}</div>
+    <div class="modal-overlay" id="addProjectModal">
+      <div class="modal modal-lg">
+        <div class="modal-title">🏗️ إضافة مشروع جديد</div>
+        <div class="form-grid-2">
+          <div class="form-group"><label class="form-label">اسم المشروع *</label><input class="form-input" id="pName" placeholder="بناء عمارة..."></div>
+          <div class="form-group"><label class="form-label">الولاية</label><select class="form-select" id="pWilaya"><option value="">اختر...</option>${WILAYAS.map(w=>`<option>${w}</option>`).join('')}</select></div>
+          <div class="form-group"><label class="form-label">اسم العميل</label><input class="form-input" id="pClient" placeholder="عبد القادر..."></div>
+          <div class="form-group"><label class="form-label">هاتف العميل</label><input class="form-input" id="pPhone" placeholder="0550..."></div>
+          <div class="form-group"><label class="form-label">الميزانية (دج)</label><input class="form-input" id="pBudget" type="number" placeholder="0"></div>
+          <div class="form-group"><label class="form-label">المرحلة الحالية</label><select class="form-select" id="pPhase"><option value="">اختر...</option>${PHASES.map(ph=>`<option>${ph}</option>`).join('')}</select></div>
+          <div class="form-group"><label class="form-label">تاريخ البداية</label><input class="form-input" id="pStart" type="date"></div>
+          <div class="form-group"><label class="form-label">تاريخ الانتهاء</label><input class="form-input" id="pEnd" type="date"></div>
+        </div>
+        <div class="form-group"><label class="form-label">الوصف</label><textarea class="form-textarea" id="pDesc"></textarea></div>
+        <div class="form-group"><label class="form-label">اللون</label><input type="hidden" id="pColor" value="#4A90E2"><div class="color-options">${COLORS.map((c,i)=>`<div class="color-option${i===0?' selected':''}" style="background:${c}" data-color="${c}" data-target="pColor"></div>`).join('')}</div></div>
+        <div class="modal-footer"><button class="btn btn-ghost" data-modal-close>إلغاء</button><button class="btn btn-gold" onclick="addProject()">💾 حفظ المشروع</button></div>
+      </div>
+    </div>
+    <div class="modal-overlay" id="editProjectModal">
+      <div class="modal modal-lg">
+        <div class="modal-title">✏️ تعديل المشروع</div><input type="hidden" id="epId">
+        <div class="form-grid-2">
+          <div class="form-group"><label class="form-label">اسم المشروع</label><input class="form-input" id="epName"></div>
+          <div class="form-group"><label class="form-label">الولاية</label><select class="form-select" id="epWilaya"><option value="">اختر...</option>${WILAYAS.map(w=>`<option>${w}</option>`).join('')}</select></div>
+          <div class="form-group"><label class="form-label">الحالة</label><select class="form-select" id="epStatus"><option value="active">نشط</option><option value="completed">مكتمل</option><option value="delayed">متأخر</option><option value="paused">متوقف</option></select></div>
+          <div class="form-group"><label class="form-label">التقدم %</label><input class="form-input" id="epProgress" type="number" min="0" max="100"></div>
+          <div class="form-group"><label class="form-label">الميزانية (دج)</label><input class="form-input" id="epBudget" type="number"></div>
+          <div class="form-group"><label class="form-label">المرحلة</label><select class="form-select" id="epPhase"><option value="">اختر...</option>${PHASES.map(ph=>`<option>${ph}</option>`).join('')}</select></div>
+          <div class="form-group"><label class="form-label">اسم العميل</label><input class="form-input" id="epClient"></div>
+          <div class="form-group"><label class="form-label">تاريخ الانتهاء</label><input class="form-input" id="epEnd" type="date"></div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-ghost" data-modal-close>إلغاء</button><button class="btn btn-gold" onclick="saveProject()">💾 حفظ التعديلات</button></div>
+      </div>
+    </div>
+  `);
+};
+
+/* ─── WORKERS ─── */
+Pages.workers = function() {
+  const tid = Auth.getUser().tenant_id;
+  const workers  = DB.get('workers').filter(w=>w.tenant_id===tid);
+  const projects = DB.get('projects').filter(p=>p.tenant_id===tid && !p.is_archived);
+  const plan = Auth.getPlan();
+  const maxW = plan?.max_workers||-1;
+  const pct = maxW>0?Math.min(Math.round(workers.length/maxW*100),100):0;
+  const rows = workers.map(w=>{
+    const proj=projects.find(p=>p.id===w.project_id);
+    const typeLabel={daily:'يومي',monthly:'شهري',seasonal:'موسمي',contract:'مقاول'}[w.contract_type]||w.contract_type;
+    return `<tr>
+      <td><div style="display:flex;align-items:center;gap:.7rem"><div style="width:36px;height:36px;border-radius:50%;background:${w.color||'#4A90E2'};display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:.8rem">${(w.full_name||'?')[0]}</div><div><div style="font-weight:700">${escHtml(w.full_name)}</div><div style="font-size:.72rem;color:var(--dim)">📞 ${escHtml(w.phone||'')}</div></div></div></td>
+      <td>${escHtml(w.role)}</td>
+      <td style="color:var(--dim);font-size:.82rem">${escHtml(proj?.name||'—')}</td>
+      <td><span style="font-weight:700;font-family:monospace">${fmt(w.daily_salary)}</span> <span style="font-size:.72rem;color:var(--dim)">دج</span></td>
+      <td><span class="badge" style="background:rgba(74,144,226,.1);color:#60A5FA;border:1px solid rgba(74,144,226,.2)">${typeLabel}</span></td>
+      <td style="color:var(--dim);font-size:.82rem">${fmtDate(w.hire_date)}</td>
+      <td><div style="display:flex;gap:.3rem"><button class="btn btn-blue btn-sm" onclick="editWorker(${w.id})">✏️</button><button class="btn btn-red btn-sm" onclick="deleteWorker(${w.id},'${escHtml(w.full_name)}')">🗑️</button></div></td>
+    </tr>`;
+  }).join('');
+
+  return layoutHTML('workers','العمال',`
+    <div class="page-header">
+      <div><div class="page-title">👷 العمال</div><div class="page-sub">${workers.length} عامل</div></div>
+      <div class="page-actions">
+        <button class="btn btn-ghost btn-sm" onclick="exportWorkers()">📥 تصدير CSV</button>
+        <button class="btn btn-gold" data-modal-open="addWorkerModal">+ إضافة عامل</button>
+      </div>
+    </div>
+    ${maxW>0?`<div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:var(--radius);padding:.85rem 1rem;margin-bottom:1rem;display:flex;align-items:center;gap:1rem">
+      <span style="font-size:.78rem;color:var(--muted);font-weight:700;white-space:nowrap">الطاقة الاستيعابية:</span>
+      <div style="flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden"><div style="height:100%;border-radius:3px;background:${pct>=90?'var(--red)':pct>=70?'var(--gold)':'var(--green)'};width:${pct}%"></div></div>
+      <span style="font-size:.76rem;color:var(--dim);font-family:monospace">${workers.length}/${maxW}</span></div>`:''}
+    ${workers.length?`<div class="table-wrap"><table>
+      <thead><tr><th>العامل</th><th>المهنة</th><th>المشروع</th><th>الأجر اليومي</th><th>العقد</th><th>التعيين</th><th>إجراءات</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>`:`<div class="empty"><div class="empty-icon">👷</div><div class="empty-title">لا يوجد عمال</div></div>`}
+    <div class="modal-overlay" id="addWorkerModal">
+      <div class="modal">
+        <div class="modal-title">👷 إضافة عامل جديد</div>
+        <div class="form-grid-2">
+          <div class="form-group"><label class="form-label">الاسم الكامل *</label><input class="form-input" id="wName" placeholder="محمد الأمين..."></div>
+          <div class="form-group"><label class="form-label">المهنة *</label><input class="form-input" id="wRole" placeholder="بنّاء، حداد..."></div>
+          <div class="form-group"><label class="form-label">الهاتف</label><input class="form-input" id="wPhone" placeholder="0550..."></div>
+          <div class="form-group"><label class="form-label">رقم الهوية</label><input class="form-input" id="wNid"></div>
+          <div class="form-group"><label class="form-label">الأجر اليومي (دج)</label><input class="form-input" id="wSalary" type="number" placeholder="3000"></div>
+          <div class="form-group"><label class="form-label">نوع العقد</label><select class="form-select" id="wContract"><option value="daily">يومي</option><option value="monthly">شهري</option><option value="seasonal">موسمي</option><option value="contract">مقاول</option></select></div>
+          <div class="form-group"><label class="form-label">المشروع</label><select class="form-select" id="wProject"><option value="">بدون مشروع</option>${projects.map(p=>`<option value="${p.id}">${escHtml(p.name)}</option>`).join('')}</select></div>
+          <div class="form-group"><label class="form-label">تاريخ التعيين</label><input class="form-input" id="wHire" type="date"></div>
+        </div>
+        <div class="form-group"><label class="form-label">اللون</label><input type="hidden" id="wColor" value="#4A90E2"><div class="color-options">${COLORS.map((c,i)=>`<div class="color-option${i===0?' selected':''}" style="background:${c}" data-color="${c}" data-target="wColor"></div>`).join('')}</div></div>
+        <div class="modal-footer"><button class="btn btn-ghost" data-modal-close>إلغاء</button><button class="btn btn-gold" onclick="addWorker()">💾 حفظ</button></div>
+      </div>
+    </div>
+    <div class="modal-overlay" id="editWorkerModal">
+      <div class="modal">
+        <div class="modal-title">✏️ تعديل بيانات العامل</div><input type="hidden" id="ewId">
+        <div class="form-grid-2">
+          <div class="form-group"><label class="form-label">الاسم</label><input class="form-input" id="ewName"></div>
+          <div class="form-group"><label class="form-label">المهنة</label><input class="form-input" id="ewRole"></div>
+          <div class="form-group"><label class="form-label">الهاتف</label><input class="form-input" id="ewPhone"></div>
+          <div class="form-group"><label class="form-label">الأجر اليومي</label><input class="form-input" id="ewSalary" type="number"></div>
+          <div class="form-group"><label class="form-label">نوع العقد</label><select class="form-select" id="ewContract"><option value="daily">يومي</option><option value="monthly">شهري</option><option value="seasonal">موسمي</option><option value="contract">مقاول</option></select></div>
+          <div class="form-group"><label class="form-label">المشروع</label><select class="form-select" id="ewProject"><option value="">بدون مشروع</option>${projects.map(p=>`<option value="${p.id}">${escHtml(p.name)}</option>`).join('')}</select></div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-ghost" data-modal-close>إلغاء</button><button class="btn btn-gold" onclick="saveWorker()">💾 حفظ</button></div>
+      </div>
+    </div>
+  `);
+};
+
+/* ─── EQUIPMENT ─── */
+Pages.equipment = function() {
+  const tid = Auth.getUser().tenant_id;
+  const equip = DB.get('equipment').filter(e=>e.tenant_id===tid);
+  const projects = DB.get('projects').filter(p=>p.tenant_id===tid && !p.is_archived);
+  const statusMap = { active:{label:'نشط',col:'var(--green)'}, maintenance:{label:'صيانة',col:'var(--gold)'}, idle:{label:'خامل',col:'var(--dim)'} };
+  const cards = equip.map(e=>{
+    const proj=projects.find(p=>p.id===e.project_id);
+    const st=statusMap[e.status]||statusMap.idle;
+    return `<div class="card" style="position:relative">
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem">
+        <div style="width:52px;height:52px;border-radius:14px;background:rgba(232,184,75,.1);border:1px solid rgba(232,184,75,.2);display:flex;align-items:center;justify-content:center;font-size:1.8rem">${e.icon||'🚜'}</div>
+        <div><div style="font-weight:800">${escHtml(e.name)}</div><div style="font-size:.75rem;color:var(--dim)">${escHtml(e.model||'')}</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;font-size:.78rem;margin-bottom:.8rem">
+        <div><div style="color:var(--dim)">المشروع</div><div style="font-weight:600">${escHtml(proj?.name||'—')}</div></div>
+        <div><div style="color:var(--dim)">رقم اللوحة</div><div style="font-weight:600;font-family:monospace;direction:ltr;text-align:right">${escHtml(e.plate_number||'—')}</div></div>
+        <div><div style="color:var(--dim)">قيمة الشراء</div><div style="font-weight:600;font-family:monospace">${fmt(e.purchase_price)} دج</div></div>
+        <div><div style="color:var(--dim)">الحالة</div>
+          <select class="form-select" style="padding:.2rem .5rem;font-size:.75rem;margin-top:2px" onchange="updateEquipStatus(${e.id},this.value)">
+            ${Object.entries(statusMap).map(([k,v])=>`<option value="${k}"${e.status===k?' selected':''}>${v.label}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-red btn-sm" onclick="deleteEquip(${e.id},'${escHtml(e.name)}')" style="width:100%;justify-content:center">🗑️ حذف</button>
+    </div>`;
+  }).join('')||`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🚜</div><div class="empty-title">لا توجد معدات</div></div>`;
+
+  return layoutHTML('equipment','المعدات',`
+    <div class="page-header">
+      <div><div class="page-title">🚜 المعدات</div><div class="page-sub">${equip.length} معدة مسجلة</div></div>
+      <div class="page-actions"><button class="btn btn-gold" data-modal-open="addEquipModal">+ إضافة معدة</button></div>
+    </div>
+    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat-card"><div class="stat-value" style="color:var(--green)">${equip.filter(e=>e.status==='active').length}</div><div class="stat-label">نشط</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--gold)">${equip.filter(e=>e.status==='maintenance').length}</div><div class="stat-label">صيانة</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--dim)">${equip.filter(e=>e.status==='idle').length}</div><div class="stat-label">خامل</div></div>
+    </div>
+    <div class="grid-cards">${cards}</div>
+    <div class="modal-overlay" id="addEquipModal">
+      <div class="modal">
+        <div class="modal-title">🚜 إضافة معدة</div>
+        <div class="form-grid-2">
+          <div class="form-group"><label class="form-label">الاسم *</label><input class="form-input" id="eName" placeholder="حفارة..."></div>
+          <div class="form-group"><label class="form-label">الطراز</label><input class="form-input" id="eModel" placeholder="CAT 320"></div>
+          <div class="form-group"><label class="form-label">رقم اللوحة</label><input class="form-input" id="ePlate" dir="ltr"></div>
+          <div class="form-group"><label class="form-label">الأيقونة</label><select class="form-select" id="eIcon"><option>🚜</option><option>🚛</option><option>🏗️</option><option>🚧</option><option>⛏️</option></select></div>
+          <div class="form-group"><label class="form-label">قيمة الشراء (دج)</label><input class="form-input" id="ePrice" type="number"></div>
+          <div class="form-group"><label class="form-label">المشروع</label><select class="form-select" id="eProject"><option value="">اختر...</option>${projects.map(p=>`<option value="${p.id}">${escHtml(p.name)}</option>`).join('')}</select></div>
+        </div>
+        <div class="form-group"><label class="form-label">ملاحظات</label><textarea class="form-textarea" id="eNotes" style="min-height:60px"></textarea></div>
+        <div class="modal-footer"><button class="btn btn-ghost" data-modal-close>إلغاء</button><button class="btn btn-gold" onclick="addEquip()">💾 حفظ</button></div>
+      </div>
+    </div>
+  `);
+};
+
+/* ─── TRANSACTIONS ─── */
+Pages.transactions = function() {
+  const tid = Auth.getUser().tenant_id;
+  const txs = DB.get('transactions').filter(t=>t.tenant_id===tid);
+  const projects = DB.get('projects').filter(p=>p.tenant_id===tid && !p.is_archived);
+  const revenue = txs.filter(t=>t.type==='revenue').reduce((s,t)=>s+Number(t.amount),0);
+  const expense = txs.filter(t=>t.type==='expense').reduce((s,t)=>s+Number(t.amount),0);
+
+  const rows = [...txs].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(t=>{
+    const proj=projects.find(p=>p.id===t.project_id);
+    return `<tr>
+      <td style="color:var(--dim);font-size:.82rem">${fmtDate(t.date)}</td>
+      <td><span class="badge ${t.type==='revenue'?'badge-revenue':'badge-expense'}">${t.type==='revenue'?'إيراد':'مصروف'}</span></td>
+      <td style="font-size:.84rem">${escHtml(t.description)}</td>
+      <td style="font-size:.78rem;color:var(--dim)">${escHtml(t.category)}</td>
+      <td style="font-family:monospace;font-weight:700;color:${t.type==='revenue'?'var(--green)':'var(--red)'}">${t.type==='revenue'?'+':'-'}${fmt(t.amount)}</td>
+      <td style="font-size:.78rem;color:var(--dim)">${escHtml(proj?.name||'—')}</td>
+      <td><button class="btn btn-red btn-sm" onclick="deleteTx(${t.id})">🗑️</button></td>
+    </tr>`;
+  }).join('');
+
+  const RCATS = ["دفعة عميل","دفعة مقدمة","دفعة مرحلية","استلام نهائي","إيراد آخر"];
+  const ECATS = ["مواد البناء","حديد تسليح","أسمنت","رمل وحصى","طوب","رواتب العمال","مستحقات المقاولين","اكراءات المعدات","وقود","صيانة","نقل ومواصلات","مصاريف إدارية","أخرى"];
+
+  return layoutHTML('transactions','المعاملات المالية',`
+    <div class="page-header">
+      <div><div class="page-title">💰 المعاملات المالية</div><div class="page-sub">${txs.length} معاملة</div></div>
+      <div class="page-actions"><button class="btn btn-gold" data-modal-open="addTxModal">+ إضافة معاملة</button></div>
+    </div>
+    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat-card"><div class="stat-icon">📈</div><div class="stat-value" style="color:var(--green);font-size:1.1rem">${fmt(revenue)}</div><div class="stat-label">الإيرادات (دج)</div></div>
+      <div class="stat-card"><div class="stat-icon">📉</div><div class="stat-value" style="color:var(--red);font-size:1.1rem">${fmt(expense)}</div><div class="stat-label">المصاريف (دج)</div></div>
+      <div class="stat-card"><div class="stat-icon">💹</div><div class="stat-value" style="color:${revenue-expense>=0?'var(--green)':'var(--red)'};font-size:1.1rem">${fmt(revenue-expense)}</div><div class="stat-label">الربح الصافي (دج)</div></div>
+    </div>
+    ${txs.length?`<div class="table-wrap"><table>
+      <thead><tr><th>التاريخ</th><th>النوع</th><th>الوصف</th><th>الفئة</th><th>المبلغ (دج)</th><th>المشروع</th><th>حذف</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>`:`<div class="empty"><div class="empty-icon">💰</div><div class="empty-title">لا توجد معاملات بعد</div></div>`}
+    <div class="modal-overlay" id="addTxModal">
+      <div class="modal">
+        <div class="modal-title">💰 إضافة معاملة</div>
+        <div class="form-grid-2">
+          <div class="form-group"><label class="form-label">النوع</label><select class="form-select" id="txType" onchange="updateTxCats()"><option value="revenue">إيراد</option><option value="expense">مصروف</option></select></div>
+          <div class="form-group"><label class="form-label">الفئة</label><select class="form-select" id="txCat">${RCATS.map(c=>`<option>${c}</option>`).join('')}</select></div>
+          <div class="form-group"><label class="form-label">المبلغ (دج) *</label><input class="form-input" id="txAmount" type="number" placeholder="0"></div>
+          <div class="form-group"><label class="form-label">التاريخ</label><input class="form-input" id="txDate" type="date" value="${todayStr()}"></div>
+          <div class="form-group"><label class="form-label">المشروع</label><select class="form-select" id="txProject"><option value="">—</option>${projects.map(p=>`<option value="${p.id}">${escHtml(p.name)}</option>`).join('')}</select></div>
+          <div class="form-group"><label class="form-label">طريقة الدفع</label><select class="form-select" id="txPayment"><option value="cash">نقدي</option><option value="bank">تحويل بنكي</option><option value="check">شيك</option></select></div>
+        </div>
+        <div class="form-group"><label class="form-label">الوصف *</label><input class="form-input" id="txDesc" placeholder="وصف المعاملة..."></div>
+        <div class="form-group"><label class="form-label">المورد</label><input class="form-input" id="txSupplier" placeholder="اسم المورد..."></div>
+        <div class="modal-footer"><button class="btn btn-ghost" data-modal-close>إلغاء</button><button class="btn btn-gold" onclick="addTx()">💾 حفظ</button></div>
+      </div>
+    </div>
+  `);
+};
+
+/* ─── ATTENDANCE ─── */
+Pages.attendance = function() {
+  const tid = Auth.getUser().tenant_id;
+  const workers = DB.get('workers').filter(w=>w.tenant_id===tid);
+  const projects = DB.get('projects').filter(p=>p.tenant_id===tid && !p.is_archived);
+  const today = todayStr();
+  const att = DB.get('attendance');
+  const getAtt = (wid,date)=>att.find(a=>a.worker_id===wid && a.date===date);
+  const rows = workers.map(w=>{
+    const proj=projects.find(p=>p.id===w.project_id);
+    const a=getAtt(w.id,today);
+    return `<tr>
+      <td><div style="display:flex;align-items:center;gap:.7rem"><div style="width:32px;height:32px;border-radius:50%;background:${w.color||'#4A90E2'};display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:.75rem">${(w.full_name||'?')[0]}</div><div><div style="font-weight:700;font-size:.85rem">${escHtml(w.full_name)}</div><div style="font-size:.7rem;color:var(--dim)">${escHtml(w.role)}</div></div></div></td>
+      <td style="color:var(--dim);font-size:.82rem">${escHtml(proj?.name||'—')}</td>
+      <td><select class="form-select" style="padding:.3rem .6rem;font-size:.8rem" id="att_${w.id}" onchange="saveAtt(${w.id},'${today}',this.value)">
+        <option value="present"${(a?.status||'present')==='present'?' selected':''}>✅ حاضر</option>
+        <option value="absent"${a?.status==='absent'?' selected':''}>❌ غائب</option>
+        <option value="halfday"${a?.status==='halfday'?' selected':''}>🔶 نصف يوم</option>
+        <option value="holiday"${a?.status==='holiday'?' selected':''}>🏖️ إجازة</option>
+      </select></td>
+      <td style="font-family:monospace;font-size:.82rem">${fmt(w.daily_salary)} دج</td>
+    </tr>`;
+  }).join('');
+  const todayAtt=att.filter(a=>a.date===today && workers.find(w=>w.id===a.worker_id));
+  const present=todayAtt.filter(a=>a.status==='present').length;
+  const absent=todayAtt.filter(a=>a.status==='absent').length;
+  const totalSalary=workers.reduce((s,w)=>s+Number(w.daily_salary),0);
+  return layoutHTML('attendance','الحضور والغياب',`
+    <div class="page-header">
+      <div><div class="page-title">📅 الحضور والغياب</div><div class="page-sub">${new Date().toLocaleDateString('ar-DZ',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div></div>
+      <div class="page-actions">
+        <button class="btn btn-green btn-sm" onclick="markAll('present')">✅ تحديد الكل حاضر</button>
+        <button class="btn btn-red btn-sm" onclick="markAll('absent')">❌ تحديد الكل غائب</button>
+      </div>
+    </div>
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat-card"><div class="stat-value" style="color:var(--green)">${present}</div><div class="stat-label">حاضر</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--red)">${absent}</div><div class="stat-label">غائب</div></div>
+      <div class="stat-card"><div class="stat-value">${workers.length}</div><div class="stat-label">إجمالي العمال</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--gold);font-size:1rem">${fmt(totalSalary)}</div><div class="stat-label">تكلفة اليوم (دج)</div></div>
+    </div>
+    ${workers.length?`<div class="table-wrap"><table>
+      <thead><tr><th>العامل</th><th>المشروع</th><th>الحالة</th><th>الأجر اليومي</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>`:`<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">لا يوجد عمال</div></div>`}
+  `);
+};
+
+/* ─── REPORTS ─── */
+Pages.reports = function() {
+  const tid = Auth.getUser().tenant_id;
+  const txs = DB.get('transactions').filter(t=>t.tenant_id===tid);
+  const projs = DB.get('projects').filter(p=>p.tenant_id===tid && !p.is_archived);
+  const workers = DB.get('workers').filter(w=>w.tenant_id===tid);
+  const revenue=txs.filter(t=>t.type==='revenue').reduce((s,t)=>s+Number(t.amount),0);
+  const expense=txs.filter(t=>t.type==='expense').reduce((s,t)=>s+Number(t.amount),0);
+  const totalBudget=projs.reduce((s,p)=>s+Number(p.budget),0);
+  const totalSpent=projs.reduce((s,p)=>s+Number(p.total_spent),0);
+  const catMap={};
+  txs.filter(t=>t.type==='expense').forEach(t=>{catMap[t.category]=(catMap[t.category]||0)+Number(t.amount);});
+  const topCats=Object.entries(catMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const maxCat=topCats[0]?.[1]||1;
+  return layoutHTML('reports','التقارير',`
+    <div class="page-header"><div class="page-title">📈 التقارير والإحصاء</div></div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value" style="color:var(--green);font-size:1rem">${fmt(revenue)}</div><div class="stat-label">الإيرادات (دج)</div></div>
+      <div class="stat-card"><div class="stat-icon">📉</div><div class="stat-value" style="color:var(--red);font-size:1rem">${fmt(expense)}</div><div class="stat-label">المصاريف (دج)</div></div>
+      <div class="stat-card"><div class="stat-icon">💹</div><div class="stat-value" style="color:${revenue-expense>=0?'var(--green)':'var(--red)'};font-size:1rem">${fmt(revenue-expense)}</div><div class="stat-label">الربح (دج)</div></div>
+      <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value" style="color:var(--gold)">${totalBudget>0?Math.round(totalSpent/totalBudget*100):0}%</div><div class="stat-label">استهلاك الميزانية</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+      <div class="card">
+        <div style="font-weight:800;margin-bottom:1rem">🏗️ ملخص المشاريع</div>
+        ${['active','completed','delayed'].map(s=>{const cnt=projs.filter(p=>p.status===s).length;const col=s==='active'?'var(--green)':s==='completed'?'var(--blue)':'var(--red)';return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted);font-size:.84rem">${statusLabel(s)}</span><span style="font-weight:900;color:${col};font-family:monospace">${cnt}</span></div>`;}).join('')}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem 0"><span style="color:var(--muted);font-size:.84rem">إجمالي الميزانية</span><span style="font-weight:700;font-family:monospace;font-size:.82rem">${fmt(totalBudget)} دج</span></div>
+      </div>
+      <div class="card">
+        <div style="font-weight:800;margin-bottom:1rem">👷 إحصاء العمال</div>
+        <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted);font-size:.84rem">إجمالي العمال</span><span style="font-weight:900;font-family:monospace">${workers.length}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted);font-size:.84rem">متوسط الأجر اليومي</span><span style="font-weight:700;font-family:monospace;font-size:.82rem">${workers.length?fmt(Math.round(workers.reduce((s,w)=>s+Number(w.daily_salary),0)/workers.length)):0} دج</span></div>
+        <div style="display:flex;justify-content:space-between;padding:.5rem 0"><span style="color:var(--muted);font-size:.84rem">التكلفة اليومية الكلية</span><span style="font-weight:700;font-family:monospace;font-size:.82rem">${fmt(workers.reduce((s,w)=>s+Number(w.daily_salary),0))} دج</span></div>
+      </div>
+    </div>
+    ${topCats.length?`<div class="card" style="margin-bottom:1rem"><div style="font-weight:800;margin-bottom:1rem">🏆 أكبر فئات المصاريف</div>${topCats.map(([cat,amt])=>`<div style="margin-bottom:.8rem"><div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:4px"><span style="color:var(--muted)">${escHtml(cat)}</span><span style="font-weight:700;font-family:monospace">${fmt(amt)} دج</span></div><div class="progress-bar"><div class="progress-fill" style="background:var(--red)" data-width="${Math.round(amt/maxCat*100)}"></div></div></div>`).join('')}</div>`:''}
+    <div class="card"><div style="font-weight:800;margin-bottom:1rem">💼 ربحية المشاريع</div><div class="table-wrap"><table><thead><tr><th>المشروع</th><th>الميزانية</th><th>المُنفَق</th><th>التقدم</th><th>الحالة</th></tr></thead>
+      <tbody>${projs.map(p=>`<tr><td><span style="font-weight:700">${escHtml(p.name)}</span></td><td style="font-family:monospace;font-size:.82rem">${fmt(p.budget)}</td><td style="font-family:monospace;font-size:.82rem;color:${p.total_spent>p.budget?'var(--red)':'var(--green)'}">${fmt(p.total_spent)}</td><td><div style="display:flex;align-items:center;gap:.5rem"><div class="progress-bar" style="flex:1"><div class="progress-fill" style="background:${p.color}" data-width="${p.progress}"></div></div><span style="font-size:.75rem;font-weight:700">${p.progress}%</span></div></td><td>${statusBadge(p.status)}</td></tr>`).join('')}</tbody>
+    </table></div></div>
+  `);
+};
+
+/* ─── SETTINGS ─── */
+Pages.settings = function() {
+  const tenant=Auth.getTenant(), plan=Auth.getPlan(), user=Auth.getUser();
+  return layoutHTML('settings','الإعدادات',`
+    <div class="page-header"><div class="page-title">⚙️ الإعدادات</div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="card">
+        <div style="font-weight:800;margin-bottom:1rem">🏢 معلومات الشركة</div>
+        <div class="form-group"><label class="form-label">اسم الشركة</label><input class="form-input" id="setName" value="${escHtml(tenant?.name||'')}"></div>
+        <div class="form-group"><label class="form-label">الولاية</label><select class="form-select" id="setWilaya"><option value="">اختر...</option>${WILAYAS.map(w=>`<option${tenant?.wilaya===w?' selected':''}>${w}</option>`).join('')}</select></div>
+        <div class="form-group"><label class="form-label">رقم الهاتف</label><input class="form-input" id="setPhone" value="${escHtml(tenant?.phone||'')}" placeholder="0550..."></div>
+        <div class="form-group"><label class="form-label">رقم السجل التجاري</label><input class="form-input" id="setRc" value="${escHtml(tenant?.rc_number||'')}"></div>
+        <button class="btn btn-gold" onclick="saveTenantSettings()">💾 حفظ التغييرات</button>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:1rem">
+          <div style="font-weight:800;margin-bottom:1rem">👤 الحساب الشخصي</div>
+          <div style="padding:.6rem 0;border-bottom:1px solid var(--border)"><div style="font-size:.72rem;color:var(--dim)">الاسم</div><div style="font-weight:700">${escHtml(user.full_name)}</div></div>
+          <div style="padding:.6rem 0;border-bottom:1px solid var(--border)"><div style="font-size:.72rem;color:var(--dim)">البريد</div><div style="font-weight:700;direction:ltr;text-align:right">${escHtml(user.email)}</div></div>
+          <div style="padding:.6rem 0"><div style="font-size:.72rem;color:var(--dim)">الخطة</div><div style="font-weight:700;color:var(--gold)">${escHtml(plan?.name||'—')}</div></div>
+        </div>
+        <div class="card">
+          <div style="font-weight:800;margin-bottom:1rem">🔑 تغيير كلمة المرور</div>
+          <div class="form-group"><label class="form-label">كلمة المرور الحالية</label><input class="form-input" id="pwCurrent" type="password"></div>
+          <div class="form-group"><label class="form-label">كلمة المرور الجديدة</label><input class="form-input" id="pwNew" type="password"></div>
+          <div class="form-group"><label class="form-label">تأكيد كلمة المرور</label><input class="form-input" id="pwConfirm" type="password"></div>
+          <button class="btn btn-blue" onclick="changePassword()">🔑 تغيير كلمة المرور</button>
+        </div>
+      </div>
+    </div>
+  `);
+};
+
+/* ─── ADMIN ─── */
+Pages.admin = function() {
+  const tenants=DB.get('tenants'), users=DB.get('users'), plans=DB.get('plans');
+  const projects=DB.get('projects'), workers=DB.get('workers');
+  const totalRevenue = DB.get('transactions').filter(t=>t.type==='revenue').reduce((s,t)=>s+Number(t.amount),0);
+
+  const rows=tenants.map(t=>{
+    const plan=plans.find(p=>p.id===t.plan_id);
+    const uCount=users.filter(u=>u.tenant_id===t.id).length;
+    const pCount=projects.filter(p=>p.tenant_id===t.id && !p.is_archived).length;
+    const wCount=workers.filter(w=>w.tenant_id===t.id).length;
+    return `<tr>
+      <td><div style="display:flex;align-items:center;gap:.7rem"><div style="width:36px;height:36px;border-radius:10px;background:rgba(232,184,75,.1);border:1px solid rgba(232,184,75,.2);display:flex;align-items:center;justify-content:center;font-size:1rem">🏢</div><div><div style="font-weight:700">${escHtml(t.name)}</div><div style="font-size:.72rem;color:var(--dim)">${escHtml(t.wilaya||'غير محدد')}</div></div></div></td>
+      <td><span class="badge" style="background:rgba(232,184,75,.1);color:var(--gold);border:1px solid rgba(232,184,75,.2)">${escHtml(plan?.name||'—')}</span></td>
+      <td style="text-align:center;font-weight:700">${uCount}</td>
+      <td style="text-align:center;font-weight:700">${pCount}</td>
+      <td style="text-align:center;font-weight:700">${wCount}</td>
+      <td><span class="badge ${t.is_active?'badge-active':'badge-delayed'}">${t.is_active?'نشط':'موقوف'}</span></td>
+      <td><button class="btn btn-sm ${t.is_active?'btn-red':'btn-green'}" onclick="toggleTenant(${t.id})">${t.is_active?'⏸️ إيقاف':'▶️ تفعيل'}</button></td>
+    </tr>`;
+  }).join('');
+
+  return `<div class="app-shell">${sidebarHTML('admin')}
+    <div class="main-wrap">
+      ${topbarHTML('لوحة الإدارة')}
+      <main class="page-content animate-fade">
+        <!-- Header -->
+        <div class="page-header">
+          <div>
+            <div class="page-title">👑 لوحة إدارة النظام</div>
+            <div class="page-sub">مرحباً بك في مركز التحكم الكامل بـ SmartBTP</div>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-ghost btn-sm" data-nav="landing">🌐 الموقع</button>
+            <button class="btn btn-gold" data-modal-open="addTenantModal">+ إضافة مؤسسة</button>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid" style="grid-template-columns:repeat(5,1fr)">
+          <div class="stat-card"><div class="stat-icon">🏢</div><div class="stat-value" style="color:var(--green)">${tenants.filter(t=>t.is_active).length}</div><div class="stat-label">مؤسسات نشطة</div></div>
+          <div class="stat-card"><div class="stat-icon">👤</div><div class="stat-value" style="color:var(--blue)">${users.filter(u=>u.is_active).length}</div><div class="stat-label">مستخدمون</div></div>
+          <div class="stat-card"><div class="stat-icon">🏗️</div><div class="stat-value" style="color:var(--gold)">${projects.filter(p=>!p.is_archived).length}</div><div class="stat-label">مشاريع</div></div>
+          <div class="stat-card"><div class="stat-icon">👷</div><div class="stat-value" style="color:var(--purple)">${workers.length}</div><div class="stat-label">عمال</div></div>
+          <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value" style="color:var(--green);font-size:1rem">${fmt(totalRevenue)}</div><div class="stat-label">إجمالي الإيرادات (دج)</div></div>
+        </div>
+
+        <!-- Plan Distribution -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem">
+          ${plans.map(p=>{
+            const cnt=tenants.filter(t=>t.plan_id===p.id).length;
+            const pct=tenants.length?Math.round(cnt/tenants.length*100):0;
+            const colors=['var(--blue)','var(--gold)','var(--purple)'];
+            const idx=plans.indexOf(p);
+            return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem"><div style="font-weight:800;font-size:.9rem">خطة ${escHtml(p.name)}</div><span style="font-weight:900;font-size:1.3rem;color:${colors[idx]}">${cnt}</span></div>
+              <div class="progress-bar" style="margin-bottom:.4rem"><div class="progress-fill" style="background:${colors[idx]}" data-width="${pct}"></div></div>
+              <div style="font-size:.75rem;color:var(--dim)">${fmt(p.price)} دج / شهر • ${pct}% من المؤسسات</div></div>`;
+          }).join('')}
+        </div>
+
+        <!-- Tenants Table -->
+        <div class="card" style="padding:0">
+          <div style="padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:800">🏢 قائمة المؤسسات</div>
+            <span style="font-size:.78rem;color:var(--dim)">${tenants.length} مؤسسة مسجلة</span>
+          </div>
+          <div class="table-wrap" style="border:none;border-radius:0">
+            <table>
+              <thead><tr><th>المؤسسة</th><th>الخطة</th><th>المستخدمون</th><th>المشاريع</th><th>العمال</th><th>الحالة</th><th>إجراء</th></tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Recent Users -->
+        <div class="card" style="margin-top:1rem">
+          <div style="font-weight:800;margin-bottom:1rem">👥 المستخدمون</div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>الاسم</th><th>البريد الإلكتروني</th><th>الدور</th><th>الحالة</th></tr></thead>
+            <tbody>${users.filter(u=>!u.is_admin).map(u=>{
+              const tenant=tenants.find(t=>t.id===u.tenant_id);
+              return `<tr><td style="font-weight:700">${escHtml(u.full_name)}</td>
+                <td style="font-family:monospace;font-size:.82rem;direction:ltr;text-align:right">${escHtml(u.email)}</td>
+                <td>${escHtml(tenant?.name||'—')}</td>
+                <td><span class="badge ${u.is_active?'badge-active':'badge-delayed'}">${u.is_active?'نشط':'موقوف'}</span></td></tr>`;
+            }).join('')}</tbody>
+          </table></div>
+        </div>
+
+        <!-- Add Tenant Modal -->
+        <div class="modal-overlay" id="addTenantModal">
+          <div class="modal">
+            <div class="modal-title">🏢 إضافة مؤسسة جديدة</div>
+            <div class="form-group"><label class="form-label">اسم الشركة *</label><input class="form-input" id="atName" placeholder="مؤسسة البناء..."></div>
+            <div class="form-group"><label class="form-label">بريد المسؤول *</label><input class="form-input" id="atEmail" type="email" placeholder="admin@company.dz" dir="ltr"></div>
+            <div class="form-group"><label class="form-label">كلمة المرور *</label><input class="form-input" id="atPass" type="password" dir="ltr"></div>
+            <div class="form-group"><label class="form-label">اسم المسؤول *</label><input class="form-input" id="atAdmin" placeholder="محمد..."></div>
+            <div class="form-group"><label class="form-label">الخطة</label><select class="form-select" id="atPlan">${plans.map(p=>`<option value="${p.id}">${p.name} — ${fmt(p.price)} دج/شهر</option>`).join('')}</select></div>
+            <div class="modal-footer"><button class="btn btn-ghost" data-modal-close>إلغاء</button><button class="btn btn-gold" onclick="addTenant()">💾 إنشاء المؤسسة</button></div>
+          </div>
+        </div>
+      </main>
+      <footer style="padding:.8rem 1.8rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem">
+        <span style="font-size:.7rem;color:var(--dim)">© 2025 SmartBTP Admin Panel</span>
+        <span style="font-size:.7rem;color:var(--dim)">v4.0 Pro Edition</span>
+      </footer>
+    </div>
+  </div>`;
+};
+
+/* ══════════════════════════════════════════════════════
+   ACTIONS
+══════════════════════════════════════════════════════ */
+let currentTab = 'tenant';
+function switchTab(t) {
+  currentTab = t;
+  document.getElementById('tabTenant')?.classList.toggle('active', t==='tenant');
+  document.getElementById('tabAdmin')?.classList.toggle('active', t==='admin');
+}
+
+function togglePass() {
+  const p = document.getElementById('loginPass');
+  if (p) p.type = p.type==='password'?'text':'password';
+}
+
+function doLogin() {
+  const email = document.getElementById('loginEmail')?.value;
+  const pass  = document.getElementById('loginPass')?.value;
+  const err   = document.getElementById('loginError');
+  if (Auth.login(email, pass, currentTab)) {
+    Toast.success('✅ تم تسجيل الدخول بنجاح');
+    App.navigate(Auth.getUser().is_admin ? 'admin' : 'dashboard');
+  } else {
+    if (err) err.style.display = 'flex';
+    setTimeout(() => { if(err) err.style.display = 'none'; }, 3000);
+  }
+}
+
+function addProject() {
+  const name = document.getElementById('pName')?.value?.trim();
+  if (!name) { Toast.error('أدخل اسم المشروع'); return; }
+  const tid = Auth.getUser().tenant_id;
+  const projs = DB.get('projects');
+  projs.push({ id:DB.nextId('projects'), tenant_id:tid, name, wilaya:document.getElementById('pWilaya')?.value||'', client_name:document.getElementById('pClient')?.value||'', phone:document.getElementById('pPhone')?.value||'', budget:Number(document.getElementById('pBudget')?.value)||0, total_spent:0, progress:0, status:'active', color:document.getElementById('pColor')?.value||'#4A90E2', phase:document.getElementById('pPhase')?.value||'', description:document.getElementById('pDesc')?.value||'', start_date:document.getElementById('pStart')?.value||'', end_date:document.getElementById('pEnd')?.value||'', is_archived:false });
+  DB.set('projects', projs);
+  Toast.success('✅ تم إضافة المشروع');
+  App.navigate('projects');
+}
+
+function editProject(id) {
+  const p = DB.get('projects').find(p=>p.id===id); if (!p) return;
+  document.getElementById('epId').value=id; document.getElementById('epName').value=p.name;
+  document.getElementById('epWilaya').value=p.wilaya||''; document.getElementById('epStatus').value=p.status;
+  document.getElementById('epProgress').value=p.progress; document.getElementById('epBudget').value=p.budget;
+  document.getElementById('epPhase').value=p.phase||''; document.getElementById('epClient').value=p.client_name||'';
+  document.getElementById('epEnd').value=p.end_date||'';
+  document.getElementById('editProjectModal').classList.add('show');
+}
+
+function saveProject() {
+  const id=Number(document.getElementById('epId').value);
+  const projs=DB.get('projects'); const idx=projs.findIndex(p=>p.id===id); if(idx<0) return;
+  projs[idx]={...projs[idx], name:document.getElementById('epName').value, wilaya:document.getElementById('epWilaya').value, status:document.getElementById('epStatus').value, progress:Number(document.getElementById('epProgress').value)||0, budget:Number(document.getElementById('epBudget').value)||0, phase:document.getElementById('epPhase').value, client_name:document.getElementById('epClient').value, end_date:document.getElementById('epEnd').value };
+  DB.set('projects',projs); Toast.success('✅ تم تحديث المشروع'); App.navigate('projects');
+}
+
+function deleteProject(id,name) {
+  if(!confirm(`حذف المشروع "${name}"؟`)) return;
+  DB.set('projects', DB.get('projects').map(p=>p.id===id?{...p,is_archived:true}:p));
+  Toast.success('تم حذف المشروع'); App.navigate('projects');
+}
+
+function addWorker() {
+  const name=document.getElementById('wName')?.value?.trim(), role=document.getElementById('wRole')?.value?.trim();
+  if(!name||!role){Toast.error('أدخل الاسم والمهنة');return;}
+  const tid=Auth.getUser().tenant_id; const ws=DB.get('workers');
+  ws.push({ id:DB.nextId('workers'), tenant_id:tid, full_name:name, role, phone:document.getElementById('wPhone')?.value||'', national_id:document.getElementById('wNid')?.value||'', daily_salary:Number(document.getElementById('wSalary')?.value)||0, contract_type:document.getElementById('wContract')?.value||'daily', project_id:Number(document.getElementById('wProject')?.value)||null, hire_date:document.getElementById('wHire')?.value||'', color:document.getElementById('wColor')?.value||'#4A90E2' });
+  DB.set('workers',ws); Toast.success('✅ تم إضافة العامل'); App.navigate('workers');
+}
+
+function editWorker(id) {
+  const w=DB.get('workers').find(w=>w.id===id); if(!w) return;
+  document.getElementById('ewId').value=id; document.getElementById('ewName').value=w.full_name;
+  document.getElementById('ewRole').value=w.role; document.getElementById('ewPhone').value=w.phone||'';
+  document.getElementById('ewSalary').value=w.daily_salary; document.getElementById('ewContract').value=w.contract_type;
+  document.getElementById('ewProject').value=w.project_id||'';
+  document.getElementById('editWorkerModal').classList.add('show');
+}
+
+function saveWorker() {
+  const id=Number(document.getElementById('ewId').value); const ws=DB.get('workers');
+  const idx=ws.findIndex(w=>w.id===id); if(idx<0) return;
+  ws[idx]={...ws[idx], full_name:document.getElementById('ewName').value, role:document.getElementById('ewRole').value, phone:document.getElementById('ewPhone').value, daily_salary:Number(document.getElementById('ewSalary').value)||0, contract_type:document.getElementById('ewContract').value, project_id:Number(document.getElementById('ewProject').value)||null };
+  DB.set('workers',ws); Toast.success('✅ تم تحديث العامل'); App.navigate('workers');
+}
+
+function deleteWorker(id,name) {
+  if(!confirm(`حذف العامل "${name}"؟`)) return;
+  DB.set('workers', DB.get('workers').filter(w=>w.id!==id));
+  Toast.success('تم حذف العامل'); App.navigate('workers');
+}
+
+function exportWorkers() {
+  const tid=Auth.getUser().tenant_id; const ws=DB.get('workers').filter(w=>w.tenant_id===tid);
+  const projs=DB.get('projects');
+  let csv='\uFEFFالاسم,المهنة,الهاتف,الأجر,نوع العقد,تاريخ التعيين,المشروع\n';
+  ws.forEach(w=>{const proj=projs.find(p=>p.id===w.project_id);csv+=`"${w.full_name}","${w.role}","${w.phone||''}","${w.daily_salary}","${w.contract_type}","${w.hire_date||''}","${proj?.name||''}"\n`;});
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='workers.csv';a.click();
+  Toast.success('تم تصدير ملف CSV');
+}
+
+function addEquip() {
+  const name=document.getElementById('eName')?.value?.trim();
+  if(!name){Toast.error('أدخل اسم المعدة');return;}
+  const tid=Auth.getUser().tenant_id; const eq=DB.get('equipment');
+  eq.push({ id:DB.nextId('equipment'), tenant_id:tid, name, model:document.getElementById('eModel')?.value||'', plate_number:document.getElementById('ePlate')?.value||'', icon:document.getElementById('eIcon')?.value||'🚜', status:'active', purchase_price:Number(document.getElementById('ePrice')?.value)||0, project_id:Number(document.getElementById('eProject')?.value)||null, notes:document.getElementById('eNotes')?.value||'' });
+  DB.set('equipment',eq); Toast.success('✅ تم إضافة المعدة'); App.navigate('equipment');
+}
+
+function updateEquipStatus(id,status) {
+  DB.set('equipment', DB.get('equipment').map(e=>e.id===id?{...e,status}:e));
+  Toast.success('تم تحديث حالة المعدة');
+}
+
+function deleteEquip(id,name) {
+  if(!confirm(`حذف "${name}"؟`)) return;
+  DB.set('equipment', DB.get('equipment').filter(e=>e.id!==id));
+  Toast.success('تم حذف المعدة'); App.navigate('equipment');
+}
+
+const RCATS=["دفعة عميل","دفعة مقدمة","دفعة مرحلية","استلام نهائي","إيراد آخر"];
+const ECATS=["مواد البناء","حديد تسليح","أسمنت","رمل وحصى","طوب","رواتب العمال","مستحقات المقاولين","اكراءات المعدات","وقود","صيانة","نقل ومواصلات","مصاريف إدارية","أخرى"];
+
+function updateTxCats() {
+  const type=document.getElementById('txType')?.value;
+  const cats=type==='revenue'?RCATS:ECATS;
+  const sel=document.getElementById('txCat');
+  if(sel) sel.innerHTML=cats.map(c=>`<option>${c}</option>`).join('');
+}
+
+function addTx() {
+  const amount=Number(document.getElementById('txAmount')?.value);
+  const desc=document.getElementById('txDesc')?.value?.trim();
+  if(!amount||!desc){Toast.error('أدخل المبلغ والوصف');return;}
+  const tid=Auth.getUser().tenant_id; const txs=DB.get('transactions');
+  const pid=Number(document.getElementById('txProject')?.value)||null;
+  const type=document.getElementById('txType')?.value||'expense';
+  txs.push({ id:DB.nextId('transactions'), tenant_id:tid, type, category:document.getElementById('txCat')?.value||'أخرى', amount, description:desc, project_id:pid, date:document.getElementById('txDate')?.value||todayStr(), payment_method:document.getElementById('txPayment')?.value||'cash', supplier:document.getElementById('txSupplier')?.value||'' });
+  DB.set('transactions',txs);
+  if(type==='expense'&&pid){
+    const projs=DB.get('projects'); const pidx=projs.findIndex(p=>p.id===pid);
+    if(pidx>=0){projs[pidx].total_spent=DB.get('transactions').filter(t=>t.project_id===pid&&t.type==='expense').reduce((s,t)=>s+Number(t.amount),0);DB.set('projects',projs);}
+  }
+  Toast.success('✅ تم إضافة المعاملة'); App.navigate('transactions');
+}
+
+function deleteTx(id) {
+  if(!confirm('حذف هذه المعاملة؟')) return;
+  DB.set('transactions', DB.get('transactions').filter(t=>t.id!==id));
+  Toast.success('تم حذف المعاملة'); App.navigate('transactions');
+}
+
+function saveAtt(wid,date,status) {
+  const att=DB.get('attendance'); const idx=att.findIndex(a=>a.worker_id===wid&&a.date===date);
+  if(idx>=0) att[idx].status=status;
+  else att.push({id:DB.nextId('attendance'),worker_id:wid,date,status,hours:8,note:''});
+  DB.set('attendance',att);
+}
+
+function markAll(status) {
+  document.querySelectorAll('select[id^="att_"]').forEach(sel=>{
+    const wid=Number(sel.id.split('_')[1]); sel.value=status; saveAtt(wid,todayStr(),status);
+  });
+  Toast.success(`تم تحديد الكل: ${status==='present'?'حاضر':'غائب'}`);
+}
+
+function saveTenantSettings() {
+  const tid=Auth.getUser().tenant_id;
+  const tenants=DB.get('tenants').map(t=>t.id===tid?{...t,name:document.getElementById('setName')?.value||t.name,wilaya:document.getElementById('setWilaya')?.value||t.wilaya,phone:document.getElementById('setPhone')?.value||t.phone,rc_number:document.getElementById('setRc')?.value||t.rc_number}:t);
+  DB.set('tenants',tenants); Toast.success('✅ تم حفظ الإعدادات');
+}
+
+function changePassword() {
+  const current=document.getElementById('pwCurrent')?.value;
+  const newPass=document.getElementById('pwNew')?.value;
+  const confirm=document.getElementById('pwConfirm')?.value;
+  if(!current||!newPass){Toast.error('أدخل كلمة المرور الحالية والجديدة');return;}
+  if(newPass!==confirm){Toast.error('كلمتا المرور غير متطابقتين');return;}
+  if(newPass.length<8){Toast.error('كلمة المرور يجب أن تكون 8 أحرف على الأقل');return;}
+  const user=Auth.getUser();
+  if(user.password!==current){Toast.error('كلمة المرور الحالية غير صحيحة');return;}
+  const users=DB.get('users').map(u=>u.id===user.id?{...u,password:newPass}:u);
+  DB.set('users',users); user.password=newPass; sessionStorage.setItem('sbtp_user',JSON.stringify(user));
+  Toast.success('✅ تم تغيير كلمة المرور');
+  ['pwCurrent','pwNew','pwConfirm'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+}
+
+function toggleTenant(id) {
+  DB.set('tenants', DB.get('tenants').map(t=>t.id===id?{...t,is_active:!t.is_active}:t));
+  Toast.success('تم تحديث حالة المؤسسة'); App.navigate('admin');
+}
+
+function addTenant() {
+  const name=document.getElementById('atName')?.value?.trim();
+  const email=document.getElementById('atEmail')?.value?.trim().toLowerCase();
+  const pass=document.getElementById('atPass')?.value;
+  const admin=document.getElementById('atAdmin')?.value?.trim();
+  const planId=Number(document.getElementById('atPlan')?.value);
+  if(!name||!email||!pass||!admin){Toast.error('أكمل جميع الحقول المطلوبة');return;}
+  const users=DB.get('users');
+  if(users.find(u=>u.email===email)){Toast.error('هذا البريد مستخدم بالفعل');return;}
+  const tenants=DB.get('tenants');
+  const newTenant={id:DB.nextId('tenants'),name,plan_id:planId,wilaya:'',is_active:true,subscription_status:'active'};
+  tenants.push(newTenant); DB.set('tenants',tenants);
+  users.push({id:DB.nextId('users'),tenant_id:newTenant.id,full_name:admin,email,password:pass,role:'admin',is_admin:false,is_active:true});
+  DB.set('users',users); Toast.success(`✅ تم إنشاء مؤسسة "${name}" بنجاح`); App.navigate('admin');
+}
+
+/* ══════════════════════════════════════════════════════
+   SMOOTH SCROLL FOR LANDING ANCHORS
+══════════════════════════════════════════════════════ */
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[href^="#"]');
+  if (a) { e.preventDefault(); const el = document.querySelector(a.getAttribute('href')); if(el) el.scrollIntoView({behavior:'smooth'}); }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('loginPass') === document.activeElement) doLogin();
+});
+
+DB.init();
+Auth.load();
+App.render();
+</script>
+</body>
+</html>
