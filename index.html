@@ -310,6 +310,64 @@ tbody tr:hover td{background:rgba(255,255,255,0.03)}
 @media(max-width:480px){
   .stats-grid{grid-template-columns:1fr 1fr}
 }
+
+/* ===== NEW v4.2 FEATURES ===== */
+/* Search / Filter bar */
+.filter-bar{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:1.2rem}
+.search-input-wrap{position:relative;flex:1;min-width:180px}
+.search-input-wrap input{width:100%;padding:.55rem .9rem .55rem 2.4rem;background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-family:'Tajawal',sans-serif;font-size:.85rem;outline:none;transition:border-color .2s}
+.search-input-wrap input:focus{border-color:var(--gold)}
+.search-icon{position:absolute;left:.75rem;top:50%;transform:translateY(-50%);color:var(--dim);font-size:.9rem;pointer-events:none}
+
+/* Notification bell */
+.notif-bell{position:relative;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.05);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;transition:var(--transition)}
+.notif-bell:hover{background:rgba(255,255,255,.1)}
+.notif-dot{position:absolute;top:4px;right:4px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid var(--bg)}
+
+/* Alert budget bar */
+.budget-alert{display:flex;align-items:center;gap:.7rem;padding:.75rem 1rem;border-radius:var(--radius);font-size:.83rem;font-weight:700;margin-bottom:1rem}
+.budget-alert-warn{background:rgba(232,184,75,.08);border:1px solid rgba(232,184,75,.3);color:var(--gold)}
+.budget-alert-danger{background:rgba(240,78,106,.08);border:1px solid rgba(240,78,106,.3);color:#f79fa9}
+
+/* Project detail tabs */
+.detail-tabs{display:flex;gap:0;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:var(--radius);padding:.25rem;margin-bottom:1.2rem;overflow-x:auto}
+.detail-tab{padding:.45rem .9rem;border-radius:8px;border:none;font-family:'Tajawal',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;color:var(--dim);background:none;white-space:nowrap}
+.detail-tab.active{background:var(--bg2);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.3)}
+
+/* Materials table */
+.material-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;font-size:.68rem;font-weight:700}
+.material-low{background:rgba(240,78,106,.1);color:#f79fa9;border:1px solid rgba(240,78,106,.25)}
+.material-ok{background:rgba(52,195,143,.1);color:#34C38F;border:1px solid rgba(52,195,143,.25)}
+
+/* Print styles */
+@media print{
+  .sidebar,.topbar,.page-actions,.btn,.modal-overlay,.toast-container{display:none!important}
+  .main-wrap{margin-right:0!important}
+  .page-content{padding:.5rem!important}
+  body{background:#fff!important;color:#000!important}
+  .stat-card,.card{border:1px solid #ddd!important;background:#f9f9f9!important;break-inside:avoid}
+  .stat-value,.stat-label,.page-title{color:#000!important}
+  table{font-size:.75rem}
+}
+
+/* Kanban style for project phases */
+.kanban-col{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:var(--radius-lg);padding:.8rem;min-width:200px}
+.kanban-header{font-size:.72rem;font-weight:800;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.7rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
+.kanban-card{background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:10px;padding:.75rem;margin-bottom:.5rem;cursor:pointer;transition:var(--transition)}
+.kanban-card:hover{border-color:rgba(232,184,75,.3);transform:translateY(-2px)}
+
+/* Monthly attendance summary */
+.month-nav{display:flex;align-items:center;gap:.8rem;margin-bottom:1rem}
+.month-nav button{width:30px;height:30px;border-radius:50%;border:1px solid var(--border2);background:rgba(255,255,255,.04);color:var(--text);cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;transition:var(--transition)}
+.month-nav button:hover{background:rgba(255,255,255,.1)}
+.month-label{font-weight:800;font-size:.95rem}
+
+/* Notes section */
+.note-card{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:var(--radius);padding:.85rem 1rem;margin-bottom:.6rem;position:relative}
+.note-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem}
+.note-card-author{font-size:.72rem;font-weight:700;color:var(--gold)}
+.note-card-date{font-size:.7rem;color:var(--dim)}
+.note-card-text{font-size:.84rem;color:var(--muted);line-height:1.5}
 </style>
 </head>
 <body>
@@ -372,6 +430,16 @@ const DB = {
       { id:5, tenant_id:1, project_id:3, type:'expense', category:'اكراءات المعدات', amount:1200000, description:'إيجار شاحنات لنقل مواد البناء', date:'2024-09-10', payment_method:'cash' },
     ]);
     this.set('attendance', []);
+    this.set('materials', [
+      { id:1, tenant_id:1, project_id:1, name:'حديد تسليح 12mm', unit:'طن', quantity:25, min_quantity:5, unit_price:95000, supplier:'مصنع الحجار' },
+      { id:2, tenant_id:1, project_id:1, name:'أسمنت CPA 42.5', unit:'كيس', quantity:320, min_quantity:50, unit_price:650, supplier:'مصنع مفتاح' },
+      { id:3, tenant_id:1, project_id:1, name:'رمل مغسول', unit:'م³', quantity:80, min_quantity:20, unit_price:4500, supplier:'المحجرة الشرقية' },
+      { id:4, tenant_id:1, project_id:3, name:'طوب قرميد', unit:'ألف قطعة', quantity:15, min_quantity:3, unit_price:28000, supplier:'مصنع كريم' },
+    ]);
+    this.set('notes', [
+      { id:1, tenant_id:1, project_id:1, user_id:2, text:'تم اكتمال الطابق الثالث، العمل يسير بشكل ممتاز.', date:'2024-10-15' },
+      { id:2, tenant_id:1, project_id:1, user_id:2, text:'تأخر وصول الحديد من المورد، يُتوقع الوصول نهاية الأسبوع.', date:'2024-10-20' },
+    ]);
     this.set('initialized', [true]);
   }
 };
@@ -463,7 +531,8 @@ const App = {
     const pages = { landing:Pages.landing, login:Pages.login, dashboard:Pages.dashboard,
       projects:Pages.projects, workers:Pages.workers, equipment:Pages.equipment,
       transactions:Pages.transactions, attendance:Pages.attendance, reports:Pages.reports,
-      settings:Pages.settings, admin:Pages.admin };
+      settings:Pages.settings, admin:Pages.admin,
+      project_detail:Pages.project_detail, materials:Pages.materials };
     const render = pages[this.currentPage];
     if (render) { app.innerHTML = render(); this.bindEvents(); this.animateBars(); }
   },
@@ -516,7 +585,8 @@ function sidebarHTML(active) {
     { id:'projects', icon:'🏗️', label:'المشاريع', section:'الإدارة' },
     { id:'workers', icon:'👷', label:'العمال' },
     { id:'equipment', icon:'🚜', label:'المعدات' },
-    { id:'attendance', icon:'📅', label:'الحضور والغياب', badge:'جديد', badgeColor:'rgba(74,144,226,.15)', badgeTextColor:'#60A5FA' },
+    { id:'materials', icon:'🧱', label:'المواد والمخزون', badge:'جديد', badgeColor:'rgba(255,112,67,.15)', badgeTextColor:'#FF7043' },
+    { id:'attendance', icon:'📅', label:'الحضور والغياب', badge:'', badgeColor:'rgba(74,144,226,.15)', badgeTextColor:'#60A5FA' },
     { id:'transactions', icon:'💰', label:'المعاملات المالية', section:'المالية' },
     { id:'reports', icon:'📈', label:'التقارير', badge:'جديد', badgeColor:'rgba(155,109,255,.15)', badgeTextColor:'#9B6DFF' },
     { id:'settings', icon:'⚙️', label:'الإعدادات', section:'الحساب' },
@@ -554,12 +624,17 @@ function sidebarHTML(active) {
 function topbarHTML(breadcrumb) {
   const user = Auth.getUser();
   const initial = (user?.full_name||'U')[0].toUpperCase();
+  const tid = user?.tenant_id;
+  // Check budget alerts
+  const projects = tid ? DB.get('projects').filter(p=>p.tenant_id===tid&&!p.is_archived) : [];
+  const alertCount = projects.filter(p=>p.total_spent >= p.budget*0.9 && p.budget>0).length;
   return `<header class="topbar">
     <div style="display:flex;align-items:center;gap:.8rem">
       <button class="hamburger">☰</button>
       <div class="topbar-breadcrumb">SmartBTP <span style="opacity:.3">›</span> ${breadcrumb}</div>
     </div>
     <div style="display:flex;align-items:center;gap:.6rem">
+      ${alertCount>0?`<div class="notif-bell" title="${alertCount} مشروع يقترب من تجاوز الميزانية" onclick="App.navigate('reports')">🔔<span class="notif-dot"></span></div>`:''}
       <button class="btn btn-ghost btn-sm" data-nav="landing" style="font-size:.78rem">🌐 الموقع</button>
       <div class="topbar-user">
         <div class="topbar-avatar" title="${escHtml(user?.full_name||'')}">${initial}</div>
@@ -576,7 +651,7 @@ function layoutHTML(active, breadcrumb, content) {
     <main class="page-content animate-fade">${content}</main>
     <footer style="padding:.8rem 1.8rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem">
       <span style="font-size:.7rem;color:var(--dim)">© 2025 SmartBTP — منصة إدارة مشاريع البناء الجزائرية</span>
-      <span style="font-size:.7rem;color:var(--dim)">v4.0 Pro Edition</span>
+      <span style="font-size:.7rem;color:var(--dim)">v4.2 Pro Edition</span>
     </footer>
   </div></div>`;
 }
@@ -907,6 +982,14 @@ Pages.dashboard = function() {
         <button class="btn btn-gold btn-sm" data-nav="projects">+ مشروع جديد</button>
       </div>
     </div>
+    ${projects.filter(p=>p.total_spent>=p.budget*0.9&&p.budget>0).map(p=>{
+      const pct=Math.round(p.total_spent/p.budget*100);
+      return `<div class="${pct>=100?'budget-alert budget-alert-danger':'budget-alert budget-alert-warn'}">
+        <span>${pct>=100?'🚨':'⚠️'}</span>
+        <span>${pct>=100?'تجاوز الميزانية':'اقتراب من تجاوز الميزانية'}: <strong>${escHtml(p.name)}</strong> — ${pct}% مُستهلَك (${fmt(p.total_spent)} / ${fmt(p.budget)} دج)</span>
+        <button class="btn btn-sm" style="margin-right:auto;padding:.2rem .6rem;font-size:.72rem;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:var(--text);border-radius:6px" onclick="editProject(${p.id})">تعديل</button>
+      </div>`;
+    }).join('')}
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-icon">🏗️</div><div class="stat-value" style="color:var(--blue)">${projects.filter(p=>p.status==='active').length}</div><div class="stat-label">مشاريع نشطة</div></div>
       <div class="stat-card"><div class="stat-icon">👷</div><div class="stat-value" style="color:var(--green)">${workers.length}</div><div class="stat-label">عمال مسجلون</div></div>
@@ -992,7 +1075,8 @@ Pages.projects = function() {
           <div><div style="color:var(--dim)">المُنفَق</div><div style="font-weight:700;color:${p.total_spent>p.budget?'var(--red)':'var(--green)'};font-family:monospace">${fmt(p.total_spent)}</div></div>
         </div>
         <div style="display:flex;gap:.4rem">
-          <button class="btn btn-blue btn-sm" style="flex:1" onclick="editProject(${p.id})">✏️ تعديل</button>
+          <button class="btn btn-ghost btn-sm" style="flex:1" onclick="App.navigate('project_detail',{id:${p.id}})">📋 تفاصيل</button>
+          <button class="btn btn-blue btn-sm" onclick="editProject(${p.id})">✏️</button>
           <button class="btn btn-red btn-sm" onclick="deleteProject(${p.id},'${escHtml(p.name)}')">🗑️</button>
         </div>
       </div>
@@ -1010,7 +1094,24 @@ Pages.projects = function() {
       <div class="stat-card"><div class="stat-value" style="color:var(--blue)">${completed}</div><div class="stat-label">مكتملة</div></div>
       <div class="stat-card"><div class="stat-value" style="color:var(--red)">${delayed}</div><div class="stat-label">متأخرة</div></div>
     </div>
-    <div class="grid-cards">${cards}</div>
+    <div class="filter-bar">
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="ابحث عن مشروع..." id="projSearch" oninput="filterProjects()" style="padding-right:.9rem">
+      </div>
+      <select class="form-select" id="projStatusFilter" onchange="filterProjects()" style="width:auto;min-width:130px">
+        <option value="">كل الحالات</option>
+        <option value="active">نشط</option>
+        <option value="completed">مكتمل</option>
+        <option value="delayed">متأخر</option>
+        <option value="paused">متوقف</option>
+      </select>
+      <select class="form-select" id="projWilayaFilter" onchange="filterProjects()" style="width:auto;min-width:130px">
+        <option value="">كل الولايات</option>
+        ${[...new Set(projects.map(p=>p.wilaya).filter(Boolean))].map(w=>`<option>${w}</option>`).join('')}
+      </select>
+    </div>
+    <div class="grid-cards" id="projGrid">${cards}</div>
     <div class="modal-overlay" id="addProjectModal">
       <div class="modal modal-lg">
         <div class="modal-title">🏗️ إضافة مشروع جديد</div>
@@ -1294,7 +1395,14 @@ Pages.reports = function() {
   const topCats=Object.entries(catMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
   const maxCat=topCats[0]?.[1]||1;
   return layoutHTML('reports','التقارير',`
-    <div class="page-header"><div class="page-title">📈 التقارير والإحصاء</div></div>
+    <div class="page-header">
+      <div class="page-title">📈 التقارير والإحصاء</div>
+      <div class="page-actions">
+        <button class="btn btn-ghost btn-sm" onclick="exportFinancialCSV()">📥 تصدير مالي CSV</button>
+        <button class="btn btn-ghost btn-sm" onclick="exportAttendanceMonthly()">📥 تقرير حضور CSV</button>
+        <button class="btn btn-gold btn-sm" onclick="window.print()">🖨️ طباعة التقرير</button>
+      </div>
+    </div>
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value" style="color:var(--green);font-size:1rem">${fmt(revenue)}</div><div class="stat-label">الإيرادات (دج)</div></div>
       <div class="stat-card"><div class="stat-icon">📉</div><div class="stat-value" style="color:var(--red);font-size:1rem">${fmt(expense)}</div><div class="stat-label">المصاريف (دج)</div></div>
@@ -1464,9 +1572,377 @@ Pages.admin = function() {
   </div>`;
 };
 
-/* ══════════════════════════════════════════════════════
-   ACTIONS
-══════════════════════════════════════════════════════ */
+/* ─── PROJECT DETAIL ─── */
+Pages.project_detail = function() {
+  const pid = App.params.id;
+  const tid = Auth.getUser().tenant_id;
+  const p = DB.get('projects').find(pr=>pr.id===pid && pr.tenant_id===tid);
+  if (!p) return layoutHTML('projects','تفاصيل المشروع',`<div class="empty"><div class="empty-icon">🏗️</div><div class="empty-title">المشروع غير موجود</div><button class="btn btn-ghost" data-nav="projects">العودة</button></div>`);
+
+  const workers = DB.get('workers').filter(w=>w.project_id===pid);
+  const equip = DB.get('equipment').filter(e=>e.project_id===pid);
+  const txs = DB.get('transactions').filter(t=>t.project_id===pid);
+  const materials = DB.get('materials').filter(m=>m.project_id===pid);
+  const notes = DB.get('notes').filter(n=>n.project_id===pid).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const revenue = txs.filter(t=>t.type==='revenue').reduce((s,t)=>s+Number(t.amount),0);
+  const expense = txs.filter(t=>t.type==='expense').reduce((s,t)=>s+Number(t.amount),0);
+  const budgetPct = p.budget>0?Math.round(p.total_spent/p.budget*100):0;
+  const user = Auth.getUser();
+
+  return layoutHTML('projects','تفاصيل المشروع',`
+    <div class="page-header" style="flex-wrap:wrap">
+      <div>
+        <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:.3rem">
+          <button class="btn btn-ghost btn-sm" data-nav="projects">← العودة</button>
+          ${statusBadge(p.status)}
+        </div>
+        <div class="page-title">${escHtml(p.name)}</div>
+        <div class="page-sub">${p.wilaya?'📍 '+escHtml(p.wilaya):''} ${p.client_name?'• 👤 '+escHtml(p.client_name):''} ${p.phase?'• 🔧 '+escHtml(p.phase):''}</div>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ طباعة</button>
+        <button class="btn btn-blue btn-sm" onclick="editProject(${p.id})">✏️ تعديل</button>
+      </div>
+    </div>
+
+    <!-- Budget Overview -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;margin-bottom:1.2rem">
+      <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value" style="color:var(--gold)">${p.progress}%</div><div class="stat-label">نسبة الإنجاز</div><div class="progress-bar" style="margin-top:.5rem"><div class="progress-fill" style="background:${p.color}" data-width="${p.progress}"></div></div></div>
+      <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value" style="color:var(--blue);font-size:1rem">${fmt(p.budget)}</div><div class="stat-label">الميزانية (دج)</div></div>
+      <div class="stat-card"><div class="stat-icon">📉</div><div class="stat-value" style="color:${budgetPct>=100?'var(--red)':budgetPct>=80?'var(--gold)':'var(--green)'};font-size:1rem">${fmt(p.total_spent)}</div><div class="stat-label">المُنفَق — ${budgetPct}%</div></div>
+      <div class="stat-card"><div class="stat-icon">💹</div><div class="stat-value" style="color:${revenue-expense>=0?'var(--green)':'var(--red)'};font-size:1rem">${fmt(revenue-expense)}</div><div class="stat-label">الربح الصافي (دج)</div></div>
+    </div>
+
+    ${budgetPct>=90?`<div class="${budgetPct>=100?'budget-alert budget-alert-danger':'budget-alert budget-alert-warn'}">
+      <span>${budgetPct>=100?'🚨':'⚠️'}</span>
+      ${budgetPct>=100?'تجاوز الميزانية!':'اقتراب من الميزانية!'} تم استهلاك ${budgetPct}% (${fmt(p.total_spent)} / ${fmt(p.budget)} دج)
+    </div>`:''}
+
+    <!-- Tabs -->
+    <div class="detail-tabs">
+      <button class="detail-tab active" onclick="showDetailTab(this,'dt-workers')">👷 العمال (${workers.length})</button>
+      <button class="detail-tab" onclick="showDetailTab(this,'dt-equip')">🚜 المعدات (${equip.length})</button>
+      <button class="detail-tab" onclick="showDetailTab(this,'dt-txs')">💰 المالية (${txs.length})</button>
+      <button class="detail-tab" onclick="showDetailTab(this,'dt-mats')">🧱 المواد (${materials.length})</button>
+      <button class="detail-tab" onclick="showDetailTab(this,'dt-notes')">📝 الملاحظات (${notes.length})</button>
+    </div>
+
+    <!-- Workers Tab -->
+    <div id="dt-workers">
+      ${workers.length?`<div class="table-wrap"><table>
+        <thead><tr><th>العامل</th><th>المهنة</th><th>الأجر اليومي</th><th>العقد</th><th>التعيين</th></tr></thead>
+        <tbody>${workers.map(w=>`<tr>
+          <td><div style="display:flex;align-items:center;gap:.6rem"><div style="width:30px;height:30px;border-radius:50%;background:${w.color||'#4A90E2'};display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:.72rem">${(w.full_name||'?')[0]}</div>${escHtml(w.full_name)}</div></td>
+          <td>${escHtml(w.role)}</td>
+          <td style="font-family:monospace">${fmt(w.daily_salary)} دج</td>
+          <td>${{daily:'يومي',monthly:'شهري',seasonal:'موسمي',contract:'مقاول'}[w.contract_type]||w.contract_type}</td>
+          <td style="color:var(--dim);font-size:.82rem">${fmtDate(w.hire_date)}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>`:`<div class="empty"><div class="empty-icon">👷</div><div class="empty-title">لا يوجد عمال في هذا المشروع</div></div>`}
+    </div>
+
+    <!-- Equipment Tab -->
+    <div id="dt-equip" style="display:none">
+      ${equip.length?`<div class="grid-cards">${equip.map(e=>`<div class="card">
+        <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:.7rem">
+          <div style="font-size:2rem">${e.icon||'🚜'}</div>
+          <div><div style="font-weight:800">${escHtml(e.name)}</div><div style="font-size:.75rem;color:var(--dim)">${escHtml(e.model||'')}</div></div>
+        </div>
+        <div style="font-size:.78rem;color:var(--dim)">رقم اللوحة: <span style="color:var(--text);font-family:monospace">${escHtml(e.plate_number||'—')}</span></div>
+        <div style="font-size:.78rem;color:var(--dim)">القيمة: <span style="color:var(--text);font-family:monospace">${fmt(e.purchase_price)} دج</span></div>
+      </div>`).join('')}</div>`:`<div class="empty"><div class="empty-icon">🚜</div><div class="empty-title">لا توجد معدات</div></div>`}
+    </div>
+
+    <!-- Transactions Tab -->
+    <div id="dt-txs" style="display:none">
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:1rem">
+        <div class="stat-card"><div class="stat-value" style="color:var(--green);font-size:1rem">${fmt(revenue)}</div><div class="stat-label">الإيرادات (دج)</div></div>
+        <div class="stat-card"><div class="stat-value" style="color:var(--red);font-size:1rem">${fmt(expense)}</div><div class="stat-label">المصاريف (دج)</div></div>
+        <div class="stat-card"><div class="stat-value" style="color:${revenue-expense>=0?'var(--green)':'var(--red)'};font-size:1rem">${fmt(revenue-expense)}</div><div class="stat-label">الربح (دج)</div></div>
+      </div>
+      ${txs.length?`<div class="table-wrap"><table>
+        <thead><tr><th>التاريخ</th><th>النوع</th><th>الوصف</th><th>الفئة</th><th>المبلغ</th></tr></thead>
+        <tbody>${[...txs].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(t=>`<tr>
+          <td style="color:var(--dim);font-size:.82rem">${fmtDate(t.date)}</td>
+          <td><span class="badge ${t.type==='revenue'?'badge-revenue':'badge-expense'}">${t.type==='revenue'?'إيراد':'مصروف'}</span></td>
+          <td>${escHtml(t.description)}</td>
+          <td style="color:var(--dim);font-size:.78rem">${escHtml(t.category)}</td>
+          <td style="font-family:monospace;font-weight:700;color:${t.type==='revenue'?'var(--green)':'var(--red)'}">${t.type==='revenue'?'+':'-'}${fmt(t.amount)}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>`:`<div class="empty"><div class="empty-icon">💰</div><div class="empty-title">لا توجد معاملات</div></div>`}
+    </div>
+
+    <!-- Materials Tab -->
+    <div id="dt-mats" style="display:none">
+      ${materials.length?`<div class="table-wrap"><table>
+        <thead><tr><th>المادة</th><th>الكمية</th><th>الوحدة</th><th>سعر الوحدة</th><th>إجمالي</th><th>المورد</th><th>الحالة</th></tr></thead>
+        <tbody>${materials.map(m=>`<tr>
+          <td style="font-weight:700">${escHtml(m.name)}</td>
+          <td style="font-family:monospace">${m.quantity}</td>
+          <td style="color:var(--dim)">${escHtml(m.unit)}</td>
+          <td style="font-family:monospace">${fmt(m.unit_price)}</td>
+          <td style="font-family:monospace;font-weight:700">${fmt(m.quantity*m.unit_price)}</td>
+          <td style="color:var(--dim);font-size:.8rem">${escHtml(m.supplier||'—')}</td>
+          <td><span class="material-badge ${m.quantity<=m.min_quantity?'material-low':'material-ok'}">${m.quantity<=m.min_quantity?'⚠️ منخفض':'✅ كافٍ'}</span></td>
+        </tr>`).join('')}</tbody>
+      </table></div>`:`<div class="empty"><div class="empty-icon">🧱</div><div class="empty-title">لا توجد مواد مسجلة</div></div>`}
+    </div>
+
+    <!-- Notes Tab -->
+    <div id="dt-notes" style="display:none">
+      <div style="margin-bottom:1rem">
+        <div class="form-group" style="margin-bottom:.5rem"><textarea class="form-textarea" id="noteText" placeholder="أضف ملاحظة أو تعليق..."></textarea></div>
+        <button class="btn btn-gold btn-sm" onclick="addNote(${pid})">💬 إضافة ملاحظة</button>
+      </div>
+      ${notes.length?notes.map(n=>`<div class="note-card">
+        <div class="note-card-header">
+          <span class="note-card-author">👤 ${escHtml(user.full_name)}</span>
+          <span class="note-card-date">${fmtDate(n.date)}</span>
+        </div>
+        <div class="note-card-text">${escHtml(n.text)}</div>
+        <button onclick="deleteNote(${n.id},${pid})" style="position:absolute;top:.5rem;left:.5rem;background:none;border:none;cursor:pointer;color:var(--dim);font-size:.8rem">🗑️</button>
+      </div>`).join(''):`<div class="empty"><div class="empty-icon">📝</div><div class="empty-title">لا توجد ملاحظات</div></div>`}
+    </div>
+
+    <!-- Edit Modal embedded -->
+    <div class="modal-overlay" id="editProjectModal">
+      <div class="modal modal-lg">
+        <div class="modal-title">✏️ تعديل المشروع</div><input type="hidden" id="epId">
+        <div class="form-grid-2">
+          <div class="form-group"><label class="form-label">اسم المشروع</label><input class="form-input" id="epName"></div>
+          <div class="form-group"><label class="form-label">الولاية</label><select class="form-select" id="epWilaya"><option value="">اختر...</option>${WILAYAS.map(w=>`<option>${w}</option>`).join('')}</select></div>
+          <div class="form-group"><label class="form-label">الحالة</label><select class="form-select" id="epStatus"><option value="active">نشط</option><option value="completed">مكتمل</option><option value="delayed">متأخر</option><option value="paused">متوقف</option></select></div>
+          <div class="form-group"><label class="form-label">التقدم %</label><input class="form-input" id="epProgress" type="number" min="0" max="100"></div>
+          <div class="form-group"><label class="form-label">الميزانية (دج)</label><input class="form-input" id="epBudget" type="number"></div>
+          <div class="form-group"><label class="form-label">المرحلة</label><select class="form-select" id="epPhase"><option value="">اختر...</option>${PHASES.map(ph=>`<option>${ph}</option>`).join('')}</select></div>
+          <div class="form-group"><label class="form-label">اسم العميل</label><input class="form-input" id="epClient"></div>
+          <div class="form-group"><label class="form-label">تاريخ الانتهاء</label><input class="form-input" id="epEnd" type="date"></div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-ghost" data-modal-close>إلغاء</button><button class="btn btn-gold" onclick="saveProject()">💾 حفظ التعديلات</button></div>
+      </div>
+    </div>
+  `);
+};
+
+/* ─── MATERIALS PAGE ─── */
+Pages.materials = function() {
+  const tid = Auth.getUser().tenant_id;
+  const materials = DB.get('materials').filter(m=>m.tenant_id===tid);
+  const projects = DB.get('projects').filter(p=>p.tenant_id===tid && !p.is_archived);
+  const lowStock = materials.filter(m=>m.quantity<=m.min_quantity).length;
+  const totalValue = materials.reduce((s,m)=>s+m.quantity*m.unit_price,0);
+
+  const rows = materials.map(m=>{
+    const proj = projects.find(p=>p.id===m.project_id);
+    const isLow = m.quantity <= m.min_quantity;
+    return `<tr>
+      <td style="font-weight:700">${escHtml(m.name)}</td>
+      <td style="color:var(--dim);font-size:.82rem">${escHtml(proj?.name||'—')}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <button class="btn btn-sm" style="padding:.1rem .5rem;background:rgba(240,78,106,.1);border:1px solid rgba(240,78,106,.3);color:#f79fa9;border-radius:6px" onclick="updateMatQty(${m.id},-1)">−</button>
+          <span style="font-family:monospace;font-weight:700;min-width:30px;text-align:center">${m.quantity}</span>
+          <button class="btn btn-sm" style="padding:.1rem .5rem;background:rgba(52,195,143,.1);border:1px solid rgba(52,195,143,.3);color:#34C38F;border-radius:6px" onclick="updateMatQty(${m.id},1)">+</button>
+        </div>
+      </td>
+      <td style="color:var(--dim)">${escHtml(m.unit)}</td>
+      <td style="font-family:monospace">${fmt(m.unit_price)}</td>
+      <td style="font-family:monospace;font-weight:700">${fmt(m.quantity*m.unit_price)}</td>
+      <td style="color:var(--dim);font-size:.8rem">${escHtml(m.supplier||'—')}</td>
+      <td><span class="material-badge ${isLow?'material-low':'material-ok'}">${isLow?'⚠️ منخفض':'✅ كافٍ'}</span></td>
+      <td><button class="btn btn-red btn-sm" onclick="deleteMat(${m.id})">🗑️</button></td>
+    </tr>`;
+  }).join('');
+
+  return layoutHTML('materials','المواد والمخزون',`
+    <div class="page-header">
+      <div><div class="page-title">🧱 المواد والمخزون</div><div class="page-sub">${materials.length} مادة مسجلة</div></div>
+      <div class="page-actions">
+        <button class="btn btn-ghost btn-sm" onclick="exportMaterials()">📥 تصدير CSV</button>
+        <button class="btn btn-gold" data-modal-open="addMatModal">+ إضافة مادة</button>
+      </div>
+    </div>
+    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat-card"><div class="stat-icon">🧱</div><div class="stat-value" style="color:var(--blue)">${materials.length}</div><div class="stat-label">إجمالي المواد</div></div>
+      <div class="stat-card"><div class="stat-icon">⚠️</div><div class="stat-value" style="color:${lowStock>0?'var(--red)':'var(--green)'}">${lowStock}</div><div class="stat-label">مخزون منخفض</div></div>
+      <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value" style="color:var(--gold);font-size:1rem">${fmt(totalValue)}</div><div class="stat-label">قيمة المخزون (دج)</div></div>
+    </div>
+    ${lowStock>0?`<div class="budget-alert budget-alert-warn">⚠️ تنبيه: ${lowStock} مادة وصلت للحد الأدنى من المخزون وتحتاج إلى تجديد</div>`:''}
+    ${materials.length?`<div class="table-wrap"><table>
+      <thead><tr><th>المادة</th><th>المشروع</th><th>الكمية</th><th>الوحدة</th><th>سعر الوحدة (دج)</th><th>القيمة الإجمالية</th><th>المورد</th><th>الحالة</th><th>حذف</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>`:`<div class="empty"><div class="empty-icon">🧱</div><div class="empty-title">لا توجد مواد مسجلة</div></div>`}
+    <div class="modal-overlay" id="addMatModal">
+      <div class="modal">
+        <div class="modal-title">🧱 إضافة مادة</div>
+        <div class="form-grid-2">
+          <div class="form-group"><label class="form-label">اسم المادة *</label><input class="form-input" id="mName" placeholder="حديد، أسمنت..."></div>
+          <div class="form-group"><label class="form-label">الوحدة *</label><select class="form-select" id="mUnit"><option>طن</option><option>كيس</option><option>م³</option><option>ألف قطعة</option><option>لتر</option><option>قطعة</option><option>م²</option></select></div>
+          <div class="form-group"><label class="form-label">الكمية المتوفرة</label><input class="form-input" id="mQty" type="number" value="0"></div>
+          <div class="form-group"><label class="form-label">الحد الأدنى للتنبيه</label><input class="form-input" id="mMinQty" type="number" value="5"></div>
+          <div class="form-group"><label class="form-label">سعر الوحدة (دج)</label><input class="form-input" id="mPrice" type="number" value="0"></div>
+          <div class="form-group"><label class="form-label">المشروع</label><select class="form-select" id="mProject"><option value="">— عام</option>${projects.map(p=>`<option value="${p.id}">${escHtml(p.name)}</option>`).join('')}</select></div>
+        </div>
+        <div class="form-group"><label class="form-label">المورد</label><input class="form-input" id="mSupplier" placeholder="اسم المورد..."></div>
+        <div class="modal-footer"><button class="btn btn-ghost" data-modal-close>إلغاء</button><button class="btn btn-gold" onclick="addMat()">💾 حفظ</button></div>
+      </div>
+    </div>
+  `);
+};
+
+
+/* ─── PROJECT SEARCH/FILTER ─── */
+function filterProjects() {
+  const search = (document.getElementById('projSearch')?.value||'').toLowerCase();
+  const status = document.getElementById('projStatusFilter')?.value||'';
+  const wilaya = document.getElementById('projWilayaFilter')?.value||'';
+  const tid = Auth.getUser().tenant_id;
+  const all = DB.get('projects').filter(p=>p.tenant_id===tid&&!p.is_archived);
+  const workers = DB.get('workers');
+  const filtered = all.filter(p=>{
+    const matchSearch = !search || p.name.toLowerCase().includes(search) || (p.client_name||'').toLowerCase().includes(search) || (p.wilaya||'').toLowerCase().includes(search);
+    const matchStatus = !status || p.status===status;
+    const matchWilaya = !wilaya || p.wilaya===wilaya;
+    return matchSearch && matchStatus && matchWilaya;
+  });
+  const grid = document.getElementById('projGrid');
+  if (!grid) return;
+  if (!filtered.length) { grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🔍</div><div class="empty-title">لا توجد نتائج</div></div>`; return; }
+  grid.innerHTML = filtered.map(p=>{
+    const wCount=workers.filter(w=>w.project_id===p.id).length;
+    return `<div style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:16px;overflow:hidden;transition:all .28s" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform=''">
+      <div style="height:3px;background:${p.color}"></div>
+      <div style="padding:1.1rem 1.2rem">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.5rem">
+          <div style="font-weight:800;font-size:.95rem;flex:1">${escHtml(p.name)}</div>${statusBadge(p.status)}
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.8rem">
+          ${p.wilaya?`<span style="font-size:.72rem;color:var(--dim)">📍 ${escHtml(p.wilaya)}</span>`:''}
+          ${p.client_name?`<span style="font-size:.72rem;color:var(--dim)">👤 ${escHtml(p.client_name)}</span>`:''}
+          ${wCount?`<span style="font-size:.72rem;color:var(--dim)">👷 ${wCount}</span>`:''}
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:4px"><span style="color:var(--dim)">التقدم</span><span style="font-weight:700">${p.progress}%</span></div>
+        <div class="progress-bar" style="margin-bottom:.8rem"><div class="progress-fill" style="background:${p.color};width:${p.progress}%"></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;font-size:.75rem;margin-bottom:.8rem">
+          <div><div style="color:var(--dim)">الميزانية</div><div style="font-weight:700;font-family:monospace">${fmt(p.budget)}</div></div>
+          <div><div style="color:var(--dim)">المُنفَق</div><div style="font-weight:700;color:${p.total_spent>p.budget?'var(--red)':'var(--green)'};font-family:monospace">${fmt(p.total_spent)}</div></div>
+        </div>
+        <div style="display:flex;gap:.4rem">
+          <button class="btn btn-ghost btn-sm" style="flex:1" onclick="App.navigate('project_detail',{id:${p.id}})">📋 تفاصيل</button>
+          <button class="btn btn-blue btn-sm" onclick="editProject(${p.id})">✏️</button>
+          <button class="btn btn-red btn-sm" onclick="deleteProject(${p.id},'${escHtml(p.name)}')">🗑️</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ─── DETAIL TABS ─── */
+function showDetailTab(btn, tabId) {
+  btn.closest('.detail-tabs').querySelectorAll('.detail-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  ['dt-workers','dt-equip','dt-txs','dt-mats','dt-notes'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display='none';
+  });
+  const tab=document.getElementById(tabId); if(tab) tab.style.display='';
+}
+
+/* ─── NOTES ─── */
+function addNote(pid) {
+  const text = document.getElementById('noteText')?.value?.trim();
+  if (!text) { Toast.error('أدخل نص الملاحظة'); return; }
+  const user = Auth.getUser();
+  const notes = DB.get('notes');
+  notes.push({ id:DB.nextId('notes'), tenant_id:user.tenant_id, project_id:pid, user_id:user.id, text, date:todayStr() });
+  DB.set('notes', notes);
+  Toast.success('تمت إضافة الملاحظة');
+  App.navigate('project_detail', {id:pid});
+}
+
+function deleteNote(id, pid) {
+  if (!confirm('حذف هذه الملاحظة؟')) return;
+  DB.set('notes', DB.get('notes').filter(n=>n.id!==id));
+  Toast.success('تم حذف الملاحظة');
+  App.navigate('project_detail', {id:pid});
+}
+
+/* ─── MATERIALS ─── */
+function addMat() {
+  const name = document.getElementById('mName')?.value?.trim();
+  if (!name) { Toast.error('أدخل اسم المادة'); return; }
+  const tid = Auth.getUser().tenant_id;
+  const mats = DB.get('materials');
+  mats.push({ id:DB.nextId('materials'), tenant_id:tid, name, unit:document.getElementById('mUnit')?.value||'قطعة', quantity:Number(document.getElementById('mQty')?.value)||0, min_quantity:Number(document.getElementById('mMinQty')?.value)||5, unit_price:Number(document.getElementById('mPrice')?.value)||0, project_id:Number(document.getElementById('mProject')?.value)||null, supplier:document.getElementById('mSupplier')?.value||'' });
+  DB.set('materials', mats);
+  Toast.success('✅ تمت إضافة المادة');
+  App.navigate('materials');
+}
+
+function updateMatQty(id, delta) {
+  const mats = DB.get('materials');
+  const idx = mats.findIndex(m=>m.id===id); if (idx<0) return;
+  mats[idx].quantity = Math.max(0, (mats[idx].quantity||0) + delta);
+  DB.set('materials', mats);
+  App.navigate('materials');
+}
+
+function deleteMat(id) {
+  if (!confirm('حذف هذه المادة؟')) return;
+  DB.set('materials', DB.get('materials').filter(m=>m.id!==id));
+  Toast.success('تم الحذف'); App.navigate('materials');
+}
+
+function exportMaterials() {
+  const tid = Auth.getUser().tenant_id;
+  const mats = DB.get('materials').filter(m=>m.tenant_id===tid);
+  const projs = DB.get('projects');
+  let csv = '\uFEFFالمادة,المشروع,الكمية,الوحدة,السعر,القيمة الإجمالية,المورد,الحالة\n';
+  mats.forEach(m=>{ const proj=projs.find(p=>p.id===m.project_id); csv+=`"${m.name}","${proj?.name||'—'}","${m.quantity}","${m.unit}","${m.unit_price}","${m.quantity*m.unit_price}","${m.supplier||''}","${m.quantity<=m.min_quantity?'منخفض':'كافٍ'}"\n`; });
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='materials.csv'; a.click();
+  Toast.success('تم تصدير ملف CSV');
+}
+
+/* ─── EXPORT FINANCIAL CSV ─── */
+function exportFinancialCSV() {
+  const tid = Auth.getUser().tenant_id;
+  const txs = DB.get('transactions').filter(t=>t.tenant_id===tid);
+  const projs = DB.get('projects');
+  let csv = '\uFEFFالتاريخ,النوع,الوصف,الفئة,المبلغ,المشروع,طريقة الدفع\n';
+  txs.forEach(t=>{ const proj=projs.find(p=>p.id===t.project_id); csv+=`"${t.date}","${t.type==='revenue'?'إيراد':'مصروف'}","${t.description}","${t.category}","${t.amount}","${proj?.name||'—'}","${t.payment_method||''}"\n`; });
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='financial_report.csv'; a.click();
+  Toast.success('تم تصدير التقرير المالي');
+}
+
+/* ─── EXPORT MONTHLY ATTENDANCE CSV ─── */
+function exportAttendanceMonthly() {
+  const tid = Auth.getUser().tenant_id;
+  const workers = DB.get('workers').filter(w=>w.tenant_id===tid);
+  const att = DB.get('attendance');
+  const now = new Date();
+  const year = now.getFullYear(), month = now.getMonth();
+  const days = new Date(year, month+1, 0).getDate();
+  let csv = '\uFEFFالعامل,المهنة,الأجر اليومي';
+  for (let d=1; d<=days; d++) csv += `,${d}`;
+  csv += ',أيام الحضور,إجمالي الراتب\n';
+  workers.forEach(w=>{
+    let row = `"${w.full_name}","${w.role}","${w.daily_salary}"`;
+    let presentDays = 0;
+    for (let d=1; d<=days; d++) {
+      const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const a = att.find(a=>a.worker_id===w.id && a.date===dateStr);
+      const st = a?.status||'—';
+      if(st==='present') presentDays++; else if(st==='halfday') presentDays+=0.5;
+      row += `,"${st==='present'?'✓':st==='absent'?'✗':st==='halfday'?'½':st==='holiday'?'إج':'—'}"`;
+    }
+    row += `,"${presentDays}","${Math.round(presentDays*w.daily_salary)}"`;
+    csv += row + '\n';
+  });
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`attendance_${year}_${month+1}.csv`; a.click();
+  Toast.success(`تم تصدير تقرير حضور ${year}/${month+1}`);
+}
+
 let currentTab = 'tenant';
 function switchTab(t) {
   currentTab = t;
@@ -1517,7 +1993,9 @@ function saveProject() {
   const id=Number(document.getElementById('epId').value);
   const projs=DB.get('projects'); const idx=projs.findIndex(p=>p.id===id); if(idx<0) return;
   projs[idx]={...projs[idx], name:document.getElementById('epName').value, wilaya:document.getElementById('epWilaya').value, status:document.getElementById('epStatus').value, progress:Number(document.getElementById('epProgress').value)||0, budget:Number(document.getElementById('epBudget').value)||0, phase:document.getElementById('epPhase').value, client_name:document.getElementById('epClient').value, end_date:document.getElementById('epEnd').value };
-  DB.set('projects',projs); Toast.success('✅ تم تحديث المشروع'); App.navigate('projects');
+  DB.set('projects',projs); Toast.success('✅ تم تحديث المشروع');
+  if (App.currentPage==='project_detail') App.navigate('project_detail',{id});
+  else App.navigate('projects');
 }
 
 function deleteProject(id,name) {
