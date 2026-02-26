@@ -5,20 +5,48 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SmartBTP v11.0 — نظام التحليل المالي الذكي للمقاولين الجزائريين</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script type="text/javascript"
+  src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js">
+</script>
+<script type="text/javascript">
+  (function(){
+    emailjs.init({
+      publicKey: "hn_PRTs7PuJAgrrDp",
+    });
+  })();
+</script>
 <script>
 // ═══════════════════════════════════════════
 //  EmailJS Configuration — SmartBTP
 // ═══════════════════════════════════════════
-(function(){
-  emailjs.init({ publicKey: 'hn_PRTs7PuJAgrrDp' });
-})();
+
+// ── القيم الافتراضية — يمكن تغييرها من صفحة المسؤول وتُحفظ في localStorage ──
+const EMAILJS_DEFAULTS = {
+  SERVICE_ID:     'service_37ya8ru',
+  TEMPLATE_ADMIN: 'template_haus94b',
+  TEMPLATE_USER:  'template_9hzgy4s',
+  PUBLIC_KEY:     'hn_PRTs7PuJAgrrDp',
+  ADMIN_EMAIL:    'ramzisaidi2018@gmail.com',
+};
+function getEmailJSConfig() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('sbtp_emailjs_config') || '{}');
+    return { ...EMAILJS_DEFAULTS, ...saved };
+  } catch(e) { return { ...EMAILJS_DEFAULTS }; }
+}
+function saveEmailJSConfig(cfg) {
+  localStorage.setItem('sbtp_emailjs_config', JSON.stringify(cfg));
+  // أعد تهيئة EmailJS بالـ Public Key الجديد
+  try { emailjs.init({ publicKey: cfg.PUBLIC_KEY }); } catch(e) {}
+}
 
 const EMAILJS = {
-  SERVICE_ID:      'service_gywwwyc',
-  TEMPLATE_ADMIN:  'template_haus94b',   // إشعار المسؤول بحساب جديد
-  TEMPLATE_USER:   'template_9hzgy4s',   // إشعار المستخدم بكلمة المرور
-  ADMIN_EMAIL:     'ramzisaidi2018@gmail.com',
+  get SERVICE_ID()     { return getEmailJSConfig().SERVICE_ID; },
+  get TEMPLATE_ADMIN() { return getEmailJSConfig().TEMPLATE_ADMIN; },
+  get TEMPLATE_USER()  { return getEmailJSConfig().TEMPLATE_USER; },
+  get ADMIN_EMAIL()    { return getEmailJSConfig().ADMIN_EMAIL; },
 
   // ── إرسال إشعار للمسؤول عند تسجيل حساب جديد ──
   async notifyNewAccount(userData) {
@@ -317,6 +345,29 @@ tbody tr:hover td{background:rgba(255,255,255,0.03)}
 .hero-stat-label{font-size:.7rem;color:var(--dim);margin-top:2px}
 .hero-divider{width:1px;height:38px;background:var(--border)}
 
+/* ── Hero Feature Pills ── */
+.hero-features-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.9rem;max-width:680px;margin:2.5rem auto 0;animation:slideUp .9s ease .5s both}
+.hero-feat-pill{display:flex;align-items:center;gap:.85rem;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:.9rem 1.1rem;transition:all .25s;text-align:right}
+.hero-feat-pill:hover{background:rgba(255,255,255,.055);border-color:rgba(232,184,75,.2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.hero-feat-icon{font-size:1.6rem;flex-shrink:0}
+.hero-feat-title{font-size:.85rem;font-weight:800;color:var(--text);margin-bottom:2px}
+.hero-feat-sub{font-size:.72rem;color:var(--dim)}
+@media(max-width:600px){
+  .hero-features-grid{grid-template-columns:1fr;gap:.7rem;margin-top:2rem}
+  .hero{padding:5rem 1.2rem 3rem;min-height:auto}
+  .hero-title{font-size:clamp(1.7rem,7vw,2.5rem)}
+  .hero-sub{font-size:.9rem;margin-bottom:1.5rem}
+  .trial-hero-box{padding:.6rem 1rem;flex-direction:row;gap:.6rem}
+  .trial-hero-days{font-size:1.6rem}
+  .hero-actions{flex-direction:column;align-items:stretch;gap:.6rem}
+  .hero-actions .btn-trial,.hero-actions .btn{width:100%;justify-content:center;font-size:.95rem;padding:.8rem 1rem}
+  .hero-no-cc{font-size:.68rem}
+  .hero-stats{gap:1rem;margin-top:1.5rem}
+  .hero-stat-val{font-size:1.3rem}
+  .hero-feat-pill{padding:.75rem .9rem}
+  .hero-feat-title{font-size:.8rem}
+}
+
 /* ── Dashboard Preview Mockup ── */
 .hero-mockup{position:relative;max-width:900px;margin:3rem auto 0;animation:slideUp .9s ease .5s both}
 .mockup-frame{background:var(--bg2);border:1px solid rgba(255,255,255,.08);border-radius:20px;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,.6),0 0 0 1px rgba(232,184,75,.08);position:relative}
@@ -557,8 +608,17 @@ tbody tr:hover td{background:rgba(255,255,255,0.03)}
   .login-wrap{grid-template-columns:1fr;max-width:480px}
   .login-left{display:none}
   .land-nav-links{display:none}
+  .land-nav{padding:.7rem 1rem}
+  .land-nav-actions .btn-ghost{display:none}
   .hero-stats{gap:1.2rem}
   .hero-divider{display:none}
+  /* Landing sections responsive */
+  .steps-grid{grid-template-columns:1fr}
+  .features-grid{grid-template-columns:1fr}
+  .pricing-grid{grid-template-columns:1fr;max-width:420px;margin-left:auto;margin-right:auto}
+  .testimonials-grid{grid-template-columns:1fr}
+  .section-center{padding:0 1rem}
+  .section-title{font-size:clamp(1.4rem,5vw,2rem)}
 }
 @media(min-width:901px){
   .sidebar{transform:none !important}
@@ -574,6 +634,10 @@ tbody tr:hover td{background:rgba(255,255,255,0.03)}
   .page-actions{width:100%;justify-content:flex-start}
   .topbar{padding:0 .8rem}
   .topbar-breadcrumb{font-size:.72rem}
+  .land-nav-actions .lang-toggle-btn{font-size:.7rem;padding:.25rem .65rem}
+  .land-nav-actions .btn{font-size:.78rem;padding:.4rem .8rem}
+  .trust-strip{flex-wrap:wrap;gap:.5rem;justify-content:center;padding:.8rem 1rem}
+  .trust-item{font-size:.72rem}
 }
 
 /* ===== NEW v4.2 FEATURES ===== */
@@ -1735,7 +1799,18 @@ const Auth = {
     return true;
   },
   logout() { this.currentUser = null; sessionStorage.removeItem('sbtp_user'); App.navigate('landing'); },
-  load() { const u = sessionStorage.getItem('sbtp_user'); if (u) this.currentUser = JSON.parse(u); },
+  load() {
+    const u = sessionStorage.getItem('sbtp_user');
+    if (u) {
+      const parsed = JSON.parse(u);
+      // إذا كان المستخدم مسؤولاً ولم يمر من صفحة admin-login، نمسح الجلسة
+      if (parsed.is_admin && !sessionStorage.getItem('sbtp_admin_auth')) {
+        sessionStorage.removeItem('sbtp_user');
+        return;
+      }
+      this.currentUser = parsed;
+    }
+  },
   getUser() { return this.currentUser; },
   getTenant() {
     if (!this.currentUser || !this.currentUser.tenant_id) return null;
@@ -2035,6 +2110,7 @@ const TR = {
   '📦 المخزون':'📦 Stock',
   '🏗️ تفاصيل المشروع':'🏗️ Détails du projet',
   '📋 الفواتير':'📋 Factures',
+  '🧾 الفواتير':'🧾 Factures',
   '🔬 المحاكي المالي':'🔬 Simulateur financier',
   // ── Actions ──
   'إضافة':'Ajouter',
@@ -2256,10 +2332,36 @@ const TR = {
   '+ فاتورة جديدة':'+ Nouvelle facture',
   'رقم الفاتورة':'N° facture',
   'تاريخ الاستحقاق':'Date échéance',
+  'تاريخ الإصدار':'Date émission',
   'مدفوع':'Payé',
   'معلق':'En attente',
   'متأخر':'En retard',
   'لا توجد فواتير بعد':'Aucune facture',
+  'لا توجد فواتير':'Aucune facture',
+  'مدفوعة (دج)':'Payées (DA)',
+  'معلقة (دج)':'En attente (DA)',
+  'متأخرة (دج)':'En retard (DA)',
+  'إجمالي الفواتير':'Total factures',
+  'تم تحصيله':'encaissé',
+  'الكل':'Tout',
+  'مدفوعة':'Payées',
+  'معلقة':'En attente',
+  'متأخرة':'En retard',
+  'بنود الفاتورة':'Lignes de la facture',
+  '+ إضافة بند':'+ Ajouter ligne',
+  'وصف الخدمة / المادة':'Description service / article',
+  'سعر الوحدة':'Prix unit.',
+  'المجموع خارج رسم (HT)':'Sous-total HT',
+  'الإجمالي (TTC)':'Total TTC',
+  'ملاحظات / شروط الدفع':'Notes / conditions de paiement',
+  'شروط الدفع، ملاحظات...':'Conditions de paiement, notes...',
+  'حفظ الفاتورة':'Enregistrer',
+  'تأشير كمدفوعة':'Marquer payée',
+  'تصدير PDF':'Exporter PDF',
+  'نسبة TVA (%)':'Taux TVA (%)',
+  'طريقة الدفع':'Mode paiement',
+  'نقداً':'Espèces',
+  'تحويل بنكي':'Virement bancaire',
   // ── Team Page ──
   'الفريق':'Équipe',
   'الدور':'Rôle',
@@ -2345,6 +2447,179 @@ function applyDOMTranslation() {
 /* ══════════════════════════════════════════════════════
    ROUTER
 ══════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════
+   ROLES & PERMISSIONS — COMPLETE RBAC SYSTEM
+══════════════════════════════════════════════════════ */
+const ROLE_NAMES = {
+  admin:      'مسؤول',
+  manager:    'مدير مشروع',
+  accountant: 'محاسب',
+  hr:         'موارد بشرية',
+  viewer:     'قارئ فقط'
+};
+const MONTHS_AR = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+
+// ── صلاحيات كل دور ──────────────────────────────────
+//  true  = يرى الصفحة ويمكنه التعديل
+//  'view'= يرى فقط بدون تعديل
+//  false / غياب = محظور تماماً
+const ROLE_PERMISSIONS = {
+  admin: {
+    // المسؤول يملك كل شيء — يتحكم عبر لوحة الإدارة
+    dashboard:true, analytics:true, projects:true, project_detail:true,
+    compare:true, calendar:true, map:true, kanban:true, gantt:true,
+    workers:true, attendance:true, salary:true,
+    transactions:true, invoices:true,
+    inventory:true, equipment:true, materials:true,
+    documents:true, reports:true, bank_report:true, simulator:true,
+    obligations:true, audit_log:true, team:true, settings:true,
+    // Write actions
+    write_projects:true, write_workers:true, write_attendance:true,
+    write_salary:true, write_transactions:true, write_invoices:true,
+    write_materials:true, write_equipment:true, write_documents:true,
+    write_notes:true, write_team:true, write_settings:true,
+  },
+  manager: {
+    // مدير المشروع: يدير المشاريع والعمال والمواد والوثائق — يرى المالية فقط
+    dashboard:true, analytics:'view', projects:true, project_detail:true,
+    compare:'view', calendar:true, map:'view', kanban:true, gantt:true,
+    workers:true, attendance:true, salary:'view',
+    transactions:'view', invoices:'view',
+    inventory:true, equipment:true, materials:true,
+    documents:true, reports:'view', bank_report:false, simulator:'view',
+    obligations:'view', audit_log:'view', team:'view', settings:'view',
+    // Write actions
+    write_projects:true, write_workers:true, write_attendance:true,
+    write_salary:false, write_transactions:false, write_invoices:false,
+    write_materials:true, write_equipment:true, write_documents:true,
+    write_notes:true, write_team:false, write_settings:false,
+  },
+  accountant: {
+    // المحاسب: يدير المالية الكاملة — يرى المشاريع والعمال فقط
+    dashboard:true, analytics:true, projects:'view', project_detail:'view',
+    compare:'view', calendar:'view', map:false, kanban:false, gantt:false,
+    workers:'view', attendance:'view', salary:true,
+    transactions:true, invoices:true,
+    inventory:'view', equipment:'view', materials:'view',
+    documents:'view', reports:true, bank_report:true, simulator:true,
+    obligations:true, audit_log:'view', team:'view', settings:'view',
+    // Write actions
+    write_projects:false, write_workers:false, write_attendance:false,
+    write_salary:true, write_transactions:true, write_invoices:true,
+    write_materials:false, write_equipment:false, write_documents:false,
+    write_notes:false, write_team:false, write_settings:false,
+  },
+  hr: {
+    // الموارد البشرية: يدير العمال والحضور والرواتب — لا يرى المالية
+    dashboard:true, analytics:false, projects:'view', project_detail:'view',
+    compare:false, calendar:'view', map:false, kanban:false, gantt:false,
+    workers:true, attendance:true, salary:true,
+    transactions:false, invoices:false,
+    inventory:false, equipment:false, materials:false,
+    documents:false, reports:false, bank_report:false, simulator:false,
+    obligations:false, audit_log:false, team:'view', settings:'view',
+    // Write actions
+    write_projects:false, write_workers:true, write_attendance:true,
+    write_salary:true, write_transactions:false, write_invoices:false,
+    write_materials:false, write_equipment:false, write_documents:false,
+    write_notes:false, write_team:false, write_settings:false,
+  },
+  viewer: {
+    // قارئ فقط: يرى كل شيء ولا يعدل شيئاً
+    dashboard:true, analytics:'view', projects:'view', project_detail:'view',
+    compare:'view', calendar:'view', map:'view', kanban:'view', gantt:'view',
+    workers:'view', attendance:'view', salary:'view',
+    transactions:'view', invoices:'view',
+    inventory:'view', equipment:'view', materials:'view',
+    documents:'view', reports:'view', bank_report:false, simulator:'view',
+    obligations:'view', audit_log:false, team:'view', settings:'view',
+    // Write actions — NONE
+    write_projects:false, write_workers:false, write_attendance:false,
+    write_salary:false, write_transactions:false, write_invoices:false,
+    write_materials:false, write_equipment:false, write_documents:false,
+    write_notes:false, write_team:false, write_settings:false,
+  }
+};
+
+// ── Pages that map to permission keys ────────────────
+const PAGE_PERM_MAP = {
+  dashboard:'dashboard', analytics:'analytics', projects:'projects',
+  project_detail:'project_detail', compare:'compare', calendar:'calendar',
+  map:'map', kanban:'kanban', gantt:'gantt', workers:'workers',
+  attendance:'attendance', salary:'salary', transactions:'transactions',
+  invoices:'invoices', inventory:'inventory', equipment:'equipment',
+  materials:'materials', documents:'documents', reports:'reports',
+  bank_report:'bank_report', simulator:'simulator', obligations:'obligations',
+  audit_log:'audit_log', team:'team', settings:'settings',
+};
+
+// ── Main permission check ─────────────────────────────
+function canDo(action) {
+  const u = Auth.getUser();
+  if (!u) return false;
+  if (u.is_admin) return true; // super admin bypasses all
+
+  // Check custom per-user permissions first (set by admin)
+  if (u.custom_perms && u.custom_perms[action] !== undefined) {
+    return !!u.custom_perms[action];
+  }
+
+  const rolePerms = ROLE_PERMISSIONS[u.role] || ROLE_PERMISSIONS['viewer'];
+
+  // For write actions
+  if (action.startsWith('write_') || ['projects','workers','attendance','materials',
+      'documents','notes','transactions','invoices','salary','equipment'].includes(action)) {
+    const writeKey = 'write_' + action;
+    if (rolePerms[writeKey] !== undefined) return !!rolePerms[writeKey];
+    // If the page perm is true (not 'view'), allow writes
+    const pagePerm = rolePerms[action];
+    return pagePerm === true;
+  }
+
+  return !!rolePerms[action];
+}
+
+// ── Can user view a page (true or 'view') ─────────────
+function canView(page) {
+  const u = Auth.getUser();
+  if (!u) return false;
+  if (u.is_admin) return true;
+  if (u.custom_perms && u.custom_perms['view_'+page] !== undefined) {
+    return !!u.custom_perms['view_'+page];
+  }
+  const rolePerms = ROLE_PERMISSIONS[u.role] || ROLE_PERMISSIONS['viewer'];
+  const perm = rolePerms[page];
+  return perm === true || perm === 'view';
+}
+
+// ── Can user write on a page ─────────────────────────
+function canWrite(page) {
+  const u = Auth.getUser();
+  if (!u) return false;
+  if (u.is_admin) return true;
+  const rolePerms = ROLE_PERMISSIONS[u.role] || ROLE_PERMISSIONS['viewer'];
+  return rolePerms['write_'+page] === true || rolePerms[page] === true;
+}
+
+// ── Access Denied page ────────────────────────────────
+function accessDeniedHTML(pageName) {
+  return layoutHTML('dashboard', L('وصول مرفوض','Accès refusé'), `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;padding:2rem">
+      <div style="font-size:4rem;margin-bottom:1rem">🚫</div>
+      <div style="font-size:1.4rem;font-weight:900;color:var(--red);margin-bottom:.5rem">${L('وصول مرفوض','Accès refusé')}</div>
+      <div style="font-size:.9rem;color:var(--muted);margin-bottom:1.5rem;max-width:400px;line-height:1.7">
+        ${L(`ليس لديك صلاحية للوصول إلى صفحة «${pageName}». تواصل مع المسؤول لطلب الصلاحية.`,
+            `Vous n'avez pas la permission d'accéder à «${pageName}». Contactez l'administrateur.`)}
+      </div>
+      <div style="background:rgba(240,78,106,0.06);border:1px solid rgba(240,78,106,0.2);border-radius:12px;padding:.8rem 1.4rem;margin-bottom:1.5rem;font-size:.82rem;color:var(--muted)">
+        ${L('دورك الحالي:','Votre rôle :')} <strong style="color:var(--gold)">${ROLE_NAMES[Auth.getUser()?.role]||'—'}</strong>
+      </div>
+      <button class="btn btn-gold" onclick="App.navigate('dashboard')">⬅️ ${L('العودة للوحة التحكم','Retour au tableau de bord')}</button>
+    </div>
+  `);
+}
+
 const App = {
   currentPage: 'landing',
   params: {},
@@ -2358,6 +2633,39 @@ const App = {
     if (!user && !['landing','login'].includes(this.currentPage)) this.currentPage = 'landing';
     if (user && this.currentPage === 'login') this.currentPage = user.is_admin ? 'admin' : 'dashboard';
     if (user && this.currentPage === 'landing') this.currentPage = user.is_admin ? 'admin' : 'dashboard';
+
+    // ── ADMIN GUARD: يمنع دخول المسؤول إلا عبر صفحة admin-login المنفصلة ──
+    if (user && user.is_admin && !sessionStorage.getItem('sbtp_admin_auth')) {
+      Auth.logout();
+      window.location.href = 'admin-login.html';
+      return;
+    }
+    // ── BLOCK normal users from reaching admin page ──
+    if (user && !user.is_admin && this.currentPage === 'admin') {
+      this.currentPage = 'dashboard';
+    }
+
+    // ── PERMISSION GUARD: block unauthorized page access ──
+    if (user && !user.is_admin && this.currentPage !== 'landing' && this.currentPage !== 'login') {
+      const permKey = PAGE_PERM_MAP[this.currentPage];
+      if (permKey && !canView(this.currentPage)) {
+        // Redirect to access denied page inline
+        const pageLabel = {
+          analytics:'التحليلات', projects:'المشاريع', compare:'مقارنة المشاريع',
+          calendar:'التقويم', map:'الخريطة', kanban:'Kanban', gantt:'Gantt',
+          workers:'العمال', attendance:'الحضور', salary:'الرواتب',
+          transactions:'المعاملات', invoices:'الفواتير', inventory:'المخزون',
+          equipment:'المعدات', materials:'المواد', documents:'الوثائق',
+          reports:'التقارير', bank_report:'التقرير البنكي', simulator:'المحاكي',
+          obligations:'الالتزامات', audit_log:'سجل النشاط', team:'الفريق'
+        }[this.currentPage] || this.currentPage;
+        app.innerHTML = accessDeniedHTML(pageLabel);
+        this.bindEvents();
+        applyDOMTranslation();
+        return;
+      }
+    }
+
     const pages = { landing:Pages.landing, login:(()=>Pages.login(App.params&&App.params.mode)), dashboard:Pages.dashboard,
       projects:Pages.projects, workers:Pages.workers, equipment:Pages.equipment,
       transactions:Pages.transactions, attendance:Pages.attendance, reports:Pages.reports,
@@ -2613,49 +2921,35 @@ Pages.landing = function() {
         </div>
       </div>
 
-      <!-- Dashboard mockup -->
-      <div class="hero-mockup" style="position:relative;max-width:860px;margin:3rem auto 0">
-        <div class="mockup-frame">
-          <div class="mockup-topbar">
-            <div class="mockup-dot" style="background:#F04E6A"></div>
-            <div class="mockup-dot" style="background:#E8B84B"></div>
-            <div class="mockup-dot" style="background:#34C38F"></div>
-            <div style="flex:1;height:12px;background:rgba(255,255,255,.04);border-radius:6px;margin-right:.5rem"></div>
-            <div style="width:60px;height:12px;background:rgba(232,184,75,.2);border-radius:6px"></div>
+      <!-- Feature Pills -->
+      <div class="hero-features-grid">
+        <div class="hero-feat-pill">
+          <span class="hero-feat-icon" style="color:var(--blue)">📊</span>
+          <div>
+            <div class="hero-feat-title">${L('تحليل مالي ذكي','Analyse financière IA')}</div>
+            <div class="hero-feat-sub">${L('تقارير لحظية دقيقة','Rapports temps réel')}</div>
           </div>
-          <div class="mockup-content">
-            <div class="mockup-card mc-blue">
-              <div class="mockup-card-val" style="color:var(--blue)">4</div>
-              <div class="mockup-card-lbl">${L('مشاريع نشطة','Projets actifs')}</div>
-            </div>
-            <div class="mockup-card mc-green">
-              <div class="mockup-card-val" style="color:var(--green)">82</div>
-              <div class="mockup-card-lbl">${L('مؤشر الصحة','Score santé')}</div>
-            </div>
-            <div class="mockup-card mc-gold">
-              <div class="mockup-card-val" style="color:var(--gold)">3.2M</div>
-              <div class="mockup-card-lbl">${L('ربح متوقع','Bénéfice prévu')}</div>
-            </div>
-            <div class="mockup-card mc-red">
-              <div class="mockup-card-val" style="color:var(--red)">1</div>
-              <div class="mockup-card-lbl">${L('مشروع في خطر','Projet à risque')}</div>
-            </div>
-            <div class="mockup-bar">
-              <div style="font-size:.62rem;color:var(--dim);margin-bottom:.5rem;font-weight:700">${L('التدفق النقدي','Flux de trésorerie')}</div>
-              ${[
-                {l: L('المشروع أ','Projet A'), w: 78, c: '#4A90E2'},
-                {l: L('المشروع ب','Projet B'), w: 55, c: '#34C38F'},
-                {l: L('المشروع ج','Projet C'), w: 90, c: '#E8B84B'},
-              ].map(b => `<div class="mockup-bar-row">
-                <div class="mockup-bar-lbl">${b.l}</div>
-                <div style="flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.05)">
-                  <div style="width:${b.w}%;height:5px;border-radius:3px;background:${b.c}"></div>
-                </div>
-                <div style="font-size:.6rem;color:var(--dim);width:30px;text-align:left">${b.w}%</div>
-              </div>`).join('')}
-            </div>
+        </div>
+        <div class="hero-feat-pill">
+          <span class="hero-feat-icon" style="color:var(--gold)">⚠️</span>
+          <div>
+            <div class="hero-feat-title">${L('تتبع المخاطر','Suivi des risques')}</div>
+            <div class="hero-feat-sub">${L('تنبيه فوري بالانحرافات','Alertes instantanées')}</div>
           </div>
-          <div class="mockup-gradient"></div>
+        </div>
+        <div class="hero-feat-pill">
+          <span class="hero-feat-icon" style="color:var(--green)">👥</span>
+          <div>
+            <div class="hero-feat-title">${L('إدارة العمالة','Gestion du personnel')}</div>
+            <div class="hero-feat-sub">${L('حضور وأجور مباشرة','Présence & salaires')}</div>
+          </div>
+        </div>
+        <div class="hero-feat-pill">
+          <span class="hero-feat-icon" style="color:var(--purple)">📄</span>
+          <div>
+            <div class="hero-feat-title">${L('تصدير PDF تلقائي','Export PDF auto')}</div>
+            <div class="hero-feat-sub">${L('تقارير احترافية جاهزة','Rapports professionnels')}</div>
+          </div>
         </div>
       </div>
     </section>
@@ -2942,7 +3236,6 @@ function renderLoginForm(L) {
     <div class="login-right-sub">${L('أدخل بياناتك للوصول إلى لوحة التحكم','Saisissez vos informations pour accéder au tableau de bord')}</div>
     <div class="login-tabs">
       <button class="login-tab active" id="tabTenant" onclick="switchTab('tenant')">🏢 ${L('مؤسسة','Entreprise')}</button>
-      <button class="login-tab" id="tabAdmin" onclick="switchTab('admin')">👑 ${L('مسؤول','Administrateur')}</button>
     </div>
     <div id="loginError" style="display:none" class="alert alert-error">❌ ${L('البريد الإلكتروني أو كلمة المرور غير صحيحة','Email ou mot de passe incorrect')}</div>
     <div class="form-group">
@@ -2972,7 +3265,6 @@ function renderLoginForm(L) {
     </div>
     <div class="login-demo-box">
       <div class="login-demo-title">${L('بيانات تجريبية','Données de démonstration')}</div>
-      <div class="login-demo-row">👑 ${L('مسؤول:','Admin:')} <span dir="ltr" style="color:var(--gold);font-family:monospace;font-size:.72rem">admin@smartbtp.dz / Admin@SmartBTP2025</span></div>
       <div class="login-demo-row">🏢 ${L('مؤسسة:','Entreprise:')} <span dir="ltr" style="color:var(--blue);font-family:monospace;font-size:.72rem">demo@algerie-construction.dz / Demo@1234</span></div>
     </div>
   `;
@@ -4351,36 +4643,7 @@ Pages.settings = function() {
           </div>
         </div>
 
-        <!-- EmailJS Status Card -->
-        <div class="card" style="margin-top:1rem;border-color:rgba(52,195,143,.2)">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
-            <div style="font-weight:800">📧 ${L('نظام إشعارات البريد الإلكتروني','Système de notifications email')}</div>
-            <span style="background:rgba(52,195,143,.12);color:var(--green);border:1px solid rgba(52,195,143,.3);border-radius:20px;padding:2px 10px;font-size:.7rem;font-weight:800">● ${L('مُفعَّل','Activé')}</span>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:.6rem;font-size:.82rem">
-            <div style="display:flex;justify-content:space-between;padding:.5rem .8rem;background:rgba(255,255,255,.03);border-radius:8px">
-              <span style="color:var(--muted)">${L('المزوّد','Fournisseur')}</span>
-              <span style="font-weight:700;color:var(--blue)">EmailJS</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;padding:.5rem .8rem;background:rgba(255,255,255,.03);border-radius:8px">
-              <span style="color:var(--muted)">${L('إيميل المسؤول','Email admin')}</span>
-              <span style="font-weight:700;direction:ltr;font-size:.78rem">ramzisaidi2018@gmail.com</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;padding:.5rem .8rem;background:rgba(255,255,255,.03);border-radius:8px">
-              <span style="color:var(--muted)">Service ID</span>
-              <span style="font-weight:700;font-family:monospace;color:var(--gold);font-size:.75rem">service_gywwwyc</span>
-            </div>
-            <div style="padding:.6rem .8rem;background:rgba(52,195,143,.05);border:1px solid rgba(52,195,143,.15);border-radius:8px;font-size:.76rem;color:var(--muted);line-height:1.6">
-              📬 ${L('الإشعارات المُفعَّلة:','Notifications activées :')}<br>
-              &nbsp;&nbsp;✅ ${L('تسجيل حساب جديد → إشعار للمسؤول','Nouveau compte → Email admin')}<br>
-              &nbsp;&nbsp;✅ ${L('طلب استعادة كلمة المرور → إشعار للمسؤول','Demande MDP → Email admin')}<br>
-              &nbsp;&nbsp;✅ ${L('تعيين كلمة مرور جديدة → إشعار للمستخدم','Nouveau MDP → Email utilisateur')}
-            </div>
-            <button class="btn btn-ghost btn-sm" onclick="testEmailJS()" style="justify-content:center">
-              🧪 ${L('اختبار الاتصال','Tester la connexion')}
-            </button>
-          </div>
-        </div>
+
       </div>
     </div>
   `);
@@ -4557,6 +4820,125 @@ Pages.admin = function() {
               <tbody>${nrows}</tbody>
             </table></div>
           </div>`;
+        })()}
+
+        <!-- ══ EmailJS Notifications System ══ -->
+        ${(()=>{
+          const cfg = getEmailJSConfig();
+          const allNotifs = DB.get('admin_notifications') || [];
+          const sentNew   = allNotifs.filter(n=>n.type==='new_account').length;
+          const sentReset = allNotifs.filter(n=>n.type==='reset_password').length;
+          const last5     = allNotifs.slice(0,5);
+          return `
+        <div class="card" style="margin-top:1.5rem;border-color:rgba(52,195,143,.25)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;flex-wrap:wrap;gap:.5rem">
+            <div style="display:flex;align-items:center;gap:.7rem">
+              <div style="width:40px;height:40px;border-radius:12px;background:rgba(52,195,143,.12);border:1px solid rgba(52,195,143,.25);display:flex;align-items:center;justify-content:center;font-size:1.3rem">📧</div>
+              <div>
+                <div style="font-weight:800;font-size:.95rem">${L('نظام إشعارات البريد الإلكتروني','Système de notifications email')}</div>
+                <div style="font-size:.72rem;color:var(--muted)">EmailJS — ${L('قابل للتعديل من هنا','Configurable depuis ici')}</div>
+              </div>
+            </div>
+            <span style="background:rgba(52,195,143,.12);color:var(--green);border:1px solid rgba(52,195,143,.3);border-radius:20px;padding:3px 12px;font-size:.72rem;font-weight:800">● ${L('مُفعَّل','Activé')}</span>
+          </div>
+
+          <!-- إحصاء -->
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin-bottom:1.2rem">
+            <div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;padding:.8rem;text-align:center">
+              <div style="font-size:1.5rem;font-weight:900;color:var(--green)">${sentNew+sentReset}</div>
+              <div style="font-size:.7rem;color:var(--muted)">${L('إجمالي الإيميلات','Total emails')}</div>
+            </div>
+            <div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;padding:.8rem;text-align:center">
+              <div style="font-size:1.5rem;font-weight:900;color:var(--blue)">${sentNew}</div>
+              <div style="font-size:.7rem;color:var(--muted)">${L('حسابات جديدة','Nouveaux comptes')}</div>
+            </div>
+            <div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;padding:.8rem;text-align:center">
+              <div style="font-size:1.5rem;font-weight:900;color:var(--gold)">${sentReset}</div>
+              <div style="font-size:.7rem;color:var(--muted)">${L('طلبات كلمة مرور','Demandes MDP')}</div>
+            </div>
+          </div>
+
+          <!-- نموذج التعديل -->
+          <div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:1.2rem;margin-bottom:1rem">
+            <div style="font-size:.8rem;font-weight:800;color:var(--muted);margin-bottom:1rem;display:flex;align-items:center;gap:.4rem">
+              ⚙️ ${L('إعدادات EmailJS — قابلة للتعديل','Configuration EmailJS — Modifiable')}
+            </div>
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label class="form-label" style="font-size:.75rem">Service ID</label>
+                <input class="form-input" id="ejs_service" value="${escHtml(cfg.SERVICE_ID)}" dir="ltr" style="font-family:monospace;font-size:.82rem" placeholder="service_xxxxxxx">
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="font-size:.75rem">Public Key</label>
+                <input class="form-input" id="ejs_pubkey" value="${escHtml(cfg.PUBLIC_KEY)}" dir="ltr" style="font-family:monospace;font-size:.82rem" placeholder="user_xxxxxxxxx">
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="font-size:.75rem">Template ID — ${L('حساب جديد','Nouveau compte')}</label>
+                <input class="form-input" id="ejs_tmpl_admin" value="${escHtml(cfg.TEMPLATE_ADMIN)}" dir="ltr" style="font-family:monospace;font-size:.82rem" placeholder="template_xxxxxxx">
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="font-size:.75rem">Template ID — ${L('كلمة المرور','Mot de passe')}</label>
+                <input class="form-input" id="ejs_tmpl_user" value="${escHtml(cfg.TEMPLATE_USER)}" dir="ltr" style="font-family:monospace;font-size:.82rem" placeholder="template_xxxxxxx">
+              </div>
+              <div class="form-group" style="grid-column:1/-1">
+                <label class="form-label" style="font-size:.75rem">📬 ${L('إيميل استقبال الإشعارات (المسؤول)','Email réception des notifications (admin)')}</label>
+                <input class="form-input" id="ejs_email" value="${escHtml(cfg.ADMIN_EMAIL)}" type="email" dir="ltr" style="font-size:.85rem" placeholder="admin@example.com">
+              </div>
+            </div>
+            <div style="display:flex;gap:.6rem;margin-top:.4rem;flex-wrap:wrap">
+              <button class="btn btn-gold" onclick="saveEmailJSSettings()" style="flex:1;justify-content:center">
+                💾 ${L('حفظ الإعدادات','Enregistrer la configuration')}
+              </button>
+              <button class="btn btn-ghost btn-sm" onclick="testEmailJS(event)">
+                🧪 ${L('اختبار الاتصال','Tester connexion')}
+              </button>
+              <button class="btn btn-ghost btn-sm" onclick="resetEmailJSSettings()">
+                🔄 ${L('إعادة الضبط','Réinitialiser')}
+              </button>
+            </div>
+          </div>
+
+          <!-- قنوات الإشعارات -->
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-bottom:1rem">
+            <div style="padding:.6rem .8rem;background:rgba(52,195,143,.05);border:1px solid rgba(52,195,143,.12);border-radius:8px;font-size:.75rem">
+              <div style="font-weight:700;margin-bottom:2px">✅ ${L('حساب جديد','Nouveau compte')}</div>
+              <div style="color:var(--muted)">${L('إيميل للمسؤول','Email → admin')}</div>
+            </div>
+            <div style="padding:.6rem .8rem;background:rgba(232,184,75,.05);border:1px solid rgba(232,184,75,.12);border-radius:8px;font-size:.75rem">
+              <div style="font-weight:700;margin-bottom:2px">✅ ${L('طلب كلمة مرور','Demande MDP')}</div>
+              <div style="color:var(--muted)">${L('إيميل للمسؤول','Email → admin')}</div>
+            </div>
+            <div style="padding:.6rem .8rem;background:rgba(74,144,226,.05);border:1px solid rgba(74,144,226,.12);border-radius:8px;font-size:.75rem">
+              <div style="font-weight:700;margin-bottom:2px">✅ ${L('كلمة مرور جديدة','Nouveau MDP')}</div>
+              <div style="color:var(--muted)">${L('إيميل للمستخدم','Email → utilisateur')}</div>
+            </div>
+          </div>
+
+          <!-- سجل آخر الإشعارات -->
+          ${last5.length ? `
+          <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden">
+            <div style="padding:.5rem 1rem;background:rgba(255,255,255,.03);border-bottom:1px solid var(--border);font-size:.73rem;font-weight:800;color:var(--muted)">
+              📋 ${L('آخر الإشعارات المُرسلة','Dernières notifications envoyées')}
+            </div>
+            ${last5.map(n=>{
+              const isReset = n.type==='reset_password';
+              const icon  = isReset ? '🔑' : '🆕';
+              const color = isReset ? 'var(--gold)' : 'var(--green)';
+              const label = isReset ? L('طلب MDP','Demande MDP') : L('حساب جديد','Nouveau compte');
+              const date  = new Date(n.date).toLocaleDateString(I18N.currentLang==='ar'?'ar-DZ':'fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+              const statusIcon = n.status==='done'?'✅':n.status==='pending'?'⏳':'👁️';
+              return `<div style="display:flex;align-items:center;gap:.7rem;padding:.5rem 1rem;border-bottom:1px solid var(--border);font-size:.77rem">
+                <span>${icon}</span>
+                <div style="flex:1;min-width:0;overflow:hidden">
+                  <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(n.body)}</div>
+                  <div style="font-size:.67rem;color:var(--muted)">${date}</div>
+                </div>
+                <span style="color:${color};font-size:.7rem;font-weight:700;white-space:nowrap">${label}</span>
+                <span>${statusIcon}</span>
+              </div>`;
+            }).join('')}
+          </div>` : `<div style="text-align:center;padding:.8rem;color:var(--muted);font-size:.8rem">📭 ${L('لا توجد إشعارات بعد','Aucune notification encore')}</div>`}
+        </div>`;
         })()}
 
         <!-- Add Tenant Modal -->
@@ -4962,9 +5344,8 @@ function exportAttendanceMonthly() {
 
 let currentTab = 'tenant';
 function switchTab(t) {
-  currentTab = t;
-  document.getElementById('tabTenant')?.classList.toggle('active', t==='tenant');
-  document.getElementById('tabAdmin')?.classList.toggle('active', t==='admin');
+  currentTab = 'tenant'; // always tenant on main login
+  document.getElementById('tabTenant')?.classList.add('active');
 }
 
 function togglePass() {
@@ -5369,6 +5750,18 @@ function submitForgotRequest() {
   }).then(ok => {
     if (ok) console.log('📧 إيميل طلب كلمة المرور أُرسل للمسؤول');
   });
+  // ─── إرسال تأكيد للمستخدم أن طلبه وصل ───
+  try {
+    emailjs.send(getEmailJSConfig().SERVICE_ID, getEmailJSConfig().TEMPLATE_USER, {
+      to_email:    user.email,
+      to_name:     user.full_name,
+      user_email:  user.email,
+      company_name:tenant?.name||'',
+      date:        new Date().toLocaleDateString(I18N.currentLang==='ar'?'ar-DZ':'fr-DZ',{year:'numeric',month:'long',day:'numeric'}),
+      new_password:'[سيتم إرسالها من المسؤول قريباً / Sera envoyé par l\'admin]',
+      message:     `تم استلام طلبك لإعادة تعيين كلمة المرور. سيقوم المسؤول بمعالجة طلبك وإرسال كلمة المرور الجديدة إليك قريباً.`
+    }).then(()=>console.log('✅ تأكيد الطلب أُرسل للمستخدم')).catch(e=>console.warn('تأكيد المستخدم:',e));
+  } catch(e){ console.warn(e); }
   msgEl.style.display='block'; msgEl.style.background='rgba(52,195,143,.08)'; msgEl.style.border='1px solid rgba(52,195,143,.25)'; msgEl.style.color='#6eddb5';
   msgEl.textContent=L('✅ تم إرسال طلبك بنجاح! سيقوم المسؤول بتعيين كلمة مرور جديدة لك قريبًا.','✅ Demande envoyée avec succès ! L\'administrateur vous attribuera un nouveau mot de passe.');
   setTimeout(() => { document.getElementById('forgotModal')?.remove(); }, 2500);
@@ -5459,11 +5852,35 @@ function dismissNotif(notifId) {
   App.navigate('admin');
 }
 
+// ── حفظ إعدادات EmailJS من صفحة المسؤول ──
+function saveEmailJSSettings() {
+  const cfg = {
+    SERVICE_ID:     (document.getElementById('ejs_service')?.value||'').trim(),
+    PUBLIC_KEY:     (document.getElementById('ejs_pubkey')?.value||'').trim(),
+    TEMPLATE_ADMIN: (document.getElementById('ejs_tmpl_admin')?.value||'').trim(),
+    TEMPLATE_USER:  (document.getElementById('ejs_tmpl_user')?.value||'').trim(),
+    ADMIN_EMAIL:    (document.getElementById('ejs_email')?.value||'').trim(),
+  };
+  if (!cfg.SERVICE_ID || !cfg.PUBLIC_KEY) {
+    Toast.error(L('❌ Service ID و Public Key مطلوبان','❌ Service ID et Public Key sont requis'));
+    return;
+  }
+  saveEmailJSConfig(cfg);
+  Toast.success(L('✅ تم حفظ إعدادات EmailJS بنجاح','✅ Configuration EmailJS sauvegardée'));
+}
+
+// ── إعادة ضبط إعدادات EmailJS للقيم الافتراضية ──
+function resetEmailJSSettings() {
+  if (!confirm(L('هل تريد إعادة الضبط للقيم الافتراضية؟','Réinitialiser aux valeurs par défaut ?'))) return;
+  localStorage.removeItem('sbtp_emailjs_config');
+  Toast.success(L('🔄 تم إعادة الضبط للقيم الافتراضية','🔄 Réinitialisé aux valeurs par défaut'));
+  App.navigate('admin');
+}
+
 // ── اختبار اتصال EmailJS ──
-async function testEmailJS() {
-  const btn = event.target;
-  btn.disabled = true;
-  btn.textContent = L('⏳ جاري الاختبار...','⏳ Test en cours...');
+async function testEmailJS(event) {
+  const btn = event && event.target ? event.target : document.querySelector('[onclick*="testEmailJS"]');
+  if(btn) { btn.disabled = true; btn.textContent = L('⏳ جاري الاختبار...','⏳ Test en cours...'); }
   try {
     const result = await emailjs.send(
       EMAILJS.SERVICE_ID,
@@ -5481,13 +5898,10 @@ async function testEmailJS() {
       }
     );
     Toast.success(L('✅ الاتصال يعمل! تم إرسال إيميل اختباري إلى ' + EMAILJS.ADMIN_EMAIL, '✅ Connexion OK! Email de test envoyé à ' + EMAILJS.ADMIN_EMAIL));
-    btn.textContent = L('✅ الاتصال يعمل','✅ Connexion OK');
-    btn.className = 'btn btn-green btn-sm';
+    if(btn) { btn.textContent = L('✅ يعمل','✅ OK'); btn.className = 'btn btn-green btn-sm'; }
   } catch(e) {
     Toast.error(L('❌ فشل الاتصال: ' + (e.text || e.message || 'خطأ غير معروف'), '❌ Connexion échouée: ' + (e.text || e.message || 'Erreur inconnue')));
-    btn.textContent = L('❌ فشل الاتصال','❌ Connexion échouée');
-    btn.className = 'btn btn-red btn-sm';
-    btn.disabled = false;
+    if(btn) { btn.textContent = L('❌ فشل','❌ Échec'); btn.className = 'btn btn-red btn-sm'; btn.disabled = false; }
   }
 }
 
@@ -5509,23 +5923,6 @@ document.addEventListener('keydown', e => {
    v5.0 NEW FEATURES
 ══════════════════════════════════════════════════════ */
 
-/* ── ROLES & PERMISSIONS ── */
-const ROLE_NAMES = {admin:'مسؤول',manager:'مدير مشروع',accountant:'محاسب',hr:'موارد بشرية',viewer:'قارئ فقط'};
-const MONTHS_AR = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-
-function canDo(action) {
-  const u = Auth.getUser();
-  if (!u) return false;
-  if (u.is_admin) return true;
-  const perms = {
-    admin: {all:true},
-    manager: {projects:true,workers:true,attendance:true,materials:true,documents:true,notes:true},
-    accountant: {transactions:true,reports:true,invoices:true},
-    hr: {workers:true,attendance:true,salary:true},
-    viewer: {}
-  };
-  return (perms[u.role] || {}).all || !!(perms[u.role] || {})[action];
-}
 
 function roleBadge(role) {
   const map = {admin:'badge-role-admin',manager:'badge-role-manager',accountant:'badge-role-accountant',hr:'badge-role-hr',viewer:'badge-role-viewer'};
@@ -5681,49 +6078,96 @@ function sidebarHTML(active='') {
   const tenant = Auth.getTenant();
   const unread = DB.get('notifications').filter(n => n.tenant_id === user?.tenant_id && !n.read).length;
   const isAdmin = user?.is_admin;
+
+  // Helper: render a nav link only if user can view that page
+  function navLink(page, icon, label, badge='') {
+    if (!isAdmin && !canView(page)) return ''; // hide if no access
+    const isReadOnly = !isAdmin && !canWrite(page) && canView(page);
+    const lockIcon = isReadOnly ? ' <span style="font-size:.55rem;opacity:.5;margin-right:auto">👁️</span>' : '';
+    return `<button class="nav-link ${active===page?'active':''}" data-nav="${page}">
+      <span class="nav-link-icon">${icon}</span>${label}${lockIcon}${badge}
+    </button>`;
+  }
+
   let navHTML = '';
   if (isAdmin) {
+    const un = (DB.get('admin_notifications')||[]).filter(n=>!n.read).length;
+    const unBadge = un>0?`<span style="background:var(--red);color:#fff;border-radius:20px;padding:0 6px;font-size:.6rem;margin-right:auto">${un}</span>`:'';
     navHTML = `
       <div class="nav-section-label">الإدارة</div>
-      <button class="nav-link ${active==='admin'?'active':''}" data-nav="admin"><span class="nav-link-icon">👑</span>لوحة التحكم${(()=>{const un=(DB.get('admin_notifications')||[]).filter(n=>!n.read).length;return un>0?`<span style="background:var(--red);color:#fff;border-radius:20px;padding:0 6px;font-size:.6rem;margin-right:auto">${un}</span>`:'';})()} </button>
+      <button class="nav-link ${active==='admin'?'active':''}" data-nav="admin"><span class="nav-link-icon">👑</span>لوحة التحكم${unBadge}</button>
     `;
   } else {
-    navHTML = `
-      <div class="nav-section-label">${__('section.main')}</div>
-      <button class="nav-link ${active==='dashboard'?'active':''}" data-nav="dashboard"><span class="nav-link-icon">📊</span>${__('nav.dashboard')}</button>
-      <button class="nav-link ${active==='analytics'?'active':''}" data-nav="analytics"><span class="nav-link-icon">📈</span>${__('nav.analytics')}</button>
-      <div class="nav-section-label">${__('section.projects')}</div>
-      <button class="nav-link ${active==='projects'?'active':''}" data-nav="projects"><span class="nav-link-icon">🏗️</span>${__('nav.projects')}</button>
-      <button class="nav-link ${active==='compare'?'active':''}" data-nav="compare"><span class="nav-link-icon">📊</span>${__('nav.compare')}</button>
-      <button class="nav-link ${active==='calendar'?'active':''}" data-nav="calendar"><span class="nav-link-icon">🗓️</span>${__('nav.calendar')}</button>
-      <button class="nav-link ${active==='map'?'active':''}" data-nav="map"><span class="nav-link-icon">🗺️</span>${__('nav.map')}</button>
-      <button class="nav-link ${active==='kanban'?'active':''}" data-nav="kanban"><span class="nav-link-icon">📋</span>${__('nav.kanban')}</button>
-      <button class="nav-link ${active==='gantt'?'active':''}" data-nav="gantt"><span class="nav-link-icon">📅</span>${__('nav.gantt')}</button>
-      <div class="nav-section-label">${__('section.hr')}</div>
-      <button class="nav-link ${active==='workers'?'active':''}" data-nav="workers"><span class="nav-link-icon">👷</span>${__('nav.workers')}</button>
-      <button class="nav-link ${active==='attendance'?'active':''}" data-nav="attendance"><span class="nav-link-icon">📋</span>${__('nav.attendance')}</button>
-      <button class="nav-link ${active==='salary'?'active':''}" data-nav="salary"><span class="nav-link-icon">💵</span>${__('nav.salary')}</button>
-      <div class="nav-section-label">${__('section.finance')}</div>
-      <button class="nav-link ${active==='transactions'?'active':''}" data-nav="transactions"><span class="nav-link-icon">💰</span>${__('nav.transactions')}</button>
-      <button class="nav-link ${active==='invoices'?'active':''}" data-nav="invoices"><span class="nav-link-icon">🧾</span>${__('nav.invoices')}</button>
-      <div class="nav-section-label">${__('section.stock')}</div>
-      <button class="nav-link ${active==='inventory'?'active':''}" data-nav="inventory"><span class="nav-link-icon">📦</span>${__('nav.inventory')}</button>
-      <button class="nav-link ${active==='equipment'?'active':''}" data-nav="equipment"><span class="nav-link-icon">🚜</span>${__('nav.equipment')}</button>
-      <div class="nav-section-label">${__('section.docs')}</div>
-      <button class="nav-link ${active==='documents'?'active':''}" data-nav="documents"><span class="nav-link-icon">📁</span>${__('nav.documents')}</button>
-      <button class="nav-link ${active==='reports'?'active':''}" data-nav="reports"><span class="nav-link-icon">📈</span>${__('nav.reports')}</button>
-      <button class="nav-link ${active==='bank_report'?'active':''}" data-nav="bank_report"><span class="nav-link-icon">🏦</span>تقرير بنكي</button>
-      <button class="nav-link ${active==='simulator'?'active':''}" data-nav="simulator"><span class="nav-link-icon">🧮</span>محاكي الربح</button>
-      <button class="nav-link ${active==='obligations'?'active':''}" data-nav="obligations"><span class="nav-link-icon">⏰</span>الالتزامات القادمة</button>
-      <button class="nav-link ${active==='audit_log'?'active':''}" data-nav="audit_log"><span class="nav-link-icon">📋</span>سجل النشاط</button>
-      <button class="nav-link ${active==='team'?'active':''}" data-nav="team"><span class="nav-link-icon">👥</span>${__('nav.team')}</button>
-      <button class="nav-link ${active==='settings'?'active':''}" data-nav="settings"><span class="nav-link-icon">⚙️</span>${__('nav.settings')}</button>
-    `;
+    // ── Main Section ──
+    const mainLinks = [
+      navLink('dashboard','📊',__('nav.dashboard')),
+      navLink('analytics','📈',__('nav.analytics')),
+    ].filter(Boolean).join('');
+
+    // ── Projects Section ──
+    const projectLinks = [
+      navLink('projects','🏗️',__('nav.projects')),
+      navLink('compare','📊',__('nav.compare')),
+      navLink('calendar','🗓️',__('nav.calendar')),
+      navLink('map','🗺️',__('nav.map')),
+      navLink('kanban','📋',__('nav.kanban')),
+      navLink('gantt','📅',__('nav.gantt')),
+    ].filter(Boolean).join('');
+
+    // ── HR Section ──
+    const hrLinks = [
+      navLink('workers','👷',__('nav.workers')),
+      navLink('attendance','📋',__('nav.attendance')),
+      navLink('salary','💵',__('nav.salary')),
+    ].filter(Boolean).join('');
+
+    // ── Finance Section ──
+    const finLinks = [
+      navLink('transactions','💰',__('nav.transactions')),
+      navLink('invoices','🧾',__('nav.invoices')),
+    ].filter(Boolean).join('');
+
+    // ── Stock Section ──
+    const stockLinks = [
+      navLink('inventory','📦',__('nav.inventory')),
+      navLink('equipment','🚜',__('nav.equipment')),
+    ].filter(Boolean).join('');
+
+    // ── Docs & Reports Section ──
+    const docLinks = [
+      navLink('documents','📁',__('nav.documents')),
+      navLink('reports','📈',__('nav.reports')),
+      navLink('bank_report','🏦',L('تقرير بنكي','Rapport bancaire')),
+      navLink('simulator','🧮',L('محاكي الربح','Simulateur')),
+      navLink('obligations','⏰',L('الالتزامات','Obligations')),
+      navLink('audit_log','📋',L('سجل النشاط','Journal activité')),
+    ].filter(Boolean).join('');
+
+    // ── Account Section ──
+    const accountLinks = [
+      navLink('team','👥',__('nav.team')),
+      navLink('settings','⚙️',__('nav.settings')),
+    ].filter(Boolean).join('');
+
+    // Build nav with sections (only show section label if it has items)
+    navHTML = '';
+    if(mainLinks)     navHTML += `<div class="nav-section-label">${__('section.main')}</div>${mainLinks}`;
+    if(projectLinks)  navHTML += `<div class="nav-section-label">${__('section.projects')}</div>${projectLinks}`;
+    if(hrLinks)       navHTML += `<div class="nav-section-label">${__('section.hr')}</div>${hrLinks}`;
+    if(finLinks)      navHTML += `<div class="nav-section-label">${__('section.finance')}</div>${finLinks}`;
+    if(stockLinks)    navHTML += `<div class="nav-section-label">${__('section.stock')}</div>${stockLinks}`;
+    if(docLinks)      navHTML += `<div class="nav-section-label">${__('section.docs')}</div>${docLinks}`;
+    if(accountLinks)  navHTML += `<div class="nav-section-label">${__('section.account')}</div>${accountLinks}`;
   }
+
+  // Role badge shown in footer
+  const roleName = ROLE_NAMES[user?.role] || '';
+  const roleColor = {admin:'var(--gold)',manager:'var(--blue)',accountant:'var(--green)',hr:'var(--purple)',viewer:'var(--dim)'}[user?.role]||'var(--dim)';
+
   return `<aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
       <div class="sidebar-logo-icon">🏗️</div>
-      <div><div class="sidebar-logo-text">SmartBTP</div><div class="sidebar-logo-sub">v9.0 — الذكاء المالي</div></div>
+      <div><div class="sidebar-logo-text">SmartBTP</div><div class="sidebar-logo-sub">v20.0 — الذكاء المالي</div></div>
       <button class="sidebar-close-btn" onclick="window.closeSidebar()" title="إغلاق">✕</button>
     </div>
     <nav class="sidebar-nav">${navHTML}</nav>
@@ -5731,19 +6175,22 @@ function sidebarHTML(active='') {
       <div class="tenant-chip">
         ${avatarHtml(user?.full_name, user?.avatar_color, 32)}
         <div style="flex:1;min-width:0">
-          <div class="tenant-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(user?.full_name||'')}</div>
-          <div class="tenant-plan">${isAdmin?'👑 مسؤول':(ROLE_NAMES[user?.role]||'')}${unread>0?` <span style="background:var(--red);color:#fff;border-radius:8px;padding:0 5px;font-size:.6rem">${unread}</span>`:''}</div>
+          <div class="tenant-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(user?.full_name||'')}</div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <div class="tenant-plan" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(tenant?.name||'')}</div>
+            ${!isAdmin&&roleName?`<span style="font-size:.58rem;padding:1px 5px;border-radius:8px;background:rgba(255,255,255,0.06);color:${roleColor};flex-shrink:0">${roleName}</span>`:''}
+          </div>
         </div>
       </div>
-      <div style="display:flex;gap:.4rem;margin-bottom:.5rem">
-        <button onclick="I18N.setLang('ar')" style="flex:1;padding:.35rem;border-radius:8px;border:1px solid ${I18N.currentLang==='ar'?'var(--gold)':'var(--border)'};background:${I18N.currentLang==='ar'?'var(--gold-dim)':'transparent'};color:${I18N.currentLang==='ar'?'var(--gold)':'var(--muted)'};cursor:pointer;font-family:'Tajawal',sans-serif;font-size:.75rem;font-weight:700">🇩🇿 عربي</button>
-        <button onclick="I18N.setLang('fr')" style="flex:1;padding:.35rem;border-radius:8px;border:1px solid ${I18N.currentLang==='fr'?'var(--gold)':'var(--border)'};background:${I18N.currentLang==='fr'?'var(--gold-dim)':'transparent'};color:${I18N.currentLang==='fr'?'var(--gold)':'var(--muted)'};cursor:pointer;font-family:'Tajawal',sans-serif;font-size:.75rem;font-weight:700">🇫🇷 Français</button>
+      ${unread>0?`<div style="font-size:.72rem;color:var(--gold);padding:.3rem .8rem;background:rgba(232,184,75,0.08);border-radius:8px;margin-bottom:.4rem">🔔 ${unread} ${L('إشعار جديد','nouvelle(s) notification(s)')}</div>`:''}
+      <div style="display:flex;gap:.4rem;margin-bottom:.4rem">
+        <button onclick="I18N.setLang('ar')" style="flex:1;padding:.3rem;border-radius:8px;border:1px solid ${I18N.currentLang==='ar'?'var(--gold)':'var(--border)'};background:${I18N.currentLang==='ar'?'var(--gold-dim)':'transparent'};color:${I18N.currentLang==='ar'?'var(--gold)':'var(--muted)'};cursor:pointer;font-family:'Tajawal',sans-serif;font-size:.72rem;font-weight:700">🇩🇿 عربي</button>
+        <button onclick="I18N.setLang('fr')" style="flex:1;padding:.3rem;border-radius:8px;border:1px solid ${I18N.currentLang==='fr'?'var(--gold)':'var(--border)'};background:${I18N.currentLang==='fr'?'var(--gold-dim)':'transparent'};color:${I18N.currentLang==='fr'?'var(--gold)':'var(--muted)'};cursor:pointer;font-family:'Tajawal',sans-serif;font-size:.72rem;font-weight:700">🇫🇷 FR</button>
       </div>
-      <button class="nav-link logout" onclick="Auth.logout()"><span class="nav-link-icon">🚪</span>${I18N.currentLang==='ar'?'تسجيل الخروج':'Déconnexion'}</button>
+      <button class="nav-link logout" onclick="Auth.logout()">🚪 ${L('تسجيل الخروج','Déconnexion')}</button>
     </div>
   </aside>`;
 }
-
 /* ── OVERRIDE topbarHTML ── */
 topbarHTML = topbarHTMLv5;
 
@@ -6186,96 +6633,493 @@ Pages.invoices = function() {
   const projects = DB.get('projects').filter(p=>p.tenant_id===tid);
   const tenant = Auth.getTenant();
   const total_paid = invoices.filter(i=>i.status==='paid').reduce((s,i)=>s+Number(i.amount),0);
-  const total_pending = invoices.filter(i=>i.status!=='paid').reduce((s,i)=>s+Number(i.amount),0);
-  return layoutHTML('invoices', 'الفواتير', `
+  const total_pending = invoices.filter(i=>i.status==='pending').reduce((s,i)=>s+Number(i.amount),0);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const total_overdue = invoices.filter(i=>{
+    if(i.status==='paid') return false;
+    if(!i.due_date) return false;
+    return new Date(i.due_date) < today;
+  }).reduce((s,i)=>s+Number(i.amount),0);
+  const total_count_overdue = invoices.filter(i=>{
+    if(i.status==='paid') return false;
+    if(!i.due_date) return false;
+    return new Date(i.due_date) < today;
+  }).length;
+
+  const filterStatus = sessionStorage.getItem('inv_filter_status')||'all';
+  let filtered = invoices;
+  if(filterStatus==='paid') filtered=invoices.filter(i=>i.status==='paid');
+  else if(filterStatus==='pending') filtered=invoices.filter(i=>i.status==='pending'&&(!i.due_date||new Date(i.due_date)>=today));
+  else if(filterStatus==='overdue') filtered=invoices.filter(i=>i.status!=='paid'&&i.due_date&&new Date(i.due_date)<today);
+
+  const nextNum = 'FAC-'+(new Date().getFullYear())+'-'+String(invoices.length+1).padStart(3,'0');
+
+  return layoutHTML('invoices', L('الفواتير','Factures'), `
     <div class="page-header">
-      <div><div class="page-title">🧾 الفواتير</div><div class="page-sub">${invoices.length} فاتورة</div></div>
+      <div>
+        <div class="page-title">🧾 ${L('الفواتير','Factures')}</div>
+        <div class="page-sub">${invoices.length} ${L('فاتورة','facture(s)')}</div>
+      </div>
       <div class="page-actions">
-        ${canDo('transactions')?`<button class="btn btn-gold" data-modal-open="addInvModal">+ فاتورة جديدة</button>`:''}
+        ${canDo('transactions')?`<button class="btn btn-gold" data-modal-open="addInvModal">+ ${L('فاتورة جديدة','Nouvelle facture')}</button>`:''}
+        <button class="btn btn-ghost" onclick="exportInvoicesCSV()">📥 CSV</button>
       </div>
     </div>
-    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
-      <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value" style="color:var(--green);font-size:1rem">${fmt(total_paid)}</div><div class="stat-label">مدفوعة (دج)</div></div>
-      <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-value" style="color:var(--orange);font-size:1rem">${fmt(total_pending)}</div><div class="stat-label">معلقة (دج)</div></div>
-      <div class="stat-card"><div class="stat-icon">🧾</div><div class="stat-value">${invoices.length}</div><div class="stat-label">إجمالي الفواتير</div></div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:1.5rem">
+      <div class="stat-card" style="border-color:rgba(52,195,143,0.2)">
+        <div class="stat-icon">✅</div>
+        <div class="stat-value" style="color:var(--green);font-size:1.1rem">${fmt(total_paid)}</div>
+        <div class="stat-label">${L('مدفوعة (دج)','Payées (DA)')}</div>
+        <div style="font-size:.7rem;color:var(--dim);margin-top:4px">${invoices.filter(i=>i.status==='paid').length} ${L('فاتورة','facture(s)')}</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(255,112,67,0.2)">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-value" style="color:var(--orange);font-size:1.1rem">${fmt(total_pending)}</div>
+        <div class="stat-label">${L('معلقة (دج)','En attente (DA)')}</div>
+        <div style="font-size:.7rem;color:var(--dim);margin-top:4px">${invoices.filter(i=>i.status==='pending').length} ${L('فاتورة','facture(s)')}</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(240,78,106,0.2)">
+        <div class="stat-icon">🔴</div>
+        <div class="stat-value" style="color:var(--red);font-size:1.1rem">${fmt(total_overdue)}</div>
+        <div class="stat-label">${L('متأخرة (دج)','En retard (DA)')}</div>
+        <div style="font-size:.7rem;color:var(--dim);margin-top:4px">${total_count_overdue} ${L('فاتورة','facture(s)')}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🧾</div>
+        <div class="stat-value">${invoices.length}</div>
+        <div class="stat-label">${L('إجمالي الفواتير','Total factures')}</div>
+        <div style="font-size:.7rem;color:var(--dim);margin-top:4px">${invoices.length>0?Math.round(total_paid/(total_paid+total_pending+total_overdue)*100||0):0}% ${L('تم تحصيله','encaissé')}</div>
+      </div>
     </div>
+
+    <!-- Filter Tabs -->
+    <div style="display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap">
+      <button class="btn ${filterStatus==='all'?'btn-gold':'btn-ghost'} btn-sm" onclick="sessionStorage.setItem('inv_filter_status','all');App.navigate('invoices')">${L('الكل','Tout')} (${invoices.length})</button>
+      <button class="btn ${filterStatus==='paid'?'btn-green':'btn-ghost'} btn-sm" onclick="sessionStorage.setItem('inv_filter_status','paid');App.navigate('invoices')">✅ ${L('مدفوعة','Payées')} (${invoices.filter(i=>i.status==='paid').length})</button>
+      <button class="btn ${filterStatus==='pending'?'btn-blue':'btn-ghost'} btn-sm" onclick="sessionStorage.setItem('inv_filter_status','pending');App.navigate('invoices')">⏳ ${L('معلقة','En attente')} (${invoices.filter(i=>i.status==='pending').length})</button>
+      <button class="btn ${filterStatus==='overdue'?'btn-red':'btn-ghost'} btn-sm" onclick="sessionStorage.setItem('inv_filter_status','overdue');App.navigate('invoices')">🔴 ${L('متأخرة','En retard')} (${total_count_overdue})</button>
+    </div>
+
+    <!-- Table -->
     <div class="table-wrap">
-      <table><thead><tr><th>الرقم</th><th>العميل</th><th>المشروع</th><th>المبلغ</th><th>التاريخ</th><th>الحالة</th><th>الإجراءات</th></tr></thead>
-      <tbody>${invoices.map(inv=>{
-        const proj=projects.find(p=>p.id===inv.project_id);
-        return `<tr>
-          <td style="font-family:monospace;color:var(--gold);font-size:.82rem">${escHtml(inv.number)}</td>
-          <td style="font-weight:700">${escHtml(inv.client)}</td>
-          <td style="font-size:.78rem;color:var(--dim)">${proj?escHtml(proj.name.substring(0,20)):'—'}</td>
-          <td style="font-family:monospace;font-weight:700">${fmt(inv.amount)}</td>
-          <td style="font-size:.8rem;color:var(--dim)">${fmtDate(inv.date)}</td>
-          <td><span class="badge ${inv.status==='paid'?'badge-active':'badge-delayed'}">${inv.status==='paid'?'✅ مدفوعة':'⏳ معلقة'}</span></td>
-          <td><div style="display:flex;gap:.3rem">
-            <button class="btn btn-ghost btn-sm" onclick="printInvoicePDF(${inv.id})">🖨️</button>
-            ${canDo('transactions')?`<button class="btn btn-red btn-sm" onclick="deleteInvoiceItem(${inv.id})">🗑️</button>`:''}
-          </div></td>
-        </tr>`;
-      }).join('')}</tbody></table>
+      <table>
+        <thead><tr>
+          <th>${L('الرقم','N° Facture')}</th>
+          <th>${L('العميل','Client')}</th>
+          <th>${L('المشروع','Projet')}</th>
+          <th>${L('المبلغ TTC','Montant TTC')}</th>
+          <th>${L('تاريخ الإصدار','Date émission')}</th>
+          <th>${L('تاريخ الاستحقاق','Date échéance')}</th>
+          <th>${L('الحالة','Statut')}</th>
+          <th>${L('الإجراءات','Actions')}</th>
+        </tr></thead>
+        <tbody>${filtered.length===0?`<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--dim)">${L('لا توجد فواتير','Aucune facture')}</td></tr>`:filtered.map(inv=>{
+          const proj=projects.find(p=>p.id===inv.project_id);
+          const isOverdue = inv.status!=='paid' && inv.due_date && new Date(inv.due_date)<today;
+          const tvaRate=tenant?.tva_rate||19;
+          const amountHT=Math.round(Number(inv.amount)/(1+tvaRate/100));
+          let statusBadge='';
+          if(inv.status==='paid') statusBadge=`<span class="badge badge-active">✅ ${L('مدفوعة','Payée')}</span>`;
+          else if(isOverdue) statusBadge=`<span class="badge badge-delayed">🔴 ${L('متأخرة','En retard')}</span>`;
+          else statusBadge=`<span class="badge badge-paused">⏳ ${L('معلقة','En attente')}</span>`;
+          return `<tr ${isOverdue?'style="background:rgba(240,78,106,0.04)"':''}>
+            <td style="font-family:monospace;color:var(--gold);font-size:.82rem;font-weight:700">${escHtml(inv.number)}</td>
+            <td style="font-weight:700">${escHtml(inv.client)}</td>
+            <td style="font-size:.78rem;color:var(--dim)">${proj?escHtml(proj.name.substring(0,22)):'—'}</td>
+            <td>
+              <div style="font-family:monospace;font-weight:700">${fmt(inv.amount)} ${L('دج','DA')}</div>
+              <div style="font-size:.72rem;color:var(--dim)">HT: ${fmt(amountHT)}</div>
+            </td>
+            <td style="font-size:.8rem;color:var(--dim)">${fmtDate(inv.date)}</td>
+            <td style="font-size:.8rem;color:${isOverdue?'var(--red)':'var(--dim)'};font-weight:${isOverdue?'700':'400'}">${inv.due_date?fmtDate(inv.due_date):'—'}</td>
+            <td>${statusBadge}</td>
+            <td><div style="display:flex;gap:.3rem;flex-wrap:wrap">
+              <button class="btn btn-blue btn-sm" onclick="exportInvoicePDF(${inv.id})" title="${L('تصدير PDF','Exporter PDF')}">📄 PDF</button>
+              <button class="btn btn-ghost btn-sm" onclick="printInvoiceWindow(${inv.id})" title="${L('طباعة','Imprimer')}">🖨️</button>
+              ${inv.status!=='paid'&&canDo('transactions')?`<button class="btn btn-green btn-sm" onclick="markInvoicePaid(${inv.id})" title="${L('تأشير كمدفوعة','Marquer payée')}">✅</button>`:''}
+              ${canDo('transactions')?`<button class="btn btn-red btn-sm" onclick="deleteInvoiceItem(${inv.id})">🗑️</button>`:''}
+            </div></td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
     </div>
+
+    <!-- ADD INVOICE MODAL with Items -->
     <div class="modal-overlay" id="addInvModal">
-      <div class="modal">
-        <div class="modal-title">🧾 فاتورة جديدة</div>
+      <div class="modal modal-lg" style="max-width:700px">
+        <div class="modal-title">🧾 ${L('فاتورة جديدة','Nouvelle facture')}</div>
         <div class="form-grid-2">
-          <div class="form-group"><label class="form-label">رقم الفاتورة *</label><input class="form-input" id="invNum" placeholder="FAC-2025-001"></div>
-          <div class="form-group"><label class="form-label">العميل *</label><input class="form-input" id="invClient" placeholder="اسم العميل"></div>
-          <div class="form-group"><label class="form-label">المشروع</label><select class="form-select" id="invProj"><option value="">—</option>${projects.map(p=>`<option value="${p.id}">${escHtml(p.name)}</option>`).join('')}</select></div>
-          <div class="form-group"><label class="form-label">المبلغ (دج)</label><input class="form-input" id="invAmt" type="number" placeholder="0"></div>
-          <div class="form-group"><label class="form-label">التاريخ</label><input class="form-input" id="invDt" type="date" value="${todayStr()}"></div>
-          <div class="form-group"><label class="form-label">الحالة</label><select class="form-select" id="invSt"><option value="pending">معلقة</option><option value="paid">مدفوعة</option></select></div>
+          <div class="form-group">
+            <label class="form-label">${L('رقم الفاتورة *','N° Facture *')}</label>
+            <input class="form-input" id="invNum" value="${nextNum}" placeholder="FAC-2025-001">
+          </div>
+          <div class="form-group">
+            <label class="form-label">${L('العميل *','Client *')}</label>
+            <input class="form-input" id="invClient" placeholder="${L('اسم العميل أو الشركة','Nom client ou société')}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">${L('المشروع','Projet')}</label>
+            <select class="form-select" id="invProj">
+              <option value="">—</option>
+              ${projects.map(p=>`<option value="${p.id}">${escHtml(p.name)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">${L('الحالة','Statut')}</label>
+            <select class="form-select" id="invSt">
+              <option value="pending">${L('معلقة','En attente')}</option>
+              <option value="paid">${L('مدفوعة','Payée')}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">${L('تاريخ الإصدار','Date émission')}</label>
+            <input class="form-input" id="invDt" type="date" value="${todayStr()}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">${L('تاريخ الاستحقاق','Date échéance')}</label>
+            <input class="form-input" id="invDue" type="date">
+          </div>
+          <div class="form-group">
+            <label class="form-label">${L('طريقة الدفع','Mode paiement')}</label>
+            <select class="form-select" id="invPayMethod">
+              <option value="cash">${L('نقداً','Espèces')}</option>
+              <option value="bank">${L('تحويل بنكي','Virement bancaire')}</option>
+              <option value="check">${L('شيك','Chèque')}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">${L('نسبة TVA (%)','Taux TVA (%)')}</label>
+            <input class="form-input" id="invTVA" type="number" value="${tenant?.tva_rate||19}" min="0" max="100">
+          </div>
         </div>
-        <div class="form-group"><label class="form-label">الوصف</label><textarea class="form-textarea" id="invDesc" placeholder="وصف الفاتورة..."></textarea></div>
-        <div class="modal-footer"><button class="btn btn-ghost" data-modal-close>إلغاء</button><button class="btn btn-gold" onclick="addInvoiceItem()">💾 حفظ</button></div>
+
+        <!-- Invoice Line Items -->
+        <div style="margin-top:1rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem">
+            <label class="form-label" style="margin:0">${L('بنود الفاتورة','Lignes de la facture')}</label>
+            <button class="btn btn-ghost btn-sm" onclick="addInvLine()">${L('+ إضافة بند','+ Ajouter ligne')}</button>
+          </div>
+          <div id="invLines">
+            <div class="inv-line-row" style="display:grid;grid-template-columns:3fr 1fr 1fr auto;gap:.4rem;align-items:center;margin-bottom:.4rem">
+              <input class="form-input" placeholder="${L('وصف الخدمة / المادة','Description service / article')}" oninput="calcInvTotal()">
+              <input class="form-input" type="number" placeholder="${L('الكمية','Qté')}" value="1" min="0" oninput="calcInvTotal()">
+              <input class="form-input" type="number" placeholder="${L('سعر الوحدة','Prix unit.')} (دج)" min="0" oninput="calcInvTotal()">
+              <button class="btn btn-ghost btn-sm" onclick="this.closest('.inv-line-row').remove();calcInvTotal()">✕</button>
+            </div>
+          </div>
+          <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:.8rem 1rem;margin-top:.6rem">
+            <div style="display:flex;justify-content:space-between;font-size:.85rem;color:var(--muted);margin-bottom:.3rem">
+              <span>${L('المجموع خارج رسم (HT)','Sous-total HT')}</span>
+              <span id="inv_total_ht" style="font-family:monospace">0 ${L('دج','DA')}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:.85rem;color:var(--muted);margin-bottom:.3rem">
+              <span>TVA (<span id="inv_tva_pct">${tenant?.tva_rate||19}</span>%)</span>
+              <span id="inv_total_tva" style="font-family:monospace">0 ${L('دج','DA')}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:1rem;font-weight:900;color:var(--gold);border-top:1px solid var(--border);padding-top:.4rem;margin-top:.3rem">
+              <span>${L('الإجمالي (TTC)','Total TTC')}</span>
+              <span id="inv_total_ttc" style="font-family:monospace">0 ${L('دج','DA')}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top:.8rem">
+          <label class="form-label">${L('ملاحظات / شروط الدفع','Notes / conditions de paiement')}</label>
+          <textarea class="form-textarea" id="invDesc" placeholder="${L('شروط الدفع، ملاحظات...','Conditions de paiement, notes...')}"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" data-modal-close>${L('إلغاء','Annuler')}</button>
+          <button class="btn btn-gold" onclick="addInvoiceItem()">💾 ${L('حفظ الفاتورة','Enregistrer')}</button>
+        </div>
       </div>
     </div>
   `);
 };
+
+function addInvLine() {
+  const L_fn = (ar, fr) => I18N.currentLang==='ar'?ar:fr;
+  const row = document.createElement('div');
+  row.className='inv-line-row';
+  row.style='display:grid;grid-template-columns:3fr 1fr 1fr auto;gap:.4rem;align-items:center;margin-bottom:.4rem';
+  row.innerHTML=`
+    <input class="form-input" placeholder="${L_fn('وصف الخدمة / المادة','Description service / article')}" oninput="calcInvTotal()">
+    <input class="form-input" type="number" placeholder="${L_fn('الكمية','Qté')}" value="1" min="0" oninput="calcInvTotal()">
+    <input class="form-input" type="number" placeholder="${L_fn('سعر الوحدة','Prix unit.')} (دج)" min="0" oninput="calcInvTotal()">
+    <button class="btn btn-ghost btn-sm" onclick="this.closest('.inv-line-row').remove();calcInvTotal()">✕</button>
+  `;
+  document.getElementById('invLines')?.appendChild(row);
+}
+
+function calcInvTotal() {
+  const tvaRate = Number(document.getElementById('invTVA')?.value)||19;
+  document.getElementById('inv_tva_pct').textContent = tvaRate;
+  const rows = document.querySelectorAll('#invLines .inv-line-row');
+  let totalHT = 0;
+  rows.forEach(r=>{
+    const inputs = r.querySelectorAll('input');
+    const qty = parseFloat(inputs[1]?.value)||0;
+    const price = parseFloat(inputs[2]?.value)||0;
+    totalHT += qty*price;
+  });
+  const tva = Math.round(totalHT * tvaRate / 100);
+  const ttc = totalHT + tva;
+  const suffix = I18N.currentLang==='ar'?' دج':' DA';
+  document.getElementById('inv_total_ht').textContent = totalHT.toLocaleString('fr-DZ') + suffix;
+  document.getElementById('inv_total_tva').textContent = tva.toLocaleString('fr-DZ') + suffix;
+  document.getElementById('inv_total_ttc').textContent = ttc.toLocaleString('fr-DZ') + suffix;
+}
+
 function addInvoiceItem() {
-  const num=document.getElementById('invNum')?.value?.trim(), client=document.getElementById('invClient')?.value?.trim();
-  if(!num||!client){Toast.error('أدخل رقم الفاتورة والعميل');return;}
+  const num=document.getElementById('invNum')?.value?.trim();
+  const client=document.getElementById('invClient')?.value?.trim();
+  if(!num||!client){Toast.error(L('أدخل رقم الفاتورة والعميل','Renseignez le numéro et le client'));return;}
+
+  // Collect line items
+  const rows = document.querySelectorAll('#invLines .inv-line-row');
+  const items=[];
+  rows.forEach(r=>{
+    const inputs=r.querySelectorAll('input');
+    const desc=inputs[0]?.value?.trim()||'';
+    const qty=parseFloat(inputs[1]?.value)||0;
+    const price=parseFloat(inputs[2]?.value)||0;
+    if(desc||qty||price) items.push({desc,qty,price,total:qty*price});
+  });
+
+  const tvaRate=Number(document.getElementById('invTVA')?.value)||19;
+  const totalHT=items.reduce((s,i)=>s+i.total,0);
+  const tva=Math.round(totalHT*tvaRate/100);
+  const ttc=totalHT+tva;
+  // Use manual amount if no items entered
+  const amount = ttc>0 ? ttc : 0;
+
   const invs=DB.get('invoices');
-  invs.push({id:DB.nextId('invoices'),tenant_id:Auth.getUser().tenant_id,number:num,client,project_id:Number(document.getElementById('invProj')?.value)||null,amount:Number(document.getElementById('invAmt')?.value)||0,date:document.getElementById('invDt')?.value||todayStr(),status:document.getElementById('invSt')?.value||'pending',description:document.getElementById('invDesc')?.value||''});
-  DB.set('invoices',invs);Toast.success('✅ تم إضافة الفاتورة');App.navigate('invoices');
+  invs.push({
+    id:DB.nextId('invoices'),
+    tenant_id:Auth.getUser().tenant_id,
+    number:num,
+    client,
+    project_id:Number(document.getElementById('invProj')?.value)||null,
+    amount,
+    amount_ht:totalHT,
+    tva_rate:tvaRate,
+    tva_amount:tva,
+    date:document.getElementById('invDt')?.value||todayStr(),
+    due_date:document.getElementById('invDue')?.value||'',
+    status:document.getElementById('invSt')?.value||'pending',
+    payment_method:document.getElementById('invPayMethod')?.value||'cash',
+    description:document.getElementById('invDesc')?.value||'',
+    items
+  });
+  DB.set('invoices',invs);
+  Toast.success(L('✅ تم إضافة الفاتورة','✅ Facture créée avec succès'));
+  App.navigate('invoices');
 }
+
 function deleteInvoiceItem(id) {
-  if(!confirm('حذف هذه الفاتورة؟'))return;
-  DB.set('invoices',DB.get('invoices').filter(i=>i.id!==id));Toast.success('تم الحذف');App.navigate('invoices');
+  if(!confirm(L('حذف هذه الفاتورة؟','Supprimer cette facture ?')))return;
+  DB.set('invoices',DB.get('invoices').filter(i=>i.id!==id));
+  Toast.success(L('تم الحذف','Supprimé'));
+  App.navigate('invoices');
 }
-function printInvoicePDF(id) {
+
+function markInvoicePaid(id) {
+  const invs=DB.get('invoices');
+  const idx=invs.findIndex(i=>i.id===id);
+  if(idx<0)return;
+  invs[idx].status='paid';
+  invs[idx].paid_date=todayStr();
+  DB.set('invoices',invs);
+  Toast.success(L('✅ تم تأشير الفاتورة كمدفوعة','✅ Facture marquée comme payée'));
+  App.navigate('invoices');
+}
+
+function exportInvoicesCSV() {
+  const tid=Auth.getUser().tenant_id;
+  const invoices=DB.get('invoices').filter(i=>i.tenant_id===tid);
+  const header=[L('الرقم','N° Facture'),L('العميل','Client'),L('المبلغ TTC','Montant TTC'),L('المبلغ HT','Montant HT'),L('TVA','TVA'),L('التاريخ','Date émission'),L('الاستحقاق','Échéance'),L('الحالة','Statut')];
+  const rows=invoices.map(i=>[i.number,i.client,i.amount,i.amount_ht||'',i.tva_amount||'',i.date,i.due_date||'',i.status]);
+  const csv=[header,...rows].map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`Factures_SmartBTP_${todayStr()}.csv`;a.click();
+  Toast.success(L('✅ تم تصدير CSV','✅ CSV exporté'));
+}
+// ── Real PDF Export using jsPDF ──
+function exportInvoicePDF(id) {
+  const inv = DB.get('invoices').find(i=>i.id===id);
+  if (!inv) { Toast.error(L('الفاتورة غير موجودة','Facture introuvable')); return; }
+  const tenant = Auth.getTenant();
+  const proj = DB.get('projects').find(p=>p.id===inv.project_id);
+  const tvaRate = inv.tva_rate || tenant?.tva_rate || 19;
+  const amountHT = inv.amount_ht || Math.round(Number(inv.amount)/(1+tvaRate/100));
+  const tvaAmt = inv.tva_amount || (Number(inv.amount) - amountHT);
+
+  try {
+    const { jsPDF } = window.jspdf;
+    if (!jsPDF) throw new Error('jsPDF not loaded');
+    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    const pw = doc.internal.pageSize.getWidth();
+    const ph = doc.internal.pageSize.getHeight();
+
+    // Gold header bar
+    doc.setFillColor(232,184,75);
+    doc.rect(0,0,pw,18,'F');
+    doc.setTextColor(9,18,10);
+    doc.setFontSize(14);doc.setFont('helvetica','bold');
+    doc.text('SmartBTP', 14, 12);
+    doc.setFontSize(9);doc.setFont('helvetica','normal');
+    doc.text(tenant?.name||'', pw-14, 12, {align:'right'});
+
+    // Invoice title block
+    doc.setTextColor(30,30,30);
+    doc.setFontSize(22);doc.setFont('helvetica','bold');
+    doc.text('FACTURE', pw-14, 35, {align:'right'});
+    doc.setFontSize(11);doc.setFont('helvetica','normal');
+    doc.setTextColor(200,144,48);
+    doc.text(inv.number, pw-14, 42, {align:'right'});
+
+    // Company info
+    doc.setTextColor(60,60,60);doc.setFontSize(9);
+    let y=25;
+    doc.setFont('helvetica','bold');doc.text(tenant?.name||'SmartBTP',14,y);
+    doc.setFont('helvetica','normal');
+    if(tenant?.address){y+=5;doc.text(tenant.address,14,y);}
+    if(tenant?.nif){y+=5;doc.text('NIF: '+tenant.nif,14,y);}
+    if(tenant?.nis){y+=5;doc.text('NIS: '+tenant.nis,14,y);}
+    if(tenant?.rc_number){y+=5;doc.text('RC: '+tenant.rc_number,14,y);}
+
+    // Client box
+    doc.setFillColor(248,248,248);
+    doc.roundedRect(14,52,86,28,3,3,'F');
+    doc.setDrawColor(220,220,220);doc.roundedRect(14,52,86,28,3,3,'D');
+    doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(140,140,140);
+    doc.text('CLIENT',17,59);
+    doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(30,30,30);
+    doc.text(inv.client||'—',17,66);
+    if(proj){doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(100,100,100);doc.text('Projet: '+proj.name,17,72);}
+
+    // Dates box
+    doc.setFillColor(248,248,248);
+    doc.roundedRect(pw-100,52,86,28,3,3,'F');
+    doc.setDrawColor(220,220,220);doc.roundedRect(pw-100,52,86,28,3,3,'D');
+    doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(140,140,140);
+    doc.text("DATE D'ÉMISSION",pw-97,59);
+    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(30,30,30);
+    doc.text(inv.date||'—',pw-97,65);
+    if(inv.due_date){
+      doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(140,140,140);
+      doc.text("DATE D'ÉCHÉANCE",pw-97,72);
+      doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(200,50,50);
+      doc.text(inv.due_date,pw-97,77);
+    }
+
+    // Status badge
+    if(inv.status==='paid'){doc.setFillColor(52,195,143);}else{doc.setFillColor(255,112,67);}
+    doc.roundedRect(pw-42,55,28,10,3,3,'F');
+    doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(8);
+    doc.text(inv.status==='paid'?'PAYÉE':'EN ATTENTE',pw-28,62,{align:'center'});
+
+    // Items table
+    const tableY = 88;
+    const items = inv.items && inv.items.length > 0 ? inv.items : [
+      {desc: inv.description||'Prestations de service', qty:1, price:amountHT, total:amountHT}
+    ];
+    doc.autoTable({
+      startY: tableY,
+      head:[['Description','Qté','Prix unit. (DA)','Total HT (DA)']],
+      body: items.map(it=>[it.desc||'Service',it.qty||1,Number(it.price||0).toLocaleString('fr-DZ'),Number(it.total||0).toLocaleString('fr-DZ')]),
+      theme:'grid',
+      headStyles:{fillColor:[232,184,75],textColor:[9,18,10],fontStyle:'bold',fontSize:9},
+      bodyStyles:{fontSize:9,textColor:[40,40,40]},
+      alternateRowStyles:{fillColor:[252,252,252]},
+      columnStyles:{0:{cellWidth:'auto'},1:{cellWidth:20,halign:'center'},2:{cellWidth:40,halign:'right'},3:{cellWidth:40,halign:'right'}},
+      margin:{left:14,right:14}
+    });
+
+    // Totals
+    const finalY = doc.lastAutoTable.finalY + 6;
+    const tw = 80;
+    const tx = pw - 14 - tw;
+    doc.setFillColor(250,250,250);doc.setDrawColor(220,220,220);
+    doc.roundedRect(tx,finalY,tw,30,3,3,'FD');
+    doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(80,80,80);
+    doc.text('Total HT:',tx+4,finalY+8);
+    doc.text(Number(amountHT).toLocaleString('fr-DZ')+' DA',tx+tw-4,finalY+8,{align:'right'});
+    doc.text(`TVA (${tvaRate}%):`,tx+4,finalY+15);
+    doc.text(Number(tvaAmt).toLocaleString('fr-DZ')+' DA',tx+tw-4,finalY+15,{align:'right'});
+    doc.setDrawColor(200,200,200);doc.line(tx+4,finalY+18,tx+tw-4,finalY+18);
+    doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(200,144,48);
+    doc.text('Total TTC:',tx+4,finalY+26);
+    doc.text(Number(inv.amount).toLocaleString('fr-DZ')+' DA',tx+tw-4,finalY+26,{align:'right'});
+
+    // Notes/conditions
+    if(inv.description && inv.items?.length > 0){
+      doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(100,100,100);
+      doc.text('Notes / Conditions:',14,finalY+8);
+      doc.setFont('helvetica','normal');
+      doc.text(doc.splitTextToSize(inv.description,tx-20),14,finalY+14);
+    }
+
+    // Legal footer
+    const footY = ph - 20;
+    doc.setDrawColor(232,184,75);doc.line(14,footY,pw-14,footY);
+    doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(140,140,140);
+    let legalStr = 'SmartBTP — Plateforme de gestion BTP algérienne';
+    if(tenant?.nif) legalStr += ' | NIF: '+tenant.nif;
+    if(tenant?.nis) legalStr += ' | NIS: '+tenant.nis;
+    doc.text(legalStr,pw/2,footY+5,{align:'center'});
+    doc.text('Généré le: '+new Date().toLocaleDateString('fr-DZ'),pw/2,footY+10,{align:'center'});
+
+    doc.save(`Facture_${inv.number.replace(/[^a-zA-Z0-9-]/g,'_')}.pdf`);
+    Toast.success(L('✅ تم تصدير PDF بنجاح','✅ PDF exporté avec succès'));
+  } catch(e) {
+    console.error('PDF error:', e);
+    Toast.info(L('جارٍ فتح نافذة الطباعة...','Ouverture de la fenêtre d\'impression...'));
+    printInvoiceWindow(id);
+  }
+}
+
+function printInvoiceWindow(id) {
   const inv=DB.get('invoices').find(i=>i.id===id);
   const tenant=Auth.getTenant();
   const proj=DB.get('projects').find(p=>p.id===inv?.project_id);
-  if(!inv){Toast.error('الفاتورة غير موجودة');return;}
-  const tvaRate = tenant?.tva_rate || 19;
-  const amountHT = Math.round(Number(inv.amount) / (1 + tvaRate/100));
-  const tvaAmount = Number(inv.amount) - amountHT;
-  // Simple QR code data string as text
-  const qrData = `FAC:${inv.number}|CLIENT:${inv.client}|AMOUNT:${inv.amount}|DATE:${inv.date}`;
+  if(!inv){Toast.error(L('الفاتورة غير موجودة','Facture introuvable'));return;}
+  const tvaRate = inv.tva_rate || tenant?.tva_rate || 19;
+  const amountHT = inv.amount_ht || Math.round(Number(inv.amount) / (1 + tvaRate/100));
+  const tvaAmount = inv.tva_amount || (Number(inv.amount) - amountHT);
+  const items = inv.items && inv.items.length>0 ? inv.items : [{desc:inv.description||'Prestations de service',qty:1,price:amountHT,total:amountHT}];
+
+  const isAr = I18N.currentLang === 'ar';
   const win=window.open('','_blank');
-  win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><style>
-    body{font-family:Arial,sans-serif;margin:40px;color:#1a1a1a;direction:rtl;background:#fff}
-    .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #E8B84B;padding-bottom:20px;margin-bottom:30px}
-    .logo{font-size:22px;font-weight:900;color:#C49030}.logo-sub{font-size:11px;color:#888;margin-top:4px}
-    .inv-title{font-size:18px;font-weight:900;color:#333}.inv-num{font-size:13px;color:#E8B84B;font-weight:700}
-    .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+  win.document.write(`<!DOCTYPE html><html dir="${isAr?'rtl':'ltr'}" lang="${isAr?'ar':'fr'}"><head><meta charset="UTF-8"><title>Facture ${inv.number}</title><style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Arial,sans-serif;color:#1a1a1a;background:#fff;padding:30px;max-width:800px;margin:0 auto}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #E8B84B;padding-bottom:16px;margin-bottom:24px}
+    .logo{font-size:20px;font-weight:900;color:#C49030} .logo-sub{font-size:10px;color:#888;margin-top:3px}
+    .inv-title-block{text-align:right}
+    .inv-title{font-size:26px;font-weight:900;color:#333;letter-spacing:1px} .inv-num{font-size:13px;color:#E8B84B;font-weight:700}
+    .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
     .info-box{background:#f9f9f9;border:1px solid #eee;border-radius:8px;padding:12px}
-    .info-label{font-size:11px;color:#888;margin-bottom:3px}
-    .info-value{font-size:14px;font-weight:700}
-    table{width:100%;border-collapse:collapse;margin:20px 0}
-    th{background:#f0f0f0;padding:10px;text-align:right;border:1px solid #ddd;font-size:13px}
-    td{padding:10px;border:1px solid #ddd;font-size:13px}
-    .total-row{background:#fff8e7;font-weight:900;font-size:15px;color:#C49030}
-    .tva-section{background:#f5f5f5;border:1px solid #ddd;border-radius:8px;padding:12px;margin:10px 0}
-    .legal-footer{display:flex;justify-content:space-between;align-items:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid #eee}
-    .qr-placeholder{width:80px;height:80px;border:2px solid #ccc;display:flex;align-items:center;justify-content:center;font-size:8px;text-align:center;color:#888;border-radius:4px}
-    .footer{margin-top:10px;text-align:center;font-size:11px;color:#888}
-    .status-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;background:${inv.status==='paid'?'#d4edda':'#fff3cd'};color:${inv.status==='paid'?'#155724':'#856404'}}
-    .stamp{border:3px solid #C49030;border-radius:50%;width:70px;height:70px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:800;text-align:center;color:#C49030;transform:rotate(-15deg);opacity:0.7}
+    .info-label{font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+    .info-value{font-size:13px;font-weight:700}
+    table{width:100%;border-collapse:collapse;margin:16px 0;font-size:12px}
+    thead th{background:#f5f5f5;padding:10px 12px;text-align:right;border:1px solid #e8e8e8;font-weight:700;font-size:11px}
+    tbody td{padding:10px 12px;border:1px solid #eee;vertical-align:top}
+    tbody tr:nth-child(even) td{background:#fafafa}
+    .totals{float:right;width:280px;margin-top:8px}
+    .total-line{display:flex;justify-content:space-between;padding:6px 0;font-size:12px;border-bottom:1px solid #f0f0f0}
+    .total-final{font-size:16px;font-weight:900;color:#C49030;border-top:2px solid #E8B84B;margin-top:4px;padding-top:8px}
+    .status{display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;background:${inv.status==='paid'?'#d4edda':'#fff3cd'};color:${inv.status==='paid'?'#155724':'#856404'}}
+    .footer{clear:both;margin-top:40px;padding-top:12px;border-top:1px solid #eee;font-size:10px;color:#aaa;text-align:center}
+    .stamp{float:left;width:80px;height:80px;border:3px solid #C49030;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:800;text-align:center;color:#C49030;transform:rotate(-15deg);opacity:0.7;line-height:1.4}
+    @media print{body{padding:0} .no-print{display:none}}
   </style></head><body>
+  <div class="no-print" style="margin-bottom:20px;display:flex;gap:8px">
+    <button onclick="window.print()" style="padding:8px 20px;background:#E8B84B;border:none;border-radius:6px;cursor:pointer;font-weight:700">🖨️ ${isAr?'طباعة':'Imprimer'}</button>
+    <button onclick="window.close()" style="padding:8px 20px;background:#f0f0f0;border:none;border-radius:6px;cursor:pointer">${isAr?'إغلاق':'Fermer'}</button>
+  </div>
   <div class="header">
     <div>
       <div class="logo">🏗️ SmartBTP</div>
@@ -6285,41 +7129,50 @@ function printInvoicePDF(id) {
       ${tenant?.nis?`<div class="logo-sub">NIS: ${escHtml(tenant.nis)}</div>`:''}
       ${tenant?.address?`<div class="logo-sub">📍 ${escHtml(tenant.address)}</div>`:''}
     </div>
-    <div style="text-align:left">
-      <div class="inv-title">فاتورة</div>
+    <div class="inv-title-block">
+      <div class="inv-title">${isAr?'فاتورة':'FACTURE'}</div>
       <div class="inv-num">${escHtml(inv.number)}</div>
-      <div class="logo-sub">التاريخ: ${fmtDate(inv.date)}</div>
-      <div><span class="status-badge">${inv.status==='paid'?'✅ مدفوعة':'⏳ معلقة'}</span></div>
+      <div class="logo-sub">${isAr?'التاريخ':'Date'}: ${fmtDate(inv.date)}</div>
+      ${inv.due_date?`<div class="logo-sub" style="color:#e55">${isAr?'الاستحقاق':'Échéance'}: ${fmtDate(inv.due_date)}</div>`:''}
+      <div style="margin-top:6px"><span class="status">${inv.status==='paid'?(isAr?'✅ مدفوعة':'✅ Payée'):(isAr?'⏳ معلقة':'⏳ En attente')}</span></div>
     </div>
   </div>
   <div class="info-grid">
-    <div class="info-box"><div class="info-label">العميل</div><div class="info-value">${escHtml(inv.client)}</div></div>
-    <div class="info-box"><div class="info-label">المشروع</div><div class="info-value">${proj?escHtml(proj.name):'—'}</div></div>
-  </div>
-  <table><thead><tr><th>البيان</th><th>المبلغ (دج)</th></tr></thead><tbody>
-    <tr><td>وصف الخدمة: ${escHtml(inv.description||'خدمات بناء')}</td><td style="font-family:monospace;text-align:left">${fmt(amountHT)}</td></tr>
-  </tbody></table>
-  <div class="tva-section">
-    <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span>المبلغ خارج الرسم (HT)</span><span style="font-family:monospace;font-weight:700">${fmt(amountHT)} دج</span></div>
-    <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span>TVA (${tvaRate}%)</span><span style="font-family:monospace;font-weight:700">${fmt(tvaAmount)} دج</span></div>
-    <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:900;color:#C49030;border-top:1px solid #ddd;padding-top:8px"><span>المبلغ الإجمالي (TTC)</span><span style="font-family:monospace">${fmt(Number(inv.amount))} دج</span></div>
-  </div>
-  <div class="legal-footer">
-    <div>
-      <div style="font-size:10px;color:#888;margin-bottom:4px">المرجع القانوني</div>
-      ${tenant?.nif?`<div style="font-size:11px">NIF: <strong>${escHtml(tenant.nif)}</strong></div>`:''}
-      ${tenant?.nis?`<div style="font-size:11px">NIS: <strong>${escHtml(tenant.nis)}</strong></div>`:''}
-      ${tenant?.rc_number?`<div style="font-size:11px">RC: <strong>${escHtml(tenant.rc_number)}</strong></div>`:''}
+    <div class="info-box"><div class="info-label">${isAr?'العميل':'Client'}</div><div class="info-value">${escHtml(inv.client)}</div></div>
+    <div class="info-box">
+      <div class="info-label">${isAr?'المشروع':'Projet'}</div>
+      <div class="info-value">${proj?escHtml(proj.name):'—'}</div>
+      ${inv.payment_method?`<div class="info-label" style="margin-top:8px">${isAr?'طريقة الدفع':'Mode paiement'}</div><div class="info-value">${escHtml(inv.payment_method)}</div>`:''}
     </div>
-    <div style="text-align:center">
-      <div class="qr-placeholder">QR<br>${escHtml(inv.number)}</div>
-      <div style="font-size:9px;color:#aaa;margin-top:4px">رمز التحقق</div>
-    </div>
-    <div class="stamp">SmartBTP<br>فاتورة<br>رسمية</div>
   </div>
-  <div class="footer">SmartBTP v11.0 — منصة إدارة مشاريع البناء الجزائرية<br>تم إنشاؤها بتاريخ: ${new Date().toLocaleDateString('ar-DZ')} — الرقم التسلسلي: ${escHtml(inv.number)}</div>
+  <table>
+    <thead><tr>
+      <th>${isAr?'البيان':'Description'}</th>
+      <th style="text-align:center;width:60px">${isAr?'الكمية':'Qté'}</th>
+      <th style="text-align:right;width:120px">${isAr?'سعر الوحدة (دج)':'Prix unit. (DA)'}</th>
+      <th style="text-align:right;width:130px">${isAr?'الإجمالي (دج)':'Total HT (DA)'}</th>
+    </tr></thead>
+    <tbody>
+      ${items.map(it=>`<tr>
+        <td>${escHtml(it.desc||'—')}</td>
+        <td style="text-align:center">${it.qty||1}</td>
+        <td style="text-align:right;font-family:monospace">${Number(it.price||0).toLocaleString('fr-DZ')}</td>
+        <td style="text-align:right;font-family:monospace;font-weight:700">${Number(it.total||0).toLocaleString('fr-DZ')}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>
+  <div style="overflow:hidden;margin-top:16px">
+    <div class="stamp">SmartBTP<br>${isAr?'فاتورة':'Facture'}<br>${isAr?'رسمية':'Officielle'}</div>
+    <div class="totals">
+      <div class="total-line"><span>${isAr?'المجموع خارج رسم (HT)':'Sous-total HT'}</span><span style="font-family:monospace">${Number(amountHT).toLocaleString('fr-DZ')} ${isAr?'دج':'DA'}</span></div>
+      <div class="total-line"><span>TVA (${tvaRate}%)</span><span style="font-family:monospace">${Number(tvaAmount).toLocaleString('fr-DZ')} ${isAr?'دج':'DA'}</span></div>
+      <div class="total-line total-final"><span>${isAr?'المجموع الكلي (TTC)':'Total TTC'}</span><span style="font-family:monospace">${Number(inv.amount).toLocaleString('fr-DZ')} ${isAr?'دج':'DA'}</span></div>
+    </div>
+  </div>
+  ${inv.description?`<div style="clear:both;margin-top:16px;padding:10px;background:#f9f9f9;border-radius:6px;font-size:11px;color:#555"><strong>${isAr?'ملاحظات:':'Notes / Conditions:'}</strong><br>${escHtml(inv.description)}</div>`:''}
+  <div class="footer">SmartBTP v20.0 — ${isAr?'منصة إدارة مشاريع البناء الجزائرية':'Plateforme algérienne de gestion BTP'}<br>${isAr?'تم إنشاؤها بتاريخ:':'Généré le:'} ${new Date().toLocaleDateString(isAr?'ar-DZ':'fr-DZ')} — ${escHtml(inv.number)}</div>
   </body></html>`);
-  win.document.close(); win.print();
+  win.document.close();
 }
 
 /* ── INVENTORY PAGE ── */
@@ -6657,68 +7510,181 @@ Pages.team = function() {
   const tid = Auth.getUser().tenant_id;
   const users = DB.get('users').filter(u=>u.tenant_id===tid&&u.is_active);
   const currentUser = Auth.getUser();
-  return layoutHTML('team', 'الفريق', `
+  const canManage = currentUser.role === 'admin' || currentUser.is_admin;
+
+  // Permission matrix for display
+  const permMatrix = [
+    {key:'dashboard',    label:L('لوحة التحكم','Tableau de bord')},
+    {key:'analytics',    label:L('التحليلات','Analytiques')},
+    {key:'projects',     label:L('المشاريع','Projets') + ' (تعديل)'},
+    {key:'workers',      label:L('العمال','Ouvriers') + ' (تعديل)'},
+    {key:'attendance',   label:L('الحضور','Présence') + ' (تعديل)'},
+    {key:'salary',       label:L('الرواتب','Salaires') + ' (تعديل)'},
+    {key:'transactions', label:L('المعاملات','Transactions') + ' (تعديل)'},
+    {key:'invoices',     label:L('الفواتير','Factures') + ' (تعديل)'},
+    {key:'inventory',    label:L('المخزون','Stock') + ' (تعديل)'},
+    {key:'equipment',    label:L('المعدات','Équipements') + ' (تعديل)'},
+    {key:'documents',    label:L('الوثائق','Documents') + ' (تعديل)'},
+    {key:'reports',      label:L('التقارير','Rapports')},
+    {key:'kanban',       label:'Kanban'},
+    {key:'gantt',        label:'Gantt'},
+    {key:'simulator',    label:L('المحاكي','Simulateur')},
+    {key:'bank_report',  label:L('تقرير بنكي','Rapport bancaire')},
+    {key:'audit_log',    label:L('سجل النشاط','Journal activité')},
+  ];
+
+  const roleOrder = ['manager','accountant','hr','viewer'];
+
+  function permIcon(perm) {
+    if(perm === true) return `<span style="color:var(--green);font-size:.9rem" title="${L('وصول كامل','Accès complet')}">✅</span>`;
+    if(perm === 'view') return `<span style="color:var(--blue);font-size:.9rem" title="${L('قراءة فقط','Lecture seule')}">👁️</span>`;
+    return `<span style="color:var(--dim);font-size:.9rem" title="${L('محظور','Interdit')}">—</span>`;
+  }
+
+  return layoutHTML('team', L('الفريق','Équipe'), `
     <div class="page-header">
-      <div><div class="page-title">👥 فريق العمل</div><div class="page-sub">${users.length} مستخدم</div></div>
+      <div>
+        <div class="page-title">👥 ${L('فريق العمل','Équipe de travail')}</div>
+        <div class="page-sub">${users.length} ${L('مستخدم','utilisateur(s)')}</div>
+      </div>
       <div class="page-actions">
-        ${currentUser.role==='admin'?`<button class="btn btn-gold" data-modal-open="inviteUserModal">✉️ دعوة مستخدم</button>`:''}
+        ${canManage?`<button class="btn btn-gold" data-modal-open="inviteUserModal">✉️ ${L('إضافة مستخدم','Ajouter utilisateur')}</button>`:''}
       </div>
     </div>
-    <div style="background:rgba(74,144,226,0.06);border:1px solid rgba(74,144,226,0.2);border-radius:var(--radius);padding:1rem;margin-bottom:1.2rem;font-size:.83rem;color:var(--muted)">
-      <strong>الأدوار والصلاحيات:</strong> 👑 مسؤول: وصول كامل &nbsp;|&nbsp; 🏗️ مدير مشروع: المشاريع والعمال &nbsp;|&nbsp; 💰 محاسب: المالية فقط &nbsp;|&nbsp; 👥 HR: العمال والرواتب &nbsp;|&nbsp; 👁️ قارئ: عرض فقط
+
+    <!-- Users list -->
+    <div style="display:grid;gap:.7rem;margin-bottom:2rem">
+      ${users.map(u=>{
+        const isMe = u.id === currentUser.id;
+        const rolePerm = ROLE_PERMISSIONS[u.role] || ROLE_PERMISSIONS['viewer'];
+        const accessCount = Object.values(rolePerm).filter(v=>v===true||v==='view').length;
+        const writeCount = Object.entries(rolePerm).filter(([k,v])=>!k.startsWith('write_')&&v===true).length;
+        return `<div class="user-card-v5" style="border-color:${isMe?'rgba(232,184,75,0.3)':''}">
+          ${avatarHtml(u.full_name, u.avatar_color||'#4A90E2', 48)}
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+              <span style="font-weight:800;font-size:.9rem">${escHtml(u.full_name)}</span>
+              ${isMe?`<span style="font-size:.65rem;padding:2px 7px;background:var(--gold-dim);color:var(--gold);border-radius:8px">${L('أنت','Vous')}</span>`:''}
+              ${!u.is_active?`<span style="font-size:.65rem;padding:2px 7px;background:rgba(240,78,106,.1);color:var(--red);border-radius:8px">${L('موقوف','Désactivé')}</span>`:''}
+            </div>
+            <div style="font-size:.75rem;color:var(--dim);direction:ltr;text-align:right">${escHtml(u.email)}</div>
+            <div style="font-size:.7rem;color:var(--muted);margin-top:2px">${L('وصول:','Accès:')} ${accessCount} ${L('صفحة','pages')} &nbsp;|&nbsp; ${L('تعديل:','Édit:')} ${writeCount} ${L('وحدة','modules')}</div>
+          </div>
+          ${roleBadge(u.role)}
+          <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap">
+            ${canManage&&!isMe?`
+              <select class="role-select-mini" onchange="changeUserRoleV5(${u.id},this.value)" title="${L('تغيير الدور','Changer rôle')}">
+                ${Object.entries(ROLE_NAMES).map(([k,v])=>`<option value="${k}"${u.role===k?' selected':''}>${v}</option>`).join('')}
+              </select>
+              <button class="btn btn-sm ${u.is_active?'btn-ghost':'btn-green'}" onclick="toggleUserActive(${u.id})" title="${u.is_active?L('إيقاف','Désactiver'):L('تفعيل','Activer')}">${u.is_active?'⏸️':'▶️'}</button>
+            `:''}
+          </div>
+        </div>`;
+      }).join('')}
     </div>
-    <div style="display:grid;gap:.8rem">
-      ${users.map(u=>`<div class="user-card-v5">
-        ${avatarHtml(u.full_name, u.avatar_color||'#4A90E2', 48)}
-        <div style="flex:1;min-width:0">
-          <div style="font-weight:800;font-size:.9rem">${escHtml(u.full_name)}</div>
-          <div style="font-size:.75rem;color:var(--dim);direction:ltr;text-align:right">${escHtml(u.email)}</div>
-        </div>
-        ${roleBadge(u.role)}
-        <div style="display:flex;gap:.4rem;align-items:center">
-          ${currentUser.role==='admin'&&u.id!==currentUser.id?`
-            <select class="role-select-mini" onchange="changeUserRoleV5(${u.id},this.value)">
-              ${Object.entries(ROLE_NAMES).map(([k,v])=>`<option value="${k}"${u.role===k?' selected':''}>${v}</option>`).join('')}
-            </select>
-            <button class="btn btn-red btn-sm" onclick="toggleUserActive(${u.id})">${u.is_active?'⏸️':'▶️'}</button>
-          `:''}
-        </div>
-      </div>`).join('')}
+
+    <!-- Permission Matrix -->
+    <div style="margin-bottom:2rem">
+      <div style="font-size:1rem;font-weight:900;margin-bottom:.8rem;display:flex;align-items:center;gap:.5rem">
+        🔐 ${L('مصفوفة الصلاحيات','Matrice des permissions')}
+        <span style="font-size:.72rem;color:var(--dim);font-weight:400">${L('✅ وصول كامل &nbsp; 👁️ قراءة فقط &nbsp; — محظور','✅ Accès complet &nbsp; 👁️ Lecture seule &nbsp; — Interdit')}</span>
+      </div>
+      <div class="table-wrap" style="overflow-x:auto">
+        <table style="min-width:600px">
+          <thead>
+            <tr>
+              <th style="min-width:160px">${L('الصفحة / الوحدة','Page / Module')}</th>
+              ${roleOrder.map(r=>`<th style="text-align:center">${roleBadge(r)}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${permMatrix.map(item=>{
+              const allSame = roleOrder.every(r=>(ROLE_PERMISSIONS[r]||{})[item.key] === (ROLE_PERMISSIONS[roleOrder[0]]||{})[item.key]);
+              return `<tr>
+                <td style="font-size:.82rem;font-weight:600">${item.label}</td>
+                ${roleOrder.map(r=>`<td style="text-align:center">${permIcon((ROLE_PERMISSIONS[r]||{})[item.key])}</td>`).join('')}
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
     </div>
+
+    <!-- ADD USER MODAL -->
     <div class="modal-overlay" id="inviteUserModal">
       <div class="modal">
-        <div class="modal-title">✉️ دعوة مستخدم جديد</div>
-        <div class="form-group"><label class="form-label">الاسم الكامل *</label><input class="form-input" id="iName" placeholder="الاسم الكامل..."></div>
-        <div class="form-group"><label class="form-label">البريد الإلكتروني *</label><input class="form-input" id="iEmail" type="email" placeholder="user@company.dz" dir="ltr"></div>
-        <div class="form-group"><label class="form-label">كلمة المرور المؤقتة *</label><input class="form-input" id="iPass" placeholder="كلمة مرور مؤقتة..."></div>
-        <div class="form-group"><label class="form-label">الدور</label><select class="form-select" id="iRole">
-          ${Object.entries(ROLE_NAMES).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}
-        </select></div>
-        <div class="modal-footer"><button class="btn btn-ghost" data-modal-close>إلغاء</button><button class="btn btn-gold" onclick="inviteUserV5()">✉️ إضافة</button></div>
+        <div class="modal-title">✉️ ${L('إضافة مستخدم جديد','Ajouter un utilisateur')}</div>
+        <div class="form-group"><label class="form-label">${L('الاسم الكامل *','Nom complet *')}</label><input class="form-input" id="iName" placeholder="${L('الاسم الكامل...','Nom complet...')}"></div>
+        <div class="form-group"><label class="form-label">${L('البريد الإلكتروني *','Email *')}</label><input class="form-input" id="iEmail" type="email" placeholder="user@company.dz" dir="ltr"></div>
+        <div class="form-group"><label class="form-label">${L('كلمة المرور المؤقتة *','Mot de passe temporaire *')}</label><input class="form-input" id="iPass" type="password" placeholder="${L('كلمة مرور مؤقتة...','Mot de passe temporaire...')}"></div>
+        <div class="form-group">
+          <label class="form-label">${L('الدور','Rôle')}</label>
+          <select class="form-select" id="iRole" onchange="showRolePreview(this.value)">
+            ${Object.entries(ROLE_NAMES).filter(([k])=>k!=='admin').map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}
+          </select>
+        </div>
+        <div id="rolePreviewBox" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:.8rem;font-size:.78rem;color:var(--muted);margin-bottom:.5rem">
+          <strong style="color:var(--gold)">${L('مدير مشروع','Chef de projet')}</strong> — ${L('يمكنه إدارة المشاريع والعمال والمواد والوثائق. يرى المالية ولا يعدلها.','Peut gérer projets, ouvriers, matériaux et documents. Voit les finances sans les modifier.')}
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" data-modal-close>${L('إلغاء','Annuler')}</button>
+          <button class="btn btn-gold" onclick="inviteUserV5()">✅ ${L('إضافة','Ajouter')}</button>
+        </div>
       </div>
     </div>
   `);
 };
 function changeUserRoleV5(uid,role){
-  DB.set('users',DB.get('users').map(u=>u.id===uid?{...u,role}:u));
-  Toast.success(`✅ تم تغيير الدور إلى "${ROLE_NAMES[role]}"`);
+  const users = DB.get('users').map(u=>u.id===uid?{...u,role}:u);
+  DB.set('users', users);
+  Toast.success(`✅ ${L('تم تغيير الدور إلى','Rôle changé en')} "${ROLE_NAMES[role]}"`);
+  App.navigate('team');
 }
 function toggleUserActive(uid){
   const users=DB.get('users').map(u=>u.id===uid?{...u,is_active:!u.is_active}:u);
-  DB.set('users',users);Toast.success('تم تحديث حالة المستخدم');App.navigate('team');
+  DB.set('users',users);
+  Toast.success(L('تم تحديث حالة المستخدم','Statut utilisateur mis à jour'));
+  App.navigate('team');
+}
+function showRolePreview(role) {
+  const desc = {
+    manager:  L('يدير المشاريع والعمال والمواد والوثائق. يرى التقارير والمالية ولا يعدلها.',
+                'Gère projets, ouvriers, matériaux et documents. Voit les rapports sans modifier les finances.'),
+    accountant:L('يدير المعاملات المالية والفواتير والرواتب والتقارير. يرى المشاريع والعمال فقط.',
+                 'Gère transactions, factures, salaires et rapports. Voit projets et ouvriers uniquement.'),
+    hr:       L('يدير العمال والحضور والرواتب فقط. لا يرى المالية أو المخزون.',
+                'Gère ouvriers, présences et salaires uniquement. Pas d\'accès aux finances ou stock.'),
+    viewer:   L('يرى جميع الصفحات المسموح بها ولا يمكنه تعديل أي شيء.',
+                'Voit toutes les pages autorisées sans pouvoir modifier quoi que ce soit.'),
+  };
+  const names = {
+    manager:L('مدير مشروع','Chef de projet'),
+    accountant:L('محاسب','Comptable'),
+    hr:L('موارد بشرية','RH'),
+    viewer:L('قارئ فقط','Lecteur'),
+  };
+  const box = document.getElementById('rolePreviewBox');
+  if(box) box.innerHTML = `<strong style="color:var(--gold)">${names[role]||role}</strong> — ${desc[role]||''}`;
 }
 function inviteUserV5(){
   const name=document.getElementById('iName')?.value?.trim();
   const email=document.getElementById('iEmail')?.value?.trim().toLowerCase();
   const pass=document.getElementById('iPass')?.value;
   const role=document.getElementById('iRole')?.value||'viewer';
-  if(!name||!email||!pass){Toast.error('أكمل جميع الحقول');return;}
+  if(!name||!email||!pass){Toast.error(L('أكمل جميع الحقول','Remplissez tous les champs'));return;}
+  if(pass.length<6){Toast.error(L('كلمة المرور يجب أن تكون 6 أحرف على الأقل','Mot de passe: 6 caractères minimum'));return;}
   const users=DB.get('users');
-  if(users.find(u=>u.email===email)){Toast.error('هذا البريد مستخدم بالفعل');return;}
+  if(users.find(u=>u.email===email)){Toast.error(L('هذا البريد مستخدم بالفعل','Cet email est déjà utilisé'));return;}
   const colors=['#4A90E2','#34C38F','#E8B84B','#9B6DFF','#FF7043','#F04E6A'];
-  users.push({id:DB.nextId('users'),tenant_id:Auth.getUser().tenant_id,full_name:name,email,password:pass,role,is_admin:false,is_active:true,avatar_color:colors[users.length%colors.length]});
+  users.push({
+    id:DB.nextId('users'),
+    tenant_id:Auth.getUser().tenant_id,
+    full_name:name,email,password:pass,role,
+    is_admin:false,is_active:true,
+    avatar_color:colors[users.length%colors.length]
+  });
   DB.set('users',users);
-  Toast.success(`✅ تم إضافة ${name} بدور "${ROLE_NAMES[role]}"`);
+  Toast.success(`✅ ${L('تم إضافة','Ajouté :')} ${name} ${L('بدور','avec rôle')} "${ROLE_NAMES[role]}"`);
   App.navigate('team');
 }
 
@@ -7809,6 +8775,18 @@ function showOnboardingWizard(hasProjects, hasWorkers, hasTxs) {
   document.body.appendChild(overlay);
 }
 
+// ── قراءة الصفحة المطلوبة من URL hash (مثل #admin) — قبل Auth.load ──
+(function(){
+  const hash = window.location.hash.replace('#','').trim();
+  const validPages = ['admin','dashboard','projects','workers','transactions','reports','settings',
+    'attendance','salary','invoices','inventory','equipment','materials','documents',
+    'analytics','kanban','gantt','compare','calendar','map','simulator','bank_report',
+    'audit_log','obligations','team'];
+  if (hash && validPages.includes(hash)) {
+    App.currentPage = hash;
+  }
+  if (hash) history.replaceState(null, '', window.location.pathname);
+})();
 Auth.load();
 // Apply saved language direction
 (function(){
