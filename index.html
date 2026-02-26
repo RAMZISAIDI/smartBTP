@@ -5,6 +5,87 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SmartBTP v11.0 — نظام التحليل المالي الذكي للمقاولين الجزائريين</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+// ═══════════════════════════════════════════
+//  EmailJS Configuration — SmartBTP
+// ═══════════════════════════════════════════
+(function(){
+  emailjs.init({ publicKey: 'hn_PRTs7PuJAgrrDp' });
+})();
+
+const EMAILJS = {
+  SERVICE_ID:      'service_gywwwyc',
+  TEMPLATE_ADMIN:  'template_haus94b',   // إشعار المسؤول بحساب جديد
+  TEMPLATE_USER:   'template_9hzgy4s',   // إشعار المستخدم بكلمة المرور
+  ADMIN_EMAIL:     'ramzisaidi2018@gmail.com',
+
+  // ── إرسال إشعار للمسؤول عند تسجيل حساب جديد ──
+  async notifyNewAccount(userData) {
+    try {
+      const params = {
+        to_email:    this.ADMIN_EMAIL,
+        to_name:     'المسؤول',
+        user_name:   userData.name,
+        user_email:  userData.email,
+        company_name:userData.company,
+        plan_name:   'تجريبي 14 يوم',
+        wilaya:      userData.wilaya || '—',
+        date:        new Date().toLocaleDateString('ar-DZ', {year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'}),
+        message:     `تم تسجيل مؤسسة جديدة "${userData.company}" بواسطة ${userData.name} (${userData.email}) من ولاية ${userData.wilaya||'غير محددة'}.`
+      };
+      await emailjs.send(this.SERVICE_ID, this.TEMPLATE_ADMIN, params);
+      console.log('✅ EmailJS: إشعار المسؤول أُرسل');
+      return true;
+    } catch(e) {
+      console.warn('⚠️ EmailJS notifyNewAccount:', e);
+      return false;
+    }
+  },
+
+  // ── إرسال كلمة المرور الجديدة للمستخدم ──
+  async sendNewPassword(userData, newPassword) {
+    try {
+      const params = {
+        to_email:    userData.email,
+        to_name:     userData.full_name || userData.name,
+        user_email:  userData.email,
+        new_password:newPassword,
+        company_name:userData.company || '',
+        date:        new Date().toLocaleDateString('ar-DZ', {year:'numeric',month:'long',day:'numeric'}),
+        message:     `تم تعيين كلمة مرور جديدة لحسابك في SmartBTP. يُنصح بتغييرها بعد أول تسجيل دخول.`
+      };
+      await emailjs.send(this.SERVICE_ID, this.TEMPLATE_USER, params);
+      console.log('✅ EmailJS: كلمة المرور أُرسلت للمستخدم');
+      return true;
+    } catch(e) {
+      console.warn('⚠️ EmailJS sendNewPassword:', e);
+      return false;
+    }
+  },
+
+  // ── إرسال إشعار طلب إعادة تعيين كلمة المرور للمسؤول ──
+  async notifyResetRequest(userData) {
+    try {
+      const params = {
+        to_email:    this.ADMIN_EMAIL,
+        to_name:     'المسؤول',
+        user_name:   userData.full_name,
+        user_email:  userData.email,
+        company_name:userData.companyName || '',
+        date:        new Date().toLocaleDateString('ar-DZ', {year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'}),
+        message:     `طلب المستخدم ${userData.full_name} (${userData.email}) إعادة تعيين كلمة المرور الخاصة به.`
+      };
+      await emailjs.send(this.SERVICE_ID, this.TEMPLATE_ADMIN, params);
+      console.log('✅ EmailJS: إشعار طلب كلمة المرور أُرسل للمسؤول');
+      return true;
+    } catch(e) {
+      console.warn('⚠️ EmailJS notifyResetRequest:', e);
+      return false;
+    }
+  }
+};
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap">
 <style>
@@ -3078,6 +3159,16 @@ function doRegister() {
   });
   DB.set('admin_notifications', adminNotifs);
 
+  // ─── إرسال إيميل للمسؤول عبر EmailJS ───
+  EMAILJS.notifyNewAccount({
+    name:    name.trim(),
+    email:   email,
+    company: company.trim(),
+    wilaya:  wilaya
+  }).then(ok => {
+    if (ok) console.log('📧 إيميل إشعار المسؤول أُرسل بنجاح');
+  });
+
   // Auto-login
   Auth.currentUser = newUser;
   sessionStorage.setItem('sbtp_user', JSON.stringify(newUser));
@@ -4259,6 +4350,37 @@ Pages.settings = function() {
             </div>
           </div>
         </div>
+
+        <!-- EmailJS Status Card -->
+        <div class="card" style="margin-top:1rem;border-color:rgba(52,195,143,.2)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+            <div style="font-weight:800">📧 ${L('نظام إشعارات البريد الإلكتروني','Système de notifications email')}</div>
+            <span style="background:rgba(52,195,143,.12);color:var(--green);border:1px solid rgba(52,195,143,.3);border-radius:20px;padding:2px 10px;font-size:.7rem;font-weight:800">● ${L('مُفعَّل','Activé')}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:.6rem;font-size:.82rem">
+            <div style="display:flex;justify-content:space-between;padding:.5rem .8rem;background:rgba(255,255,255,.03);border-radius:8px">
+              <span style="color:var(--muted)">${L('المزوّد','Fournisseur')}</span>
+              <span style="font-weight:700;color:var(--blue)">EmailJS</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:.5rem .8rem;background:rgba(255,255,255,.03);border-radius:8px">
+              <span style="color:var(--muted)">${L('إيميل المسؤول','Email admin')}</span>
+              <span style="font-weight:700;direction:ltr;font-size:.78rem">ramzisaidi2018@gmail.com</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:.5rem .8rem;background:rgba(255,255,255,.03);border-radius:8px">
+              <span style="color:var(--muted)">Service ID</span>
+              <span style="font-weight:700;font-family:monospace;color:var(--gold);font-size:.75rem">service_gywwwyc</span>
+            </div>
+            <div style="padding:.6rem .8rem;background:rgba(52,195,143,.05);border:1px solid rgba(52,195,143,.15);border-radius:8px;font-size:.76rem;color:var(--muted);line-height:1.6">
+              📬 ${L('الإشعارات المُفعَّلة:','Notifications activées :')}<br>
+              &nbsp;&nbsp;✅ ${L('تسجيل حساب جديد → إشعار للمسؤول','Nouveau compte → Email admin')}<br>
+              &nbsp;&nbsp;✅ ${L('طلب استعادة كلمة المرور → إشعار للمسؤول','Demande MDP → Email admin')}<br>
+              &nbsp;&nbsp;✅ ${L('تعيين كلمة مرور جديدة → إشعار للمستخدم','Nouveau MDP → Email utilisateur')}
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="testEmailJS()" style="justify-content:center">
+              🧪 ${L('اختبار الاتصال','Tester la connexion')}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   `);
@@ -5237,6 +5359,16 @@ function submitForgotRequest() {
     status: 'pending'
   });
   DB.set('admin_notifications', notifs);
+
+  // ─── إرسال إيميل للمسؤول عبر EmailJS ───
+  const tenant = DB.get('tenants').find(t => t.id === user.tenant_id);
+  EMAILJS.notifyResetRequest({
+    full_name:   user.full_name,
+    email:       user.email,
+    companyName: tenant?.name || ''
+  }).then(ok => {
+    if (ok) console.log('📧 إيميل طلب كلمة المرور أُرسل للمسؤول');
+  });
   msgEl.style.display='block'; msgEl.style.background='rgba(52,195,143,.08)'; msgEl.style.border='1px solid rgba(52,195,143,.25)'; msgEl.style.color='#6eddb5';
   msgEl.textContent=L('✅ تم إرسال طلبك بنجاح! سيقوم المسؤول بتعيين كلمة مرور جديدة لك قريبًا.','✅ Demande envoyée avec succès ! L\'administrateur vous attribuera un nouveau mot de passe.');
   setTimeout(() => { document.getElementById('forgotModal')?.remove(); }, 2500);
@@ -5297,7 +5429,25 @@ function confirmResetPass() {
   if (ni >= 0) { notifs[ni].status = 'done'; notifs[ni].read = true; }
   DB.set('admin_notifications', notifs);
   document.getElementById('resetPassModal')?.remove();
-  Toast.success(L(`✅ تم تعيين كلمة مرور جديدة لـ ${users[idx].full_name}`,`✅ Nouveau mot de passe défini pour ${users[idx].full_name}`));
+
+  // ─── إرسال كلمة المرور الجديدة للمستخدم عبر EmailJS ───
+  const tenant = DB.get('tenants').find(t => t.id === users[idx].tenant_id);
+  EMAILJS.sendNewPassword(
+    { ...users[idx], company: tenant?.name || '' },
+    newPass
+  ).then(ok => {
+    if (ok) {
+      Toast.success(L(
+        `✅ تم تعيين كلمة مرور جديدة لـ ${users[idx].full_name} وأُرسلت له عبر الإيميل 📧`,
+        `✅ Nouveau mot de passe défini et envoyé par email à ${users[idx].full_name} 📧`
+      ));
+    } else {
+      Toast.success(L(
+        `✅ تم تعيين كلمة مرور جديدة لـ ${users[idx].full_name}`,
+        `✅ Nouveau mot de passe défini pour ${users[idx].full_name}`
+      ));
+    }
+  });
   App.navigate('admin');
 }
 
@@ -5307,6 +5457,38 @@ function dismissNotif(notifId) {
   if (ni >= 0) { notifs[ni].read = true; notifs[ni].status = notifs[ni].status || 'dismissed'; }
   DB.set('admin_notifications', notifs);
   App.navigate('admin');
+}
+
+// ── اختبار اتصال EmailJS ──
+async function testEmailJS() {
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = L('⏳ جاري الاختبار...','⏳ Test en cours...');
+  try {
+    const result = await emailjs.send(
+      EMAILJS.SERVICE_ID,
+      EMAILJS.TEMPLATE_ADMIN,
+      {
+        to_email:    EMAILJS.ADMIN_EMAIL,
+        to_name:     L('المسؤول','Administrateur'),
+        user_name:   'Test User',
+        user_email:  'test@smartbtp.dz',
+        company_name:'SmartBTP Test',
+        plan_name:   'Test',
+        wilaya:      'الجزائر',
+        date:        new Date().toLocaleString('ar-DZ'),
+        message:     L('هذا إيميل اختباري من SmartBTP للتحقق من اتصال EmailJS.','Ceci est un email de test de SmartBTP pour vérifier la connexion EmailJS.')
+      }
+    );
+    Toast.success(L('✅ الاتصال يعمل! تم إرسال إيميل اختباري إلى ' + EMAILJS.ADMIN_EMAIL, '✅ Connexion OK! Email de test envoyé à ' + EMAILJS.ADMIN_EMAIL));
+    btn.textContent = L('✅ الاتصال يعمل','✅ Connexion OK');
+    btn.className = 'btn btn-green btn-sm';
+  } catch(e) {
+    Toast.error(L('❌ فشل الاتصال: ' + (e.text || e.message || 'خطأ غير معروف'), '❌ Connexion échouée: ' + (e.text || e.message || 'Erreur inconnue')));
+    btn.textContent = L('❌ فشل الاتصال','❌ Connexion échouée');
+    btn.className = 'btn btn-red btn-sm';
+    btn.disabled = false;
+  }
 }
 
 
