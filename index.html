@@ -5214,10 +5214,12 @@ function getAIConfig() {
 
 function saveAIConfig(cfg) {
   localStorage.setItem('sbtp_ai_config', JSON.stringify({ ...getAIConfig(), ...cfg }));
-  // تحديث SmartAI مباشرة
-  if (typeof SmartAI !== 'undefined') {
-    SmartAI.currentProvider = cfg.provider || SmartAI.currentProvider;
-  }
+  // تحديث SmartAI مباشرة (إذا كان معرّفاً)
+  try {
+    if (typeof SmartAI !== 'undefined' && SmartAI && cfg.provider) {
+      SmartAI.currentProvider = cfg.provider;
+    }
+  } catch(e) {}
 }
 
 function renderAIProviderSettings() {
@@ -5477,11 +5479,13 @@ async function saveAndTestAIKey() {
     Toast.success('✅ SmartAI تم تفعيله بنجاح!');
 
     // تحديث SmartAI engine فوراً
-    if (typeof SmartAI !== 'undefined') {
-      SmartAI.activeProvider = provider;
-      SmartAI.activeKey = apiKey;
-      SmartAI.activeModel = model;
-    }
+    try {
+      if (typeof SmartAI !== 'undefined' && SmartAI) {
+        SmartAI.activeProvider = provider;
+        SmartAI.activeKey = apiKey;
+        SmartAI.activeModel = model;
+      }
+    } catch(e) {}
     // تحديث status indicator
     setTimeout(() => App.navigate('admin'), 1500);
   } catch(err) {
@@ -5569,7 +5573,7 @@ function clearAIKey() {
   if (input) { input.value = ''; input.setAttribute('data-real', ''); }
   const testResult = document.getElementById('aiTestResult');
   if (testResult) { testResult.className = 'ai-test-result'; testResult.textContent = ''; }
-  if (typeof SmartAI !== 'undefined') { SmartAI.activeKey = null; }
+  try { if (typeof SmartAI !== 'undefined' && SmartAI) { SmartAI.activeKey = null; } } catch(e) {}
   Toast.success('تم مسح مفتاح API');
 }
 
@@ -5581,7 +5585,14 @@ function showAIUsageStats() {
 }
 
 /* ── تحديث SmartAI ليستخدم مفتاح الإدارة ── */
-(function patchSmartAIWithSavedConfig() {
+/* سيتم استدعاء هذه الدالة بعد تعريف SmartAI */
+function patchSmartAIWithSavedConfig() {
+  try {
+    if (typeof SmartAI === 'undefined' || !SmartAI || typeof SmartAI.callAPI !== 'function') {
+      console.warn('patchSmartAI: SmartAI not ready yet');
+      return;
+    }
+  } catch(e) { return; }
   const origCallAPI = SmartAI.callAPI.bind(SmartAI);
   SmartAI.callAPI = async function(userMessage) {
     const cfg = getAIConfig();
@@ -5689,7 +5700,7 @@ function showAIUsageStats() {
       return origCallAPI(userMessage);
     }
   };
-})();
+}
 
 /* ─── ADMIN ─── */
 Pages.admin = function() {
@@ -10023,6 +10034,9 @@ ${JSON.stringify(ctx, null, 2)}
 ══════════════════════════════════════════════════════ */
 
 /* ── تعزيز Auth: منع Prototype Pollution ── */
+/* ── تطبيق patch بعد تعريف SmartAI ── */
+patchSmartAIWithSavedConfig();
+
 (function secureDB() {
   const _set = DB.set.bind(DB);
   DB.set = function(key, val) {
@@ -10085,7 +10099,7 @@ const RateLimit = {
       return;
     }
     // منع SQL/Script injection بسيط
-    const forbiddenPatterns = [/<script/i, /javascript:/i, /on\w+\s*=/i, /SELECT.*FROM/i, /DROP TABLE/i];
+    const forbiddenPatterns = [new RegExp('<scr'+'ipt', 'i'), /javascript:/i, /on\w+\s*=/i, /SELECT.*FROM/i, /DROP TABLE/i];
     const allInputs = [name, company, email];
     for (const inp of allInputs) {
       for (const pat of forbiddenPatterns) {
