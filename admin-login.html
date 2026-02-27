@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SmartBTP — Admin Access</title>
+<title>SmartStruct — Admin Access</title>
 <!-- No indexing by search engines -->
 <meta name="robots" content="noindex, nofollow, noarchive">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -309,8 +309,21 @@
 
   <!-- Header -->
   <div class="card-header">
-    <div class="logo-icon">🏗️</div>
-    <div class="card-title">SmartBTP — لوحة الإدارة</div>
+    <div class="logo-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="32" height="32">
+        <defs>
+          <linearGradient id="ssGA" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#09120A"/>
+            <stop offset="100%" stop-color="#09120A"/>
+          </linearGradient>
+        </defs>
+        <rect x="4" y="5" width="28" height="5" rx="2.5" fill="#09120A"/>
+        <rect x="4" y="15.5" width="20" height="5" rx="2.5" fill="#09120A" opacity=".82"/>
+        <rect x="4" y="26" width="13" height="5" rx="2.5" fill="#09120A" opacity=".6"/>
+        <rect x="4" y="5" width="5" height="26" rx="2.5" fill="#09120A" opacity=".35"/>
+      </svg>
+    </div>
+    <div class="card-title">SmartStruct — لوحة الإدارة</div>
     <div class="card-sub">هذه الصفحة مخصصة لمسؤول النظام فقط</div>
   </div>
 
@@ -392,7 +405,7 @@
 
 <script>
 // ═══════════════════════════════════════════════════════
-//  SmartBTP — Secure Admin Login
+//  SmartStruct — Secure Admin Login
 //  هذا الملف يجب أن يبقى سرياً ولا يُشارك رابطه
 // ═══════════════════════════════════════════════════════
 
@@ -401,7 +414,7 @@ const ADMIN_CONFIG = {
   maxAttempts: 5,
   lockoutMinutes: 5,
   // مفتاح الأمان الثاني — يجب تغييره من قِبل المسؤول
-  securityKey: 'SBTP-ADMIN-2025',
+  securityKey: 'SSTR-ADMIN-2025',
 };
 
 // ── DB: قراءة بيانات المستخدمين من localStorage ──
