@@ -4401,9 +4401,6 @@ Pages.dashboard = function() {
         }).join('')||`<div class="empty"><div class="empty-icon">🏗️</div><div class="empty-title">${__('dash.noProjects')}</div></div>`}
       </div>
     </div>
-
-    <!-- ══ SmartAI Analytics ══ -->
-    ${renderTenantSmartAIAnalytics(projects, txs, workers, equip, attendance, tid)}
   `);
 
   // Run charts and animations after render
@@ -5358,7 +5355,7 @@ function renderTenantSmartAIAnalytics(projects, txs, workers, equip, attendance,
       <div style="display:flex;align-items:center;gap:.8rem">
         <div style="width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,rgba(155,109,255,0.25),rgba(52,195,143,0.15));border:1px solid rgba(155,109,255,0.35);display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 4px 16px rgba(155,109,255,0.2)">📡</div>
         <div>
-          <div style="font-size:.95rem;font-weight:900;letter-spacing:-.2px">SmartAI Analytics</div>
+          <div style="font-size:.95rem;font-weight:900;letter-spacing:-.2px">🧠 تحليلات ذكية</div>
           <div style="font-size:.68rem;color:var(--muted)">تُحدَّث تلقائياً • آخر تحديث: <span style="color:var(--gold);font-weight:700">${now.toLocaleTimeString('ar-DZ')}</span></div>
         </div>
       </div>
@@ -8076,7 +8073,10 @@ Pages.gantt = function() {
 Pages.analytics = function() {
   const tid = Auth.getUser().tenant_id;
   const txs = DB.get('transactions').filter(t => t.tenant_id===tid);
-  const projects = DB.get('projects').filter(p => p.tenant_id===tid);
+  const projects = DB.get('projects').filter(p => p.tenant_id===tid && !p.is_archived);
+  const workers  = DB.get('workers').filter(w => w.tenant_id===tid);
+  const equip    = DB.get('equipment').filter(e => e.tenant_id===tid);
+  const attendance = DB.get('attendance').filter(a => workers.find(w=>w.id===a.worker_id));
   const revenue = txs.filter(t=>t.type==='revenue').reduce((s,t)=>s+Number(t.amount),0);
   const expense = txs.filter(t=>t.type==='expense').reduce((s,t)=>s+Number(t.amount),0);
   return layoutHTML('analytics', 'التحليلات', `
@@ -8097,6 +8097,9 @@ Pages.analytics = function() {
       <div class="chart-card"><div class="chart-title">💹 تطور الربح الصافي</div><canvas id="chartProfit" height="220"></canvas></div>
       <div class="chart-card"><div class="chart-title">🏗️ تقدم المشاريع</div><canvas id="chartProjects" height="220"></canvas></div>
     </div>
+
+    <!-- ══ التحليلات الذكية ══ -->
+    ${renderTenantSmartAIAnalytics(projects, txs, workers, equip, attendance, tid)}
   `);
 };
 
