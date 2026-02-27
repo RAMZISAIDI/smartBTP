@@ -1705,12 +1705,425 @@ svg circle:hover { opacity: 1 !important; transform-box: fill-box; transform-ori
 /* scroll fade-in */
 [data-animate] { opacity: 0; transform: translateY(16px); transition: opacity 0.5s ease, transform 0.5s ease; }
 [data-animate].in-view { opacity: 1; transform: none; }
+
+/* ═══════════════════════════════════════════
+   AI ASSISTANT CHAT — SmartStruct AI
+═══════════════════════════════════════════ */
+.ai-fab {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 1.5rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #9B6DFF, #6B3FD4);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 8px 32px rgba(155,109,255,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  z-index: 2000;
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  animation: aiPulse 3s ease-in-out infinite;
+}
+@keyframes aiPulse {
+  0%,100% { box-shadow: 0 8px 32px rgba(155,109,255,0.5); }
+  50% { box-shadow: 0 8px 48px rgba(155,109,255,0.8), 0 0 0 8px rgba(155,109,255,0.1); }
+}
+.ai-fab:hover { transform: scale(1.1) rotate(5deg); }
+.ai-fab.open { border-radius: 16px; width: auto; padding: 0 1rem; gap: .5rem; font-size: .85rem; font-weight: 800; color: #fff; font-family: 'Tajawal', sans-serif; animation: none; }
+.ai-fab-badge {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  background: var(--red);
+  color: #fff;
+  font-size: .55rem;
+  font-weight: 900;
+  padding: 2px 5px;
+  border-radius: 20px;
+  font-family: 'Tajawal', sans-serif;
+}
+
+.ai-chat-panel {
+  position: fixed;
+  bottom: 5rem;
+  left: 1.5rem;
+  width: 380px;
+  max-height: 600px;
+  background: var(--bg3);
+  border: 1px solid rgba(155,109,255,0.3);
+  border-radius: 20px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(155,109,255,0.1);
+  display: flex;
+  flex-direction: column;
+  z-index: 1999;
+  animation: chatIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  overflow: hidden;
+}
+@keyframes chatIn {
+  from { opacity: 0; transform: scale(0.85) translateY(20px); transform-origin: bottom left; }
+  to { opacity: 1; transform: none; }
+}
+.ai-chat-header {
+  padding: .9rem 1rem;
+  background: linear-gradient(135deg, rgba(155,109,255,0.15), rgba(107,63,212,0.1));
+  border-bottom: 1px solid rgba(155,109,255,0.2);
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  flex-shrink: 0;
+}
+.ai-chat-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #9B6DFF, #6B3FD4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(155,109,255,0.4);
+}
+.ai-chat-name { font-size: .88rem; font-weight: 900; color: var(--text); }
+.ai-chat-status { font-size: .68rem; color: #34C38F; display: flex; align-items: center; gap: .3rem; }
+.ai-status-dot { width: 6px; height: 6px; border-radius: 50%; background: #34C38F; animation: blink 1.5s infinite; }
+.ai-chat-close { margin-right: auto; background: none; border: none; cursor: pointer; color: var(--dim); font-size: 1.1rem; padding: .2rem .4rem; border-radius: 6px; transition: color .2s; }
+.ai-chat-close:hover { color: var(--red); }
+
+.ai-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: .8rem;
+  min-height: 0;
+}
+.ai-msg {
+  max-width: 88%;
+  padding: .7rem .9rem;
+  border-radius: 14px;
+  font-size: .84rem;
+  line-height: 1.6;
+}
+.ai-msg.bot {
+  background: rgba(155,109,255,0.1);
+  border: 1px solid rgba(155,109,255,0.2);
+  border-radius: 4px 14px 14px 14px;
+  color: var(--text);
+  align-self: flex-start;
+}
+.ai-msg.user {
+  background: linear-gradient(135deg, rgba(232,184,75,0.15), rgba(196,144,48,0.1));
+  border: 1px solid rgba(232,184,75,0.25);
+  border-radius: 14px 14px 4px 14px;
+  color: var(--text);
+  align-self: flex-end;
+}
+.ai-msg-time { font-size: .6rem; color: var(--dim); margin-top: .3rem; }
+.ai-typing {
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+  padding: .7rem .9rem;
+  background: rgba(155,109,255,0.08);
+  border: 1px solid rgba(155,109,255,0.15);
+  border-radius: 4px 14px 14px 14px;
+  align-self: flex-start;
+}
+.ai-typing-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #9B6DFF;
+  animation: typingBounce 1.2s ease-in-out infinite;
+}
+.ai-typing-dot:nth-child(2) { animation-delay: .2s; }
+.ai-typing-dot:nth-child(3) { animation-delay: .4s; }
+@keyframes typingBounce { 0%,100%{transform:translateY(0);opacity:.4} 50%{transform:translateY(-5px);opacity:1} }
+
+.ai-quick-btns {
+  padding: .5rem 1rem;
+  display: flex;
+  gap: .4rem;
+  flex-wrap: wrap;
+  border-top: 1px solid rgba(255,255,255,.05);
+  flex-shrink: 0;
+}
+.ai-quick-btn {
+  font-size: .7rem;
+  font-weight: 700;
+  padding: .3rem .6rem;
+  border-radius: 20px;
+  border: 1px solid rgba(155,109,255,0.3);
+  background: rgba(155,109,255,0.08);
+  color: #B89AFF;
+  cursor: pointer;
+  font-family: 'Tajawal', sans-serif;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.ai-quick-btn:hover { background: rgba(155,109,255,0.2); border-color: rgba(155,109,255,0.6); }
+
+.ai-chat-input-wrap {
+  padding: .7rem 1rem;
+  border-top: 1px solid rgba(155,109,255,0.15);
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+  flex-shrink: 0;
+  background: rgba(0,0,0,0.2);
+}
+.ai-chat-input {
+  flex: 1;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(155,109,255,0.25);
+  border-radius: 12px;
+  padding: .55rem .85rem;
+  color: var(--text);
+  font-family: 'Tajawal', sans-serif;
+  font-size: .85rem;
+  outline: none;
+  resize: none;
+  transition: border-color .2s;
+  max-height: 80px;
+  overflow-y: auto;
+}
+.ai-chat-input:focus { border-color: rgba(155,109,255,0.7); }
+.ai-chat-input::placeholder { color: var(--dim); }
+.ai-send-btn {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #9B6DFF, #6B3FD4);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .95rem;
+  transition: all .2s;
+  flex-shrink: 0;
+}
+.ai-send-btn:hover { transform: scale(1.08); box-shadow: 0 4px 12px rgba(155,109,255,0.5); }
+.ai-send-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+/* AI Analysis Page */
+.ai-page-header {
+  background: linear-gradient(135deg, rgba(155,109,255,0.1), rgba(107,63,212,0.05));
+  border: 1px solid rgba(155,109,255,0.2);
+  border-radius: 20px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.ai-page-icon {
+  width: 60px; height: 60px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #9B6DFF, #6B3FD4);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem;
+  box-shadow: 0 8px 24px rgba(155,109,255,0.4);
+  flex-shrink: 0;
+}
+.ai-analysis-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.ai-analysis-card {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(155,109,255,0.15);
+  border-radius: 16px;
+  padding: 1.2rem;
+  position: relative;
+  overflow: hidden;
+  transition: all .3s;
+}
+.ai-analysis-card:hover { border-color: rgba(155,109,255,0.35); transform: translateY(-2px); }
+.ai-analysis-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #9B6DFF, transparent);
+}
+.ai-analysis-title { font-size: .88rem; font-weight: 800; margin-bottom: .8rem; color: #B89AFF; }
+.ai-insight-item {
+  display: flex;
+  align-items: flex-start;
+  gap: .6rem;
+  padding: .5rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: .82rem;
+  line-height: 1.55;
+}
+.ai-insight-item:last-child { border-bottom: none; }
+.ai-insight-icon { font-size: 1rem; flex-shrink: 0; margin-top: .05rem; }
+.ai-insight-text { color: var(--text); }
+.ai-insight-meta { font-size: .7rem; color: var(--dim); margin-top: .2rem; }
+
+.ai-project-score {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .4rem .8rem;
+  border-radius: 20px;
+  font-size: .72rem;
+  font-weight: 800;
+}
+.ai-score-excellent { background: rgba(52,195,143,0.12); border: 1px solid rgba(52,195,143,0.3); color: #34C38F; }
+.ai-score-good { background: rgba(74,144,226,0.12); border: 1px solid rgba(74,144,226,0.3); color: #60A5FA; }
+.ai-score-warn { background: rgba(232,184,75,0.12); border: 1px solid rgba(232,184,75,0.3); color: var(--gold); }
+.ai-score-danger { background: rgba(240,78,106,0.12); border: 1px solid rgba(240,78,106,0.3); color: #F79FA9; }
+
+.ai-loading-bar {
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #9B6DFF, transparent);
+  background-size: 200% 100%;
+  animation: loadingBar 1.5s linear infinite;
+  border-radius: 3px;
+  margin: .5rem 0;
+}
+@keyframes loadingBar { 0%{background-position:100% 0} 100%{background-position:-100% 0} }
+
+/* ═══ AI PROVIDER SETTINGS ═══ */
+.ai-provider-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+}
+.ai-provider-card {
+  border: 2px solid var(--border2);
+  border-radius: 16px;
+  padding: 1.2rem;
+  cursor: pointer;
+  transition: all .25s;
+  position: relative;
+  background: rgba(255,255,255,0.025);
+}
+.ai-provider-card:hover { border-color: rgba(155,109,255,0.4); transform: translateY(-2px); }
+.ai-provider-card.selected {
+  border-color: #9B6DFF;
+  background: rgba(155,109,255,0.08);
+  box-shadow: 0 0 0 3px rgba(155,109,255,0.15);
+}
+.ai-provider-card.selected::before {
+  content: '✓';
+  position: absolute;
+  top: .6rem;
+  left: .6rem;
+  width: 20px; height: 20px;
+  background: #9B6DFF;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .7rem; font-weight: 900; color: #fff;
+  line-height: 20px; text-align: center;
+}
+.ai-provider-logo {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem;
+  margin-bottom: .8rem;
+}
+.ai-provider-name { font-size: .95rem; font-weight: 900; margin-bottom: .25rem; }
+.ai-provider-desc { font-size: .75rem; color: var(--muted); line-height: 1.5; margin-bottom: .6rem; }
+.ai-provider-badges { display: flex; flex-wrap: wrap; gap: .3rem; }
+.ai-provider-badge {
+  font-size: .62rem; font-weight: 800;
+  padding: 2px 7px; border-radius: 20px;
+}
+.badge-free { background: rgba(52,195,143,0.15); color: #34C38F; border: 1px solid rgba(52,195,143,0.3); }
+.badge-fast { background: rgba(74,144,226,0.15); color: #60A5FA; border: 1px solid rgba(74,144,226,0.3); }
+.badge-smart { background: rgba(155,109,255,0.15); color: #B89AFF; border: 1px solid rgba(155,109,255,0.3); }
+.badge-paid { background: rgba(232,184,75,0.12); color: var(--gold); border: 1px solid rgba(232,184,75,0.3); }
+
+.ai-key-section {
+  background: rgba(155,109,255,0.05);
+  border: 1px solid rgba(155,109,255,0.2);
+  border-radius: 14px;
+  padding: 1.2rem;
+  margin-top: 1rem;
+}
+.ai-key-input-wrap { position: relative; }
+.ai-key-input-wrap input { padding-left: 2.8rem !important; font-family: 'JetBrains Mono', monospace; font-size: .82rem; letter-spacing: .5px; }
+.ai-key-eye { position: absolute; left: .7rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--dim); font-size: .95rem; }
+.ai-test-result {
+  display: none;
+  padding: .6rem .9rem;
+  border-radius: 10px;
+  font-size: .8rem;
+  font-weight: 700;
+  margin-top: .6rem;
+  align-items: center;
+  gap: .5rem;
+}
+.ai-test-result.success { display: flex; background: rgba(52,195,143,0.1); border: 1px solid rgba(52,195,143,0.3); color: #34C38F; }
+.ai-test-result.error { display: flex; background: rgba(240,78,106,0.1); border: 1px solid rgba(240,78,106,0.3); color: #F79FA9; }
+.ai-test-result.loading { display: flex; background: rgba(155,109,255,0.1); border: 1px solid rgba(155,109,255,0.2); color: #B89AFF; }
+
+.ai-status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .3rem .8rem;
+  border-radius: 20px;
+  font-size: .72rem;
+  font-weight: 800;
+}
+.ai-status-active { background: rgba(52,195,143,0.1); border: 1px solid rgba(52,195,143,0.3); color: #34C38F; }
+.ai-status-inactive { background: rgba(74,91,122,0.2); border: 1px solid rgba(74,91,122,0.3); color: var(--dim); }
+.ai-status-error { background: rgba(240,78,106,0.1); border: 1px solid rgba(240,78,106,0.3); color: #F79FA9; }
+
+@media(max-width:900px){
+  .ai-chat-panel { left: .5rem; right: .5rem; width: auto; }
+  .ai-fab { bottom: 1rem; left: 1rem; }
+}
 </style>
 </head>
 <body>
 
 <div id="app"></div>
 <div class="toast-container" id="toastContainer"></div>
+
+<!-- ═══ AI ASSISTANT CHAT WIDGET ═══ -->
+<button class="ai-fab" id="aiFab" onclick="SmartAI.toggleChat()" title="مساعد الذكاء الاصطناعي SmartAI">
+  🤖
+  <span class="ai-fab-badge" id="aiFabBadge" style="display:none">!</span>
+</button>
+
+<div class="ai-chat-panel" id="aiChatPanel" style="display:none">
+  <div class="ai-chat-header">
+    <div class="ai-chat-avatar">🤖</div>
+    <div>
+      <div class="ai-chat-name">SmartAI — مساعدك الذكي</div>
+      <div class="ai-chat-status">
+        <span class="ai-status-dot"></span>
+        متصل — يعمل بـ Claude AI
+      </div>
+    </div>
+    <button class="ai-chat-close" onclick="SmartAI.toggleChat()">✕</button>
+  </div>
+  <div class="ai-chat-messages" id="aiMessages"></div>
+  <div class="ai-quick-btns" id="aiQuickBtns">
+    <button class="ai-quick-btn" onclick="SmartAI.quickAsk('حلّل مشاريعي وأعطني توصيات')">📊 تحليل</button>
+    <button class="ai-quick-btn" onclick="SmartAI.quickAsk('ما هي أبرز المخاطر المالية؟')">⚠️ مخاطر</button>
+    <button class="ai-quick-btn" onclick="SmartAI.quickAsk('توقع ربحي هذا الشهر')">💰 توقعات</button>
+    <button class="ai-quick-btn" onclick="SmartAI.quickAsk('ماذا يجب أن أفعل الآن؟')">🎯 أولويات</button>
+  </div>
+  <div class="ai-chat-input-wrap">
+    <textarea class="ai-chat-input" id="aiInput" placeholder="اسأل SmartAI عن مشاريعك..." rows="1"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();SmartAI.send()}"
+      oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+    <button class="ai-send-btn" id="aiSendBtn" onclick="SmartAI.send()">➤</button>
+  </div>
+</div>
 
 <script>
 'use strict';
@@ -1849,17 +2262,19 @@ const Auth = {
 ══════════════════════════════════════════════════════ */
 const Toast = {
   show(msg, type='info') {
-    const icons = { success:'✅', error:'❌', info:'ℹ️' };
+    const icons = { success:'✅', error:'❌', info:'ℹ️', warn:'⚠️' };
     const c = document.getElementById('toastContainer');
+    if (!c) return;
     const t = document.createElement('div');
-    t.className = `toast toast-${type}`;
-    t.innerHTML = `<span>${icons[type]||'💬'}</span><span>${msg}</span>`;
+    t.className = `toast toast-${type==='warn'?'warn':type}`;
+    t.innerHTML = `<span>${icons[type]||'💬'}</span><span>${String(msg).replace(/</g,'&lt;')}</span>`;
     c.appendChild(t);
-    setTimeout(() => t.remove(), 4000);
+    setTimeout(() => t.remove(), type === 'warn' ? 6000 : 4000);
   },
   success: m => Toast.show(m,'success'),
   error: m => Toast.show(m,'error'),
-  info: m => Toast.show(m,'info')
+  info: m => Toast.show(m,'info'),
+  warn: m => Toast.show(m,'warn')
 };
 
 /* ══════════════════════════════════════════════════════
@@ -1873,7 +2288,12 @@ function statusBadge(s) {
   return `<span class="badge ${cls}">${label}</span>`;
 }
 function statusLabel(s) { return {active:'نشط',completed:'مكتمل',delayed:'متأخر',paused:'متوقف'}[s]||s; }
-function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escHtml(s) {
+  if (s === null || s === undefined) return '';
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/\//g,'&#47;');
+}
 function todayStr() { return new Date().toISOString().split('T')[0]; }
 
 const WILAYAS = [
@@ -4695,6 +5115,582 @@ Pages.settings = function() {
   `);
 };
 
+/* ══════════════════════════════════════════════════════
+   🤖 AI PROVIDER MANAGEMENT — إدارة وكلاء الذكاء الاصطناعي
+   وكلاء مجانيون مُختارون + Claude API
+══════════════════════════════════════════════════════ */
+
+const AI_PROVIDERS = [
+  {
+    id: 'groq',
+    name: 'Groq Cloud',
+    logo: '⚡',
+    logoColor: '#F55036',
+    desc: 'أسرع نموذج مجاني في العالم — يعمل بـ LLaMA 3.3 70B. مجاني تماماً مع 14,400 طلب/يوم.',
+    model: 'llama-3.3-70b-versatile',
+    endpoint: 'https://api.groq.com/openai/v1/chat/completions',
+    keyPlaceholder: 'gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+    freeLimit: '14,400 طلب/يوم',
+    badges: ['free', 'fast', 'smart'],
+    apiStyle: 'openai',
+    signupUrl: 'https://console.groq.com/keys',
+    tip: 'سجّل في console.groq.com → API Keys → Create Key'
+  },
+  {
+    id: 'openrouter_free',
+    name: 'OpenRouter (مجاني)',
+    logo: '🔀',
+    logoColor: '#7C3AED',
+    desc: 'وصول موحّد لأكثر من 20 نموذج مجاني — Mistral, Gemma, LLaMA وغيرها. مجاني بشكل دائم.',
+    model: 'mistralai/mistral-7b-instruct:free',
+    endpoint: 'https://openrouter.ai/api/v1/chat/completions',
+    keyPlaceholder: 'sk-or-v1-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+    freeLimit: 'مجاني دائم (نماذج Free)',
+    badges: ['free', 'smart'],
+    apiStyle: 'openai',
+    signupUrl: 'https://openrouter.ai/keys',
+    tip: 'سجّل في openrouter.ai → Keys → Create Key. اختر نماذج (free) مجانية'
+  },
+  {
+    id: 'gemini',
+    name: 'Google Gemini',
+    logo: '🔵',
+    logoColor: '#4285F4',
+    desc: 'نموذج Google المجاني Gemini 1.5 Flash — ذكي وسريع وداعم للعربية. 1,500 طلب/يوم مجاناً.',
+    model: 'gemini-1.5-flash',
+    endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+    keyPlaceholder: 'AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
+    freeLimit: '1,500 طلب/يوم',
+    badges: ['free', 'smart'],
+    apiStyle: 'gemini',
+    signupUrl: 'https://aistudio.google.com/app/apikey',
+    tip: 'سجّل في aistudio.google.com → Get API Key'
+  },
+  {
+    id: 'together',
+    name: 'Together AI',
+    logo: '🤝',
+    logoColor: '#0EA5E9',
+    desc: 'LLaMA 3 و Mixtral مجاناً لأول $5 (كريدت ترحيبي). جودة عالية ودعم ممتاز للعربية.',
+    model: 'meta-llama/Llama-3-70b-chat-hf',
+    endpoint: 'https://api.together.xyz/v1/chat/completions',
+    keyPlaceholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+    freeLimit: '$5 كريدت مجاني عند التسجيل',
+    badges: ['smart', 'paid'],
+    apiStyle: 'openai',
+    signupUrl: 'https://api.together.ai/',
+    tip: 'سجّل في together.ai → احصل على $5 مجاناً → Settings → API Keys'
+  },
+  {
+    id: 'claude',
+    name: 'Claude (Anthropic)',
+    logo: '🧠',
+    logoColor: '#D97706',
+    desc: 'أقوى نموذج لتحليل المشاريع الجزائرية — Claude claude-sonnet-4-6. يفهم السياق الجزائري بعمق.',
+    model: 'claude-sonnet-4-6',
+    endpoint: 'https://api.anthropic.com/v1/messages',
+    keyPlaceholder: 'sk-ant-api03-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+    freeLimit: '$5 كريدت مجاني عند التسجيل',
+    badges: ['smart', 'paid'],
+    apiStyle: 'anthropic',
+    signupUrl: 'https://console.anthropic.com/',
+    tip: 'سجّل في console.anthropic.com → API Keys → Create Key'
+  },
+];
+
+function getAIConfig() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('sbtp_ai_config') || '{}');
+    return {
+      provider: saved.provider || 'groq',
+      apiKey: saved.apiKey || '',
+      model: saved.model || '',
+      status: saved.status || 'inactive',
+      lastTested: saved.lastTested || null,
+      ...saved
+    };
+  } catch(e) { return { provider: 'groq', apiKey: '', model: '', status: 'inactive' }; }
+}
+
+function saveAIConfig(cfg) {
+  localStorage.setItem('sbtp_ai_config', JSON.stringify({ ...getAIConfig(), ...cfg }));
+  // تحديث SmartAI مباشرة
+  if (typeof SmartAI !== 'undefined') {
+    SmartAI.currentProvider = cfg.provider || SmartAI.currentProvider;
+  }
+}
+
+function renderAIProviderSettings() {
+  const cfg = getAIConfig();
+  const currentProvider = AI_PROVIDERS.find(p => p.id === cfg.provider) || AI_PROVIDERS[0];
+  const statusClass = cfg.status === 'active' ? 'ai-status-active' : cfg.status === 'error' ? 'ai-status-error' : 'ai-status-inactive';
+  const statusLabel = cfg.status === 'active' ? '✅ متصل ويعمل' : cfg.status === 'error' ? '❌ خطأ في الاتصال' : '⚪ غير مفعّل';
+
+  return `
+  <div class="card" style="margin-top:1.5rem;border-color:rgba(155,109,255,0.3);background:linear-gradient(135deg,rgba(155,109,255,0.04),rgba(107,63,212,0.02))">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:.7rem">
+      <div style="display:flex;align-items:center;gap:.8rem">
+        <div style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#9B6DFF,#6B3FD4);display:flex;align-items:center;justify-content:center;font-size:1.4rem;box-shadow:0 6px 20px rgba(155,109,255,0.4)">🤖</div>
+        <div>
+          <div style="font-size:1rem;font-weight:900">SmartAI — إعدادات وكيل الذكاء الاصطناعي</div>
+          <div style="font-size:.75rem;color:var(--muted)">اختر الوكيل المناسب وأدخل مفتاح API للتفعيل</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.6rem">
+        <span class="ai-status-indicator ${statusClass}">${statusLabel}</span>
+        ${cfg.lastTested ? `<span style="font-size:.65rem;color:var(--dim)">آخر اختبار: ${new Date(cfg.lastTested).toLocaleTimeString('ar-DZ')}</span>` : ''}
+      </div>
+    </div>
+
+    <!-- اختيار الوكيل -->
+    <div style="font-size:.82rem;font-weight:800;color:var(--muted);margin-bottom:.8rem">🎯 اختر الوكيل (الوكلاء المجانية مُعلَّمة بـ ✅ مجاني)</div>
+    <div class="ai-provider-grid" id="aiProviderGrid">
+      ${AI_PROVIDERS.map(p => `
+        <div class="ai-provider-card ${cfg.provider === p.id ? 'selected' : ''}"
+             onclick="selectAIProvider('${p.id}')" id="apcard_${p.id}">
+          <div class="ai-provider-logo" style="background:${p.logoColor}22;border:1px solid ${p.logoColor}44">${p.logo}</div>
+          <div class="ai-provider-name">${p.name}</div>
+          <div class="ai-provider-desc">${p.desc}</div>
+          <div class="ai-provider-badges">
+            ${p.badges.includes('free') ? '<span class="ai-provider-badge badge-free">✅ مجاني</span>' : ''}
+            ${p.badges.includes('fast') ? '<span class="ai-provider-badge badge-fast">⚡ سريع جداً</span>' : ''}
+            ${p.badges.includes('smart') ? '<span class="ai-provider-badge badge-smart">🧠 ذكي</span>' : ''}
+            ${p.badges.includes('paid') ? '<span class="ai-provider-badge badge-paid">💳 مدفوع/كريدت</span>' : ''}
+          </div>
+          <div style="margin-top:.7rem;font-size:.68rem;color:var(--dim)">📊 ${p.freeLimit}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <!-- إدخال مفتاح API -->
+    <div class="ai-key-section" id="aiKeySection">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+        <div style="font-size:.88rem;font-weight:900;color:#B89AFF">
+          🔑 مفتاح API — <span id="aiProviderNameLabel">${currentProvider.name}</span>
+        </div>
+        <a href="${currentProvider.signupUrl}" target="_blank" rel="noopener noreferrer"
+           style="font-size:.72rem;color:var(--blue);text-decoration:none;font-weight:700;border:1px solid rgba(74,144,226,0.3);padding:.2rem .6rem;border-radius:8px;transition:all .2s"
+           id="aiSignupLink">
+          🔗 احصل على مفتاح مجاني ←
+        </a>
+      </div>
+
+      <!-- تعليمات سريعة -->
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:.8rem;margin-bottom:.9rem;font-size:.75rem;color:var(--muted);line-height:1.7" id="aiProviderTip">
+        💡 <strong style="color:var(--text)">${currentProvider.tip}</strong>
+      </div>
+
+      <!-- Model selector -->
+      <div class="form-group" style="margin-bottom:.8rem">
+        <label class="form-label">🧩 النموذج المستخدم</label>
+        <select class="form-select" id="aiModelSelect" style="font-family:'JetBrains Mono',monospace;font-size:.82rem" onchange="saveAIConfig({model:this.value})">
+          ${getModelsForProvider(cfg.provider).map(m => `<option value="${m.id}" ${(cfg.model||currentProvider.model)===m.id?'selected':''}>${m.label}</option>`).join('')}
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-bottom:.6rem">
+        <label class="form-label">🔑 API Key</label>
+        <div class="ai-key-input-wrap">
+          <input class="form-input" type="password" id="aiApiKeyInput"
+            value="${cfg.apiKey ? '•'.repeat(Math.min(cfg.apiKey.length, 40)) : ''}"
+            placeholder="${currentProvider.keyPlaceholder}"
+            dir="ltr"
+            onfocus="if(this.value.includes('•'))this.value=''"
+            data-real="${escHtml(cfg.apiKey)}">
+          <button class="ai-key-eye" onclick="toggleAIKeyVisibility()" title="إظهار/إخفاء">👁️</button>
+        </div>
+      </div>
+
+      <div id="aiTestResult" class="ai-test-result"></div>
+
+      <div style="display:flex;gap:.6rem;margin-top:.8rem;flex-wrap:wrap">
+        <button class="btn btn-purple" onclick="saveAndTestAIKey()" style="flex:1;justify-content:center;min-width:140px">
+          💾 حفظ واختبار الاتصال
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="clearAIKey()">🗑️ مسح</button>
+        <button class="btn btn-ghost btn-sm" onclick="showAIUsageStats()">📊 إحصائيات</button>
+      </div>
+
+      <!-- Quota & Usage Info -->
+      <div style="margin-top:1rem;padding-top:.8rem;border-top:1px solid rgba(155,109,255,0.15)">
+        <div style="font-size:.72rem;font-weight:800;color:var(--dim);margin-bottom:.5rem">📋 معلومات الوكيل الحالي</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem" id="aiProviderInfo">
+          <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:.5rem .7rem;font-size:.72rem">
+            <div style="color:var(--dim)">الحد اليومي المجاني</div>
+            <div style="font-weight:700;color:var(--green)">${currentProvider.freeLimit}</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:.5rem .7rem;font-size:.72rem">
+            <div style="color:var(--dim)">النموذج الافتراضي</div>
+            <div style="font-weight:700;color:#B89AFF;font-family:monospace">${currentProvider.model.split('/').pop()}</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:.5rem .7rem;font-size:.72rem">
+            <div style="color:var(--dim)">جلسات AI اليوم</div>
+            <div style="font-weight:700;color:var(--blue)" id="aiSessionCount">
+              ${JSON.parse(sessionStorage.getItem('ai_session_stats')||'{"count":0}').count || 0}
+            </div>
+          </div>
+          <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:.5rem .7rem;font-size:.72rem">
+            <div style="color:var(--dim)">حالة الاتصال</div>
+            <div style="font-weight:700" class="${statusClass}">${statusLabel}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- معلومات أمنية -->
+    <div style="margin-top:1rem;display:flex;align-items:flex-start;gap:.5rem;font-size:.72rem;color:var(--dim);background:rgba(255,255,255,0.02);border-radius:10px;padding:.7rem .9rem">
+      <span>🔒</span>
+      <span>مفتاح API يُحفظ فقط في متصفحك المحلي (localStorage) ولا يُرسل لأي خادم خارجي. استخدم دائماً مفاتيح بأذونات محدودة وقابلة للإلغاء.</span>
+    </div>
+  </div>`;
+}
+
+function getModelsForProvider(providerId) {
+  const models = {
+    groq: [
+      { id: 'llama-3.3-70b-versatile', label: '⭐ LLaMA 3.3 70B (مجاني - موصى به)' },
+      { id: 'llama-3.1-8b-instant', label: '⚡ LLaMA 3.1 8B Instant (مجاني - أسرع)' },
+      { id: 'mixtral-8x7b-32768', label: '🔀 Mixtral 8x7B (مجاني)' },
+      { id: 'gemma2-9b-it', label: '🔵 Gemma 2 9B (مجاني)' },
+    ],
+    openrouter_free: [
+      { id: 'mistralai/mistral-7b-instruct:free', label: '⭐ Mistral 7B (مجاني - موصى به)' },
+      { id: 'google/gemma-2-9b-it:free', label: '🔵 Gemma 2 9B (مجاني)' },
+      { id: 'meta-llama/llama-3.2-3b-instruct:free', label: '🦙 LLaMA 3.2 3B (مجاني)' },
+      { id: 'microsoft/phi-3-mini-128k-instruct:free', label: '🔬 Phi-3 Mini (مجاني)' },
+    ],
+    gemini: [
+      { id: 'gemini-1.5-flash', label: '⭐ Gemini 1.5 Flash (مجاني - موصى به)' },
+      { id: 'gemini-1.5-flash-8b', label: '⚡ Gemini 1.5 Flash 8B (مجاني - أسرع)' },
+      { id: 'gemini-1.0-pro', label: '🔵 Gemini 1.0 Pro (مجاني)' },
+    ],
+    together: [
+      { id: 'meta-llama/Llama-3-70b-chat-hf', label: '⭐ LLaMA 3 70B (موصى به)' },
+      { id: 'mistralai/Mixtral-8x22B-Instruct-v0.1', label: '🔀 Mixtral 8x22B' },
+      { id: 'meta-llama/Llama-3-8b-chat-hf', label: '⚡ LLaMA 3 8B (أسرع)' },
+    ],
+    claude: [
+      { id: 'claude-sonnet-4-6', label: '⭐ Claude Sonnet 4.6 (موصى به)' },
+      { id: 'claude-haiku-4-5-20251001', label: '⚡ Claude Haiku 4.5 (أسرع وأرخص)' },
+    ],
+  };
+  return models[providerId] || models.groq;
+}
+
+function selectAIProvider(providerId) {
+  const provider = AI_PROVIDERS.find(p => p.id === providerId);
+  if (!provider) return;
+
+  // تحديث CSS
+  document.querySelectorAll('.ai-provider-card').forEach(c => c.classList.remove('selected'));
+  const card = document.getElementById('apcard_' + providerId);
+  if (card) card.classList.add('selected');
+
+  // تحديث التسمية والرابط والنصيحة
+  const nameLabel = document.getElementById('aiProviderNameLabel');
+  const signupLink = document.getElementById('aiSignupLink');
+  const tipEl = document.getElementById('aiProviderTip');
+  const modelSelect = document.getElementById('aiModelSelect');
+  const infoEl = document.getElementById('aiProviderInfo');
+
+  if (nameLabel) nameLabel.textContent = provider.name;
+  if (signupLink) {
+    signupLink.href = provider.signupUrl;
+    signupLink.textContent = '🔗 احصل على مفتاح مجاني ←';
+  }
+  if (tipEl) tipEl.innerHTML = `💡 <strong style="color:var(--text)">${provider.tip}</strong>`;
+  if (modelSelect) {
+    modelSelect.innerHTML = getModelsForProvider(providerId).map(m =>
+      `<option value="${m.id}">${m.label}</option>`
+    ).join('');
+  }
+  if (infoEl) {
+    infoEl.innerHTML = `
+      <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:.5rem .7rem;font-size:.72rem">
+        <div style="color:var(--dim)">الحد اليومي المجاني</div>
+        <div style="font-weight:700;color:var(--green)">${provider.freeLimit}</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:.5rem .7rem;font-size:.72rem">
+        <div style="color:var(--dim)">النموذج الافتراضي</div>
+        <div style="font-weight:700;color:#B89AFF;font-family:monospace">${provider.model.split('/').pop()}</div>
+      </div>`;
+  }
+
+  // مسح حقل المفتاح
+  const keyInput = document.getElementById('aiApiKeyInput');
+  if (keyInput) { keyInput.value = ''; keyInput.placeholder = provider.keyPlaceholder; }
+  const testResult = document.getElementById('aiTestResult');
+  if (testResult) { testResult.className = 'ai-test-result'; testResult.textContent = ''; }
+
+  saveAIConfig({ provider: providerId, model: getModelsForProvider(providerId)[0].id, status: 'inactive' });
+}
+
+function toggleAIKeyVisibility() {
+  const input = document.getElementById('aiApiKeyInput');
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    // استرجاع القيمة الحقيقية من data-real
+    const real = input.getAttribute('data-real');
+    if (real && input.value.includes('•')) input.value = real;
+  } else {
+    input.type = 'password';
+  }
+}
+
+async function saveAndTestAIKey() {
+  const input = document.getElementById('aiApiKeyInput');
+  const modelSelect = document.getElementById('aiModelSelect');
+  const testResult = document.getElementById('aiTestResult');
+  if (!input || !testResult) return;
+
+  let apiKey = input.value.trim();
+  // إذا كان المستخدم لم يغير الـ placeholder (نقاط)
+  if (!apiKey || apiKey.includes('•')) {
+    const real = input.getAttribute('data-real');
+    apiKey = real || '';
+  }
+  if (!apiKey) {
+    testResult.className = 'ai-test-result error';
+    testResult.textContent = '⚠️ أدخل مفتاح API أولاً';
+    return;
+  }
+
+  const cfg = getAIConfig();
+  const provider = AI_PROVIDERS.find(p => p.id === cfg.provider) || AI_PROVIDERS[0];
+  const model = modelSelect?.value || provider.model;
+
+  // حفظ فوري
+  saveAIConfig({ provider: cfg.provider, apiKey, model, status: 'testing' });
+  input.setAttribute('data-real', apiKey);
+  input.value = '•'.repeat(Math.min(apiKey.length, 40));
+  input.type = 'password';
+
+  testResult.className = 'ai-test-result loading';
+  testResult.innerHTML = '<div class="ai-loading-bar" style="width:100px;display:inline-block;height:3px;vertical-align:middle"></div> جاري اختبار الاتصال...';
+
+  try {
+    const reply = await testAIConnection(provider, apiKey, model);
+    testResult.className = 'ai-test-result success';
+    testResult.innerHTML = `✅ الاتصال ناجح! رد النموذج: "<em>${reply.substring(0, 80)}...</em>"`;
+    saveAIConfig({ provider: cfg.provider, apiKey, model, status: 'active', lastTested: Date.now() });
+    Toast.success('✅ SmartAI تم تفعيله بنجاح!');
+
+    // تحديث SmartAI engine فوراً
+    if (typeof SmartAI !== 'undefined') {
+      SmartAI.activeProvider = provider;
+      SmartAI.activeKey = apiKey;
+      SmartAI.activeModel = model;
+    }
+    // تحديث status indicator
+    setTimeout(() => App.navigate('admin'), 1500);
+  } catch(err) {
+    testResult.className = 'ai-test-result error';
+    testResult.innerHTML = `❌ فشل الاتصال: ${escHtml(err.message)}`;
+    saveAIConfig({ ...getAIConfig(), status: 'error', lastTested: Date.now() });
+  }
+}
+
+async function testAIConnection(provider, apiKey, model) {
+  const testMsg = 'قل "مرحبا" فقط';
+
+  if (provider.apiStyle === 'openai') {
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    };
+    if (provider.id === 'openrouter_free') {
+      headers['HTTP-Referer'] = 'https://smartstruct.dz';
+      headers['X-Title'] = 'SmartStruct';
+    }
+    const resp = await fetch(provider.endpoint, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model,
+        messages: [{ role: 'user', content: testMsg }],
+        max_tokens: 30
+      })
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${resp.status}`);
+    }
+    const data = await resp.json();
+    return data.choices?.[0]?.message?.content || 'OK';
+
+  } else if (provider.apiStyle === 'gemini') {
+    const url = `${provider.endpoint}?key=${apiKey}`;
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: testMsg }] }],
+        generationConfig: { maxOutputTokens: 30 }
+      })
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${resp.status}`);
+    }
+    const data = await resp.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || 'OK';
+
+  } else if (provider.apiStyle === 'anthropic') {
+    const resp = await fetch(provider.endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 30,
+        messages: [{ role: 'user', content: testMsg }]
+      })
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${resp.status}`);
+    }
+    const data = await resp.json();
+    return data.content?.[0]?.text || 'OK';
+  }
+
+  throw new Error('نوع API غير معروف');
+}
+
+function clearAIKey() {
+  if (!confirm('هل تريد مسح مفتاح API الحالي؟')) return;
+  saveAIConfig({ apiKey: '', status: 'inactive', lastTested: null });
+  const input = document.getElementById('aiApiKeyInput');
+  if (input) { input.value = ''; input.setAttribute('data-real', ''); }
+  const testResult = document.getElementById('aiTestResult');
+  if (testResult) { testResult.className = 'ai-test-result'; testResult.textContent = ''; }
+  if (typeof SmartAI !== 'undefined') { SmartAI.activeKey = null; }
+  Toast.success('تم مسح مفتاح API');
+}
+
+function showAIUsageStats() {
+  const stats = JSON.parse(sessionStorage.getItem('ai_session_stats') || '{"count":0,"tokens":0}');
+  const cfg = getAIConfig();
+  const provider = AI_PROVIDERS.find(p => p.id === cfg.provider);
+  Toast.info(`📊 الجلسة الحالية: ${stats.count} رسالة • الوكيل: ${provider?.name||'—'}`);
+}
+
+/* ── تحديث SmartAI ليستخدم مفتاح الإدارة ── */
+(function patchSmartAIWithSavedConfig() {
+  const origCallAPI = SmartAI.callAPI.bind(SmartAI);
+  SmartAI.callAPI = async function(userMessage) {
+    const cfg = getAIConfig();
+
+    // تتبع الاستخدام
+    const stats = JSON.parse(sessionStorage.getItem('ai_session_stats') || '{"count":0}');
+    stats.count = (stats.count || 0) + 1;
+    sessionStorage.setItem('ai_session_stats', JSON.stringify(stats));
+
+    // إذا لا يوجد مفتاح محفوظ، استخدم Claude API المدمج
+    if (!cfg.apiKey || cfg.status === 'inactive') {
+      return origCallAPI(userMessage);
+    }
+
+    const provider = AI_PROVIDERS.find(p => p.id === cfg.provider) || AI_PROVIDERS[0];
+    const model = cfg.model || provider.model;
+
+    this.history.push({ role: 'user', content: userMessage });
+    const systemPrompt = this.buildSystemPrompt();
+
+    try {
+      let reply;
+
+      if (provider.apiStyle === 'openai') {
+        const headers = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${cfg.apiKey}`
+        };
+        if (provider.id === 'openrouter_free') {
+          headers['HTTP-Referer'] = 'https://smartstruct.dz';
+          headers['X-Title'] = 'SmartStruct';
+        }
+        const msgs = [
+          { role: 'system', content: systemPrompt },
+          ...this.history.slice(-10)
+        ];
+        const resp = await fetch(provider.endpoint, {
+          method: 'POST', headers,
+          body: JSON.stringify({ model, messages: msgs, max_tokens: 1024, temperature: 0.7 })
+        });
+        if (!resp.ok) {
+          const e = await resp.json().catch(() => ({}));
+          throw new Error(e.error?.message || `HTTP ${resp.status}`);
+        }
+        const data = await resp.json();
+        reply = data.choices?.[0]?.message?.content || 'لم أتمكن من الإجابة.';
+
+      } else if (provider.apiStyle === 'gemini') {
+        const url = `${provider.endpoint}?key=${cfg.apiKey}`;
+        const contents = [];
+        // Gemini يحتاج system في أول رسالة user
+        const historyWithSystem = [
+          { role: 'user', content: 'أنت SmartAI. ' + systemPrompt + '\n\nقل "مفهوم".' },
+          { role: 'assistant', content: 'مفهوم، أنا SmartAI جاهز لمساعدتك.' },
+          ...this.history.slice(-8)
+        ];
+        historyWithSystem.forEach(m => {
+          contents.push({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] });
+        });
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents, generationConfig: { maxOutputTokens: 1024, temperature: 0.7 } })
+        });
+        if (!resp.ok) {
+          const e = await resp.json().catch(() => ({}));
+          throw new Error(e.error?.message || `HTTP ${resp.status}`);
+        }
+        const data = await resp.json();
+        reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'لم أتمكن من الإجابة.';
+
+      } else if (provider.apiStyle === 'anthropic') {
+        const resp = await fetch(provider.endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': cfg.apiKey,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true'
+          },
+          body: JSON.stringify({
+            model, max_tokens: 1024,
+            system: systemPrompt,
+            messages: this.history.slice(-10)
+          })
+        });
+        if (!resp.ok) {
+          const e = await resp.json().catch(() => ({}));
+          throw new Error(e.error?.message || `HTTP ${resp.status}`);
+        }
+        const data = await resp.json();
+        reply = data.content?.[0]?.text || 'لم أتمكن من الإجابة.';
+
+      } else {
+        throw new Error('نوع API غير مدعوم');
+      }
+
+      this.history.push({ role: 'assistant', content: reply });
+      return reply;
+
+    } catch(err) {
+      // في حالة الفشل، حاول Claude المدمج
+      console.warn('AI Provider failed, falling back:', err.message);
+      this.history.pop(); // أزل الرسالة التي أضفناها
+      return origCallAPI(userMessage);
+    }
+  };
+})();
+
 /* ─── ADMIN ─── */
 Pages.admin = function() {
 
@@ -4986,6 +5982,9 @@ Pages.admin = function() {
           </div>` : `<div style="text-align:center;padding:.8rem;color:var(--muted);font-size:.8rem">📭 ${L('لا توجد إشعارات بعد','Aucune notification encore')}</div>`}
         </div>`;
         })()}
+
+        <!-- ══ 🤖 SmartAI — إعدادات وكيل الذكاء الاصطناعي ══ -->
+        ${renderAIProviderSettings()}
 
         <!-- Add Tenant Modal -->
         <div class="modal-overlay" id="addTenantModal">
@@ -6159,6 +7158,7 @@ function sidebarHTML(active='') {
     const mainLinks = [
       navLink('dashboard','📊',__('nav.dashboard')),
       navLink('analytics','📈',__('nav.analytics')),
+      navLink('ai_analysis','🤖', I18N.currentLang==='ar'?'تحليل SmartAI':'Analyse SmartAI'),
     ].filter(Boolean).join('');
 
     // ── Projects Section ──
@@ -8750,6 +9750,535 @@ function printAICEOSummary() {
   Toast.info('يمكنك استخدام Ctrl+P لطباعة الصفحة');
 }
 
+/* ══════════════════════════════════════════════════════
+   🤖 SmartAI — نظام الذكاء الاصطناعي الحقيقي
+   يعمل بـ Claude API من Anthropic
+══════════════════════════════════════════════════════ */
+const SmartAI = {
+  isOpen: false,
+  isLoading: false,
+  history: [],
+  apiKey: null,
+
+  /* ── الحصول على بيانات السياق من قاعدة البيانات ── */
+  getContext() {
+    try {
+      const user = Auth.getUser();
+      if (!user) return {};
+      const tid = user.tenant_id;
+      const tenant = Auth.getTenant() || {};
+      const projects = DB.get('projects').filter(p => p.tenant_id === tid && !p.is_archived);
+      const workers = DB.get('workers').filter(w => w.tenant_id === tid);
+      const txs = DB.get('transactions').filter(t => t.tenant_id === tid);
+      const att = DB.get('attendance');
+      const today = new Date().toISOString().split('T')[0];
+      const revenue = txs.filter(t => t.type === 'revenue').reduce((s, t) => s + Number(t.amount), 0);
+      const expense = txs.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
+      const todayAtt = att.filter(a => a.date === today);
+      const presentToday = todayAtt.filter(a => a.status === 'present').length;
+
+      const projectSummaries = projects.map(p => {
+        const pRev = txs.filter(t => t.project_id === p.id && t.type === 'revenue').reduce((s, t) => s + Number(t.amount), 0);
+        const pExp = txs.filter(t => t.project_id === p.id && t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
+        const budgetUsed = p.budget > 0 ? Math.round(p.total_spent / p.budget * 100) : 0;
+        return {
+          اسم: p.name,
+          الولاية: p.wilaya || '—',
+          الحالة: p.status,
+          التقدم: p.progress + '%',
+          الميزانية: p.budget.toLocaleString() + ' دج',
+          المنفق: p.total_spent.toLocaleString() + ' دج',
+          نسبة_الاستهلاك: budgetUsed + '%',
+          الإيراد: pRev.toLocaleString() + ' دج',
+          المصروف: pExp.toLocaleString() + ' دج',
+          الربح: (pRev - pExp).toLocaleString() + ' دج',
+          خطر: budgetUsed > 80 && p.progress < 60 ? 'عالي' : budgetUsed > 60 ? 'متوسط' : 'منخفض'
+        };
+      });
+
+      const workerSummary = {
+        العدد_الإجمالي: workers.length,
+        الحاضرون_اليوم: presentToday,
+        معدل_الحضور: workers.length > 0 ? Math.round(presentToday / workers.length * 100) + '%' : '0%',
+        إجمالي_الأجور_اليومية: workers.reduce((s, w) => s + Number(w.daily_salary || 0), 0).toLocaleString() + ' دج'
+      };
+
+      return {
+        المؤسسة: tenant.name || '—',
+        الولاية: tenant.wilaya || '—',
+        اليوم: today,
+        الماليات: {
+          إجمالي_الإيرادات: revenue.toLocaleString() + ' دج',
+          إجمالي_المصاريف: expense.toLocaleString() + ' دج',
+          الربح_الصافي: (revenue - expense).toLocaleString() + ' دج',
+          نسبة_الربحية: revenue > 0 ? Math.round((revenue - expense) / revenue * 100) + '%' : '0%'
+        },
+        المشاريع: projectSummaries,
+        العمال: workerSummary,
+        المشاريع_النشطة: projects.filter(p => p.status === 'active').length,
+        المشاريع_المتأخرة: projects.filter(p => p.status === 'delayed').length,
+        مشاريع_في_خطر: projects.filter(p => p.budget > 0 && p.total_spent / p.budget > 0.8 && p.progress < 60).length
+      };
+    } catch (e) {
+      return {};
+    }
+  },
+
+  /* ── إنشاء System Prompt بالسياق الكامل ── */
+  buildSystemPrompt() {
+    const ctx = this.getContext();
+    return `أنت SmartAI، مساعد ذكاء اصطناعي متخصص في إدارة مشاريع المقاولة الجزائرية، مدمج في منصة SmartStruct.
+
+**بيانات المؤسسة الحالية (حقيقية، محدّثة):**
+${JSON.stringify(ctx, null, 2)}
+
+**دورك:**
+- محلل مالي ومستشار مشاريع متخصص في السوق الجزائري
+- تقدم توصيات عملية وقابلة للتطبيق فوراً
+- تستخدم الأرقام الحقيقية من البيانات أعلاه في تحليلاتك
+- تتحدث بالعربية الفصحى البسيطة، مع إمكانية استخدام الفرنسية عند الحاجة
+- تكون موجزاً ومركّزاً على الإجراءات
+
+**تعليمات الإجابة:**
+- استخدم الإيموجي لتنظيم الإجابة بصرياً
+- قدم الأرقام بالدينار الجزائري (دج)
+- أولوياتك: سلامة الميزانية، الربحية، كفاءة العمال
+- إذا لم تجد بيانات كافية، أشر إلى ذلك وأعطِ توصيات عامة
+- لا تتجاوز 300 كلمة في الإجابة إلا إذا طُلب منك التفصيل
+- **لا تُجب على أسئلة خارج نطاق إدارة المشاريع والمقاولة**`;
+  },
+
+  /* ── إرسال رسالة للـ API ── */
+  async callAPI(userMessage) {
+    this.history.push({ role: 'user', content: userMessage });
+
+    const body = {
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1024,
+      system: this.buildSystemPrompt(),
+      messages: this.history.slice(-10) // أحدث 10 رسائل للسياق
+    };
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'خطأ في الاتصال بالخادم');
+    }
+
+    const data = await resp.json();
+    const assistantMsg = data.content?.[0]?.text || 'لم أتمكن من الإجابة.';
+    this.history.push({ role: 'assistant', content: assistantMsg });
+    return assistantMsg;
+  },
+
+  /* ── عرض رسالة في الدردشة ── */
+  appendMessage(role, text) {
+    const el = document.getElementById('aiMessages');
+    if (!el) return;
+    const now = new Date().toLocaleTimeString('ar-DZ', { hour: '2-digit', minute: '2-digit' });
+    // تحويل markdown بسيط لـ HTML
+    const formatted = text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/\n/g, '<br>');
+    const div = document.createElement('div');
+    div.className = `ai-msg ${role}`;
+    div.innerHTML = `${formatted}<div class="ai-msg-time">${now}</div>`;
+    el.appendChild(div);
+    el.scrollTop = el.scrollHeight;
+    return div;
+  },
+
+  showTyping() {
+    const el = document.getElementById('aiMessages');
+    if (!el) return;
+    const div = document.createElement('div');
+    div.className = 'ai-typing';
+    div.id = 'aiTypingIndicator';
+    div.innerHTML = '<div class="ai-typing-dot"></div><div class="ai-typing-dot"></div><div class="ai-typing-dot"></div>';
+    el.appendChild(div);
+    el.scrollTop = el.scrollHeight;
+  },
+
+  hideTyping() {
+    document.getElementById('aiTypingIndicator')?.remove();
+  },
+
+  /* ── إرسال رسالة ── */
+  async send() {
+    if (this.isLoading) return;
+    const input = document.getElementById('aiInput');
+    if (!input) return;
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    const user = Auth.getUser();
+    if (!user) { Toast.error('يجب تسجيل الدخول أولاً'); return; }
+
+    input.value = '';
+    input.style.height = 'auto';
+    this.appendMessage('user', msg);
+    this.setLoading(true);
+    this.showTyping();
+
+    try {
+      const reply = await this.callAPI(msg);
+      this.hideTyping();
+      this.appendMessage('bot', reply);
+      // حفظ محادثة AI في audit log
+      try {
+        const tid = user.tenant_id;
+        const log = DB.get('audit_log_' + tid) || [];
+        log.push({ action: 'ai_chat', user: user.full_name, q: msg.substring(0, 80), ts: Date.now() });
+        DB.set('audit_log_' + tid, log.slice(-200));
+      } catch (e) {}
+    } catch (err) {
+      this.hideTyping();
+      const errMsg = err.message.includes('API') || err.message.includes('fetch')
+        ? '⚠️ خطأ في الاتصال بـ Claude API. تأكد من اتصال الإنترنت.'
+        : `⚠️ ${err.message}`;
+      this.appendMessage('bot', errMsg);
+    } finally {
+      this.setLoading(false);
+    }
+  },
+
+  quickAsk(msg) {
+    const input = document.getElementById('aiInput');
+    if (input) { input.value = msg; input.style.height = 'auto'; }
+    this.send();
+  },
+
+  setLoading(on) {
+    this.isLoading = on;
+    const btn = document.getElementById('aiSendBtn');
+    if (btn) btn.disabled = on;
+  },
+
+  toggleChat() {
+    this.isOpen = !this.isOpen;
+    const panel = document.getElementById('aiChatPanel');
+    const fab = document.getElementById('aiFab');
+    if (!panel) return;
+
+    if (this.isOpen) {
+      panel.style.display = 'flex';
+      panel.style.flexDirection = 'column';
+      document.getElementById('aiFabBadge').style.display = 'none';
+      // رسالة ترحيب تلقائية عند أول فتح
+      if (this.history.length === 0) {
+        setTimeout(() => {
+          const user = Auth.getUser();
+          const ctx = this.getContext();
+          const greeting = user
+            ? `مرحباً ${escHtml(user.full_name.split(' ')[0])} 👋\n\nأنا **SmartAI**، مساعدك الذكي لإدارة المشاريع.\n\n📊 لديك حالياً:\n• **${ctx.المشاريع_النشطة || 0}** مشروع نشط\n• **${ctx.العمال?.العدد_الإجمالي || 0}** عامل\n• الربح الصافي: **${ctx.الماليات?.الربح_الصافي || '0 دج'}**\n\nكيف يمكنني مساعدتك اليوم؟`
+            : 'مرحباً! أنا SmartAI. سجّل الدخول للحصول على تحليل مخصص لمشاريعك.';
+          this.appendMessage('bot', greeting);
+        }, 300);
+      }
+      setTimeout(() => { document.getElementById('aiInput')?.focus(); }, 350);
+    } else {
+      panel.style.display = 'none';
+    }
+  },
+
+  /* ── تحليل ذكي تلقائي للمشاريع ── */
+  async autoAnalyze() {
+    const user = Auth.getUser();
+    if (!user || user.is_admin) return;
+
+    // تحقق هل تم التحليل اليوم
+    const today = new Date().toISOString().split('T')[0];
+    const lastAnalysis = sessionStorage.getItem('ai_last_analysis');
+    if (lastAnalysis === today) return;
+
+    const ctx = this.getContext();
+    if (!ctx.مشاريع_في_خطر && ctx.المشاريع_المتأخرة === 0) return;
+
+    sessionStorage.setItem('ai_last_analysis', today);
+
+    // إظهار تنبيه ذكي في الـ FAB
+    if (ctx.مشاريع_في_خطر > 0 || ctx.المشاريع_المتأخرة > 0) {
+      const badge = document.getElementById('aiFabBadge');
+      if (badge) { badge.style.display = 'block'; badge.textContent = ctx.مشاريع_في_خطر + ctx.المشاريع_المتأخرة; }
+      // إشعار
+      setTimeout(() => {
+        Toast.warn(`🤖 SmartAI: ${ctx.مشاريع_في_خطر > 0 ? ctx.مشاريع_في_خطر + ' مشاريع في خطر!' : ''} ${ctx.المشاريع_المتأخرة > 0 ? ctx.المشاريع_المتأخرة + ' متأخرة' : ''} — اضغط على 🤖 للتحليل`);
+      }, 3000);
+    }
+  }
+};
+
+/* ══════════════════════════════════════════════════════
+   🛡️ SECURITY FIXES — إصلاح الثغرات الأمنية
+══════════════════════════════════════════════════════ */
+
+/* ── تعزيز Auth: منع Prototype Pollution ── */
+(function secureDB() {
+  const _set = DB.set.bind(DB);
+  DB.set = function(key, val) {
+    // تحقق من صحة المفتاح — منع حقن مفاتيح خطيرة
+    if (typeof key !== 'string' || key.includes('__proto__') || key.includes('constructor') || key.includes('prototype')) {
+      console.error('[Security] محاولة حقن مفتاح خطير مرفوضة:', key);
+      return;
+    }
+    return _set(key, val);
+  };
+})();
+
+/* ── تحقق من صلاحيات الصفحة الحساسة (Admin) ── */
+(function secureAdminAccess() {
+  const _navigate = App.navigate.bind(App);
+  App.navigate = function(page, params) {
+    if (page === 'admin') {
+      const user = Auth.getUser();
+      if (!user || !user.is_admin) {
+        Toast.error('⛔ ليس لديك صلاحية الوصول إلى لوحة المسؤول');
+        return _navigate('dashboard', {});
+      }
+      // تحقق إضافي من admin flag في session
+      if (!sessionStorage.getItem('sbtp_admin_auth')) {
+        Toast.error('⛔ جلسة المسؤول منتهية. أعد تسجيل الدخول');
+        return _navigate('dashboard', {});
+      }
+    }
+    return _navigate(page, params);
+  };
+})();
+
+/* ── Rate Limiting للـ AI Chat ── */
+const RateLimit = {
+  counts: {},
+  check(action, limit = 10, windowMs = 60000) {
+    const now = Date.now();
+    if (!this.counts[action]) this.counts[action] = [];
+    this.counts[action] = this.counts[action].filter(t => now - t < windowMs);
+    if (this.counts[action].length >= limit) return false;
+    this.counts[action].push(now);
+    return true;
+  }
+};
+
+/* ── تحقق إضافي من المدخلات في نماذج التسجيل ── */
+(function patchInputValidation() {
+  const _doRegister = typeof doRegister === 'function' ? doRegister : null;
+  if (!_doRegister) return;
+  window.doRegister = function() {
+    const email = document.getElementById('regEmail')?.value?.trim().toLowerCase() || '';
+    const name = document.getElementById('regName')?.value?.trim() || '';
+    const company = document.getElementById('regCompany')?.value?.trim() || '';
+    const pass = document.getElementById('regPass')?.value || '';
+
+    // تحقق من الإيميل
+    const emailRe = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRe.test(email)) {
+      Toast.error('البريد الإلكتروني غير صالح');
+      return;
+    }
+    // منع SQL/Script injection بسيط
+    const forbiddenPatterns = [/<script/i, /javascript:/i, /on\w+\s*=/i, /SELECT.*FROM/i, /DROP TABLE/i];
+    const allInputs = [name, company, email];
+    for (const inp of allInputs) {
+      for (const pat of forbiddenPatterns) {
+        if (pat.test(inp)) {
+          Toast.error('⛔ المدخلات تحتوي على محتوى غير مسموح');
+          return;
+        }
+      }
+    }
+    // كلمة مرور قوية
+    if (pass.length < 8) { Toast.error('كلمة المرور يجب أن تكون 8 أحرف على الأقل'); return; }
+    // استدعاء الدالة الأصلية
+    return _doRegister();
+  };
+})();
+
+/* ══════════════════════════════════════════════════════
+   🤖 AI ANALYSIS PAGE — صفحة التحليل الذكي
+══════════════════════════════════════════════════════ */
+Pages.ai_analysis = function() {
+  if (!Auth.getUser()) return layoutHTML('ai_analysis', 'تحليل AI', '<div class="empty"><div class="empty-icon">🔒</div><div class="empty-title">يجب تسجيل الدخول</div></div>');
+
+  const ctx = SmartAI.getContext();
+  const projects = DB.get('projects').filter(p => p.tenant_id === Auth.getUser().tenant_id && !p.is_archived);
+  const txs = DB.get('transactions').filter(t => t.tenant_id === Auth.getUser().tenant_id);
+  const workers = DB.get('workers').filter(w => w.tenant_id === Auth.getUser().tenant_id);
+
+  // تحليل كل مشروع
+  const projectInsights = projects.map(p => {
+    const pRev = txs.filter(t => t.project_id === p.id && t.type === 'revenue').reduce((s, t) => s + Number(t.amount), 0);
+    const pExp = txs.filter(t => t.project_id === p.id && t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
+    const budgetPct = p.budget > 0 ? Math.round(p.total_spent / p.budget * 100) : 0;
+    const roi = pExp > 0 ? Math.round((pRev - pExp) / pExp * 100) : 0;
+    let score = 100;
+    const issues = [];
+    if (budgetPct > 90) { score -= 30; issues.push({ icon: '🔴', text: `استهلاك الميزانية حرج: ${budgetPct}%` }); }
+    else if (budgetPct > 70 && p.progress < 60) { score -= 20; issues.push({ icon: '🟡', text: `استهلاك مرتفع (${budgetPct}%) مع تقدم منخفض (${p.progress}%)` }); }
+    if (p.status === 'delayed') { score -= 25; issues.push({ icon: '⏰', text: 'المشروع متأخر عن الجدول الزمني' }); }
+    if (pRev > 0 && roi < 5) { score -= 15; issues.push({ icon: '💸', text: `هامش ربح منخفض جداً: ${roi}%` }); }
+    if (p.progress < 10 && p.start_date && new Date(p.start_date) < new Date(Date.now() - 30 * 86400000)) { score -= 10; issues.push({ icon: '🐢', text: 'بداية متأخرة — التقدم أقل من المتوقع' }); }
+    score = Math.max(0, score);
+    const scoreClass = score >= 80 ? 'ai-score-excellent' : score >= 60 ? 'ai-score-good' : score >= 40 ? 'ai-score-warn' : 'ai-score-danger';
+    const scoreLabel = score >= 80 ? 'ممتاز' : score >= 60 ? 'جيد' : score >= 40 ? 'يحتاج متابعة' : 'خطر';
+    return { p, budgetPct, roi, score, scoreClass, scoreLabel, issues, pRev, pExp };
+  });
+
+  // توصيات شاملة
+  const recommendations = [];
+  const delayed = projects.filter(p => p.status === 'delayed');
+  if (delayed.length > 0) recommendations.push({ icon: '🚨', priority: 'عالية', text: `${delayed.length} مشاريع متأخرة تحتاج تدخلاً فورياً: ${delayed.map(p => escHtml(p.name)).join('، ')}` });
+  const overBudget = projects.filter(p => p.budget > 0 && p.total_spent > p.budget);
+  if (overBudget.length > 0) recommendations.push({ icon: '💰', priority: 'عالية', text: `تجاوز الميزانية في: ${overBudget.map(p => escHtml(p.name)).join('، ')} — راجع عقود الموردين` });
+  const revenue = txs.filter(t => t.type === 'revenue').reduce((s, t) => s + Number(t.amount), 0);
+  const expense = txs.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
+  if (revenue > 0 && (revenue - expense) / revenue < 0.1) recommendations.push({ icon: '📉', priority: 'متوسطة', text: 'هامش الربح الإجمالي أقل من 10% — راجع تسعير خدماتك' });
+  if (workers.length > 0) {
+    const today = new Date().toISOString().split('T')[0];
+    const att = DB.get('attendance');
+    const presentToday = att.filter(a => a.date === today && a.status === 'present').length;
+    const rate = Math.round(presentToday / workers.length * 100);
+    if (rate < 70) recommendations.push({ icon: '👷', priority: 'متوسطة', text: `معدل الحضور اليوم منخفض: ${rate}% — تحقق من غياب العمال` });
+  }
+  if (recommendations.length === 0) recommendations.push({ icon: '✅', priority: 'منخفضة', text: 'كل شيء يسير بشكل جيد — استمر في المتابعة اليومية' });
+
+  return layoutHTML('ai_analysis', '🤖 تحليل AI', `
+    <div class="ai-page-header">
+      <div class="ai-page-icon">🤖</div>
+      <div>
+        <div style="font-size:1.3rem;font-weight:900;margin-bottom:.3rem">تحليل SmartAI الذكي</div>
+        <div style="font-size:.85rem;color:var(--muted)">تحليل شامل لجميع مشاريعك مع توصيات فورية قابلة للتطبيق</div>
+        <div style="font-size:.75rem;color:var(--dim);margin-top:.3rem">📅 ${new Date().toLocaleDateString('ar-DZ', {weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
+      </div>
+      <div style="margin-right:auto">
+        <button class="btn btn-purple btn-sm" onclick="SmartAI.toggleChat();SmartAI.quickAsk('أعطني تحليلاً شاملاً مفصلاً لجميع مشاريعي مع أهم التوصيات')">🤖 اسأل SmartAI</button>
+      </div>
+    </div>
+
+    <!-- توصيات فورية -->
+    <div class="card" style="margin-bottom:1.5rem;border-color:rgba(155,109,255,0.25)">
+      <div style="font-size:.9rem;font-weight:900;margin-bottom:1rem;color:#B89AFF">🎯 التوصيات الفورية</div>
+      ${recommendations.map(r => `
+        <div class="ai-insight-item">
+          <span class="ai-insight-icon">${r.icon}</span>
+          <div>
+            <div class="ai-insight-text">${r.text}</div>
+            <div class="ai-insight-meta">الأولوية: ${r.priority}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+
+    <!-- تحليل كل مشروع -->
+    <div style="font-size:.9rem;font-weight:800;color:var(--muted);margin-bottom:.8rem">📊 تحليل المشاريع</div>
+    <div class="ai-analysis-cards">
+      ${projectInsights.length ? projectInsights.map(({ p, budgetPct, roi, score, scoreClass, scoreLabel, issues, pRev, pExp }) => `
+        <div class="ai-analysis-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.8rem">
+            <div style="font-weight:800;font-size:.9rem;flex:1">${escHtml(p.name)}</div>
+            <div class="ai-project-score ${scoreClass}">${score}/100 — ${scoreLabel}</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;font-size:.78rem;margin-bottom:.8rem">
+            <div style="color:var(--dim)">الميزانية المستهلكة</div><div style="font-weight:700;color:${budgetPct>80?'var(--red)':budgetPct>60?'var(--gold)':'var(--green)'}">${budgetPct}%</div>
+            <div style="color:var(--dim)">التقدم</div><div style="font-weight:700">${p.progress}%</div>
+            <div style="color:var(--dim)">العائد على الاستثمار</div><div style="font-weight:700;color:${roi>15?'var(--green)':roi>5?'var(--gold)':'var(--red)'}">${roi}%</div>
+            <div style="color:var(--dim)">الربح الصافي</div><div style="font-weight:700;color:${pRev-pExp>=0?'var(--green)':'var(--red)'}">${((pRev-pExp)/1000000).toFixed(1)}M دج</div>
+          </div>
+          <div class="ai-analysis-title">الملاحظات:</div>
+          ${issues.length ? issues.map(i => `
+            <div class="ai-insight-item" style="padding:.3rem 0">
+              <span class="ai-insight-icon">${i.icon}</span>
+              <div class="ai-insight-text" style="font-size:.78rem">${i.text}</div>
+            </div>
+          `).join('') : `<div style="color:var(--green);font-size:.78rem">✅ المشروع في وضع ممتاز</div>`}
+          <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;margin-top:.7rem"
+            onclick="SmartAI.toggleChat();SmartAI.quickAsk('حلّل مشروع ${escHtml(p.name)} بالتفصيل وأعطني خطة عمل محددة')">
+            🤖 تحليل مفصّل
+          </button>
+        </div>
+      `).join('') : `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🏗️</div><div class="empty-title">لا توجد مشاريع للتحليل</div></div>`}
+    </div>
+
+    <!-- إحصائيات عامة -->
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-top:1rem">
+      <div class="stat-card" style="border-color:rgba(155,109,255,0.2)">
+        <div class="stat-icon">🏆</div>
+        <div class="stat-value" style="color:#9B6DFF">${projectInsights.filter(p=>p.score>=80).length}</div>
+        <div class="stat-label">مشاريع ممتازة</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(232,184,75,0.2)">
+        <div class="stat-icon">⚠️</div>
+        <div class="stat-value" style="color:var(--gold)">${projectInsights.filter(p=>p.score>=40&&p.score<80).length}</div>
+        <div class="stat-label">تحتاج متابعة</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(240,78,106,0.2)">
+        <div class="stat-icon">🚨</div>
+        <div class="stat-value" style="color:var(--red)">${projectInsights.filter(p=>p.score<40).length}</div>
+        <div class="stat-label">في خطر</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(52,195,143,0.2)">
+        <div class="stat-icon">📈</div>
+        <div class="stat-value" style="color:var(--green);font-size:1rem">${projectInsights.length>0?Math.round(projectInsights.reduce((s,p)=>s+p.score,0)/projectInsights.length):0}</div>
+        <div class="stat-label">متوسط الدرجة</div>
+      </div>
+    </div>
+  `);
+};
+
+/* ══════════════════════════════════════════════════════
+   إضافة AI Analysis للـ Sidebar وإصلاح التنقل
+══════════════════════════════════════════════════════ */
+(function patchSidebar() {
+  const originalLayoutHTML = typeof layoutHTML === 'function' ? layoutHTML : null;
+  // إضافة AI Analysis لقائمة الصفحات الصالحة
+  const origHash = (function() {
+    const hash = window.location.hash.replace('#', '').trim();
+    return hash;
+  })();
+  if (origHash === 'ai_analysis') App.currentPage = 'ai_analysis';
+})();
+
+/* ── تهيئة SmartAI بعد تحميل الصفحة ── */
+document.addEventListener('DOMContentLoaded', function() {
+  // إظهار زر AI فقط عند تسجيل الدخول
+  function updateAIFabVisibility() {
+    const fab = document.getElementById('aiFab');
+    if (!fab) return;
+    const user = Auth.getUser();
+    fab.style.display = user && !user.is_admin ? 'flex' : 'none';
+    if (user && !user.is_admin) {
+      setTimeout(() => SmartAI.autoAnalyze(), 2000);
+    }
+  }
+  updateAIFabVisibility();
+  // مراقبة تغيير حالة المستخدم
+  const origAuthLoad = Auth.load.bind(Auth);
+  Auth.load = function() {
+    origAuthLoad();
+    setTimeout(updateAIFabVisibility, 100);
+  };
+});
+
+/* ── Rate limit على إرسال AI ── */
+(function patchAISend() {
+  const orig = SmartAI.send.bind(SmartAI);
+  SmartAI.send = async function() {
+    if (!RateLimit.check('ai_chat', 20, 60000)) {
+      Toast.warn('⚠️ أرسلت رسائل كثيرة جداً، انتظر دقيقة');
+      return;
+    }
+    return orig();
+  };
+})();
+
 /* ─── UPSELL MODAL FUNCTION ─── */
 function showUpsellModal(feature) {
   const plans = DB.get('plans') || [];
@@ -8838,7 +10367,7 @@ function showOnboardingWizard(hasProjects, hasWorkers, hasTxs) {
   const validPages = ['admin','dashboard','projects','workers','transactions','reports','settings',
     'attendance','salary','invoices','inventory','equipment','materials','documents',
     'analytics','kanban','gantt','compare','calendar','map','simulator','bank_report',
-    'audit_log','obligations','team'];
+    'audit_log','obligations','team','ai_analysis'];
   if (hash && validPages.includes(hash)) {
     App.currentPage = hash;
   }
