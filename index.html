@@ -5577,6 +5577,24 @@ function clearAIKey() {
   Toast.success('تم مسح مفتاح API');
 }
 
+function switchAdminTab(tab) {
+  const tabs = ['tenants','ai','notif'];
+  tabs.forEach(t => {
+    const btn = document.getElementById('adminTab_' + t);
+    const panel = document.getElementById('adminTabContent_' + t);
+    if (!btn || !panel) return;
+    if (t === tab) {
+      btn.style.background = t === 'ai' ? '#9B6DFF' : t === 'notif' ? 'var(--blue)' : 'var(--gold)';
+      btn.style.color = t === 'ai' ? '#fff' : '#1a1a1a';
+      panel.style.display = 'block';
+    } else {
+      btn.style.background = 'transparent';
+      btn.style.color = 'var(--muted)';
+      panel.style.display = 'none';
+    }
+  });
+}
+
 function showAIUsageStats() {
   const stats = JSON.parse(sessionStorage.getItem('ai_session_stats') || '{"count":0,"tokens":0}');
   const cfg = getAIConfig();
@@ -5759,6 +5777,25 @@ Pages.admin = function() {
           </div>
         </div>
 
+        <!-- Admin Tabs -->
+        <div style="display:flex;gap:.4rem;margin-bottom:1.5rem;background:rgba(255,255,255,0.03);border:1px solid var(--border2);border-radius:14px;padding:.35rem">
+          <button id="adminTab_tenants" onclick="switchAdminTab('tenants')"
+            style="flex:1;padding:.55rem 1rem;border-radius:10px;font-size:.82rem;font-weight:800;border:none;cursor:pointer;transition:all .2s;background:var(--gold);color:#1a1a1a">
+            🏢 المؤسسات والإحصائيات
+          </button>
+          <button id="adminTab_ai" onclick="switchAdminTab('ai')"
+            style="flex:1;padding:.55rem 1rem;border-radius:10px;font-size:.82rem;font-weight:800;border:none;cursor:pointer;transition:all .2s;background:transparent;color:var(--muted)">
+            🤖 إعدادات SmartAI
+          </button>
+          <button id="adminTab_notif" onclick="switchAdminTab('notif')"
+            style="flex:1;padding:.55rem 1rem;border-radius:10px;font-size:.82rem;font-weight:800;border:none;cursor:pointer;transition:all .2s;background:transparent;color:var(--muted)">
+            📧 الإشعارات والبريد
+          </button>
+        </div>
+
+        <!-- TAB CONTENT: المؤسسات -->
+        <div id="adminTabContent_tenants" style="display:block">
+
         <!-- Stats -->
         <div class="stats-grid" style="grid-template-columns:repeat(5,1fr)">
           <div class="stat-card"><div class="stat-icon">🏢</div><div class="stat-value" style="color:var(--green)">${tenants.filter(t=>t.is_active).length}</div><div class="stat-label">${L('مؤسسات نشطة','Entreprises actives')}</div></div>
@@ -5840,6 +5877,11 @@ Pages.admin = function() {
             }).join('')}</tbody>
           </table></div>
         </div>
+
+        </div><!-- END adminTabContent_tenants -->
+
+        <!-- TAB CONTENT: الإشعارات والبريد -->
+        <div id="adminTabContent_notif" style="display:none">
 
         <!-- ══ Notifications Panel ══ -->
         ${(()=>{
@@ -5994,8 +6036,12 @@ Pages.admin = function() {
         </div>`;
         })()}
 
-        <!-- ══ 🤖 SmartAI — إعدادات وكيل الذكاء الاصطناعي ══ -->
-        ${renderAIProviderSettings()}
+        </div><!-- END adminTabContent_notif -->
+
+        <!-- TAB CONTENT: SmartAI -->
+        <div id="adminTabContent_ai" style="display:none">
+          ${renderAIProviderSettings()}
+        </div><!-- END adminTabContent_ai -->
 
         <!-- Add Tenant Modal -->
         <div class="modal-overlay" id="addTenantModal">
