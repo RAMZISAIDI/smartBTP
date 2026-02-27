@@ -5578,21 +5578,182 @@ function clearAIKey() {
 }
 
 function switchAdminTab(tab) {
-  const tabs = ['tenants','ai','notif'];
+  const tabs = ['tenants','ai','notif','ai_insights'];
   tabs.forEach(t => {
     const btn = document.getElementById('adminTab_' + t);
     const panel = document.getElementById('adminTabContent_' + t);
     if (!btn || !panel) return;
+    const colors = { ai:'#9B6DFF', notif:'var(--blue)', ai_insights:'var(--green)', tenants:'var(--gold)' };
+    const textColors = { ai:'#fff', notif:'#fff', ai_insights:'#09120A', tenants:'#1a1a1a' };
     if (t === tab) {
-      btn.style.background = t === 'ai' ? '#9B6DFF' : t === 'notif' ? 'var(--blue)' : 'var(--gold)';
-      btn.style.color = t === 'ai' ? '#fff' : '#1a1a1a';
+      btn.style.background = colors[t] || 'var(--gold)';
+      btn.style.color = textColors[t] || '#1a1a1a';
       panel.style.display = 'block';
+      if (t === 'ai_insights') renderAdminAIInsights();
     } else {
       btn.style.background = 'transparent';
       btn.style.color = 'var(--muted)';
       panel.style.display = 'none';
     }
   });
+}
+
+/* ══════════════════════════════════════════════════════
+   🤖 ADMIN AI INSIGHTS DASHBOARD
+══════════════════════════════════════════════════════ */
+function renderAdminAIInsights() {
+  const root = document.getElementById('adminAIInsightsRoot');
+  if (!root) return;
+
+  const tenants = DB.get('tenants');
+  const projects = DB.get('projects');
+  const workers = DB.get('workers');
+  const txs = DB.get('transactions');
+  const plans = DB.get('plans') || [];
+
+  const tenantInsights = tenants.map(t => {
+    const tp = projects.filter(p => p.tenant_id === t.id && !p.is_archived);
+    const tRev = txs.filter(tx => tx.tenant_id === t.id && tx.type === 'revenue').reduce((s, tx) => s + Number(tx.amount), 0);
+    const tExp = txs.filter(tx => tx.tenant_id === t.id && tx.type === 'expense').reduce((s, tx) => s + Number(tx.amount), 0);
+    const tWorkers = workers.filter(w => w.tenant_id === t.id);
+    const delayed = tp.filter(p => p.status === 'delayed').length;
+    const overBudget = tp.filter(p => p.budget > 0 && p.total_spent > p.budget).length;
+    const plan = plans.find(p => p.id === t.plan_id);
+    let score = 100;
+    const issues = [], strengths = [];
+    if (!t.is_active) { score -= 50; issues.push({ icon: '⏸️', text: 'المؤسسة موقوفة' }); }
+    if (delayed > 0) { score -= delayed * 15; issues.push({ icon: '⏰', text: delayed + ' مشروع متأخر' }); }
+    if (overBudget > 0) { score -= overBudget * 20; issues.push({ icon: '💸', text: overBudget + ' مشروع تجاوز الميزانية' }); }
+    if (t.subscription_status === 'expired') { score -= 30; issues.push({ icon: '🔴', text: 'الاشتراك منتهي' }); }
+    if (tRev > 0 && (tRev - tExp) / tRev > 0.15) strengths.push({ icon: '💰', text: 'هامش ربح ممتاز: ' + Math.round((tRev - tExp) / tRev * 100) + '%' });
+    if (tp.filter(p => p.status === 'completed').length > 0) strengths.push({ icon: '✅', text: tp.filter(p => p.status === 'completed').length + ' مشروع مكتمل' });
+    score = Math.max(0, Math.min(100, score));
+    const scoreClass = score >= 80 ? 'ai-score-excellent' : score >= 60 ? 'ai-score-good' : score >= 40 ? 'ai-score-warn' : 'ai-score-danger';
+    return { t, tp, tRev, tExp, tWorkers, delayed, overBudget, plan, score, scoreClass, issues, strengths };
+  });
+
+  const totalRev = txs.filter(t => t.type === 'revenue').reduce((s, t) => s + Number(t.amount), 0);
+  const totalExp = txs.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
+  const totalDelayed = projects.filter(p => p.status === 'delayed').length;
+  const totalOverBudget = projects.filter(p => p.budget > 0 && p.total_spent > p.budget).length;
+  const avgScore = tenantInsights.length > 0 ? Math.round(tenantInsights.reduce((s, ti) => s + ti.score, 0) / tenantInsights.length) : 0;
+  const sorted = [...tenantInsights].sort((a, b) => b.score - a.score);
+  const best = sorted[0];
+  const worst = sorted[sorted.length - 1];
+
+  const adminRecs = [];
+  if (totalDelayed > 0) adminRecs.push({ icon: '🚨', color: 'var(--red)', text: totalDelayed + ' مشروع متأخر عبر المنصة — تواصل مع المؤسسات المعنية' });
+  if (totalOverBudget > 0) adminRecs.push({ icon: '💸', color: 'var(--orange)', text: totalOverBudget + ' مشروع تجاوز الميزانية — راجع خطط التمويل' });
+  const expiredSubs = tenants.filter(t => t.subscription_status === 'expired').length;
+  if (expiredSubs > 0) adminRecs.push({ icon: '🔔', color: 'var(--gold)', text: expiredSubs + ' مؤسسة اشتراكها منتهٍ — فرصة لتجديد الاشتراكات' });
+  const trialSubs = tenants.filter(t => t.subscription_status === 'trial').length;
+  if (trialSubs > 0) adminRecs.push({ icon: '⏳', color: 'var(--blue)', text: trialSubs + ' مؤسسة في فترة تجريبية — ابدأ محادثات التحويل للخطط المدفوعة' });
+  if (adminRecs.length === 0) adminRecs.push({ icon: '✅', color: 'var(--green)', text: 'كل المؤسسات في وضع ممتاز — استمر في المتابعة الدورية' });
+
+  const aiNotifs = (() => { try { return JSON.parse(localStorage.getItem('ai_admin_notifications') || '[]'); } catch(e) { return []; } })();
+
+  root.innerHTML = `
+    <div class="ai-page-header" style="margin-bottom:1.2rem">
+      <div class="ai-page-icon">📊</div>
+      <div style="flex:1">
+        <div style="font-size:1.1rem;font-weight:900;margin-bottom:.25rem">تحليلات SmartAI — رؤية شاملة للمنصة</div>
+        <div style="font-size:.78rem;color:var(--muted)">تحليل ذكي لجميع المؤسسات • ${new Date().toLocaleDateString('ar-DZ', {weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
+      </div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <button class="btn btn-purple btn-sm" onclick="SmartAI.toggleChat();SmartAI.quickAsk('أعطني تحليلاً شاملاً لأداء جميع المؤسسات على المنصة مع أبرز المخاطر والفرص')">🤖 تحليل AI مفصّل</button>
+        <button class="btn btn-ghost btn-sm" onclick="renderAdminAIInsights()">🔄 تحديث</button>
+      </div>
+    </div>
+
+    <div class="stats-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:1.2rem">
+      <div class="stat-card" style="border-color:rgba(155,109,255,0.2)">
+        <div class="stat-icon">🏆</div>
+        <div class="stat-value" style="color:#9B6DFF">${avgScore}<span style="font-size:.7rem">/100</span></div>
+        <div class="stat-label">متوسط صحة المنصة</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(52,195,143,0.2)">
+        <div class="stat-icon">💰</div>
+        <div class="stat-value" style="color:var(--green);font-size:.95rem">${((totalRev - totalExp) / 1e6).toFixed(1)}M</div>
+        <div class="stat-label">إجمالي الأرباح (دج)</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(240,78,106,0.2)">
+        <div class="stat-icon">🚨</div>
+        <div class="stat-value" style="color:var(--red)">${totalDelayed}</div>
+        <div class="stat-label">مشاريع متأخرة</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(232,184,75,0.2)">
+        <div class="stat-icon">💸</div>
+        <div class="stat-value" style="color:var(--gold)">${totalOverBudget}</div>
+        <div class="stat-label">تجاوزت الميزانية</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(74,144,226,0.2)">
+        <div class="stat-icon">📈</div>
+        <div class="stat-value" style="color:var(--blue);font-size:.9rem">${totalRev > 0 ? Math.round((totalRev - totalExp) / totalRev * 100) : 0}%</div>
+        <div class="stat-label">هامش الربح الإجمالي</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:1.2rem;border-color:rgba(155,109,255,0.25)">
+      <div style="font-size:.88rem;font-weight:900;margin-bottom:.8rem;color:#B89AFF;display:flex;align-items:center;gap:.5rem">
+        🎯 توصيات SmartAI الفورية
+        <button class="btn btn-purple btn-sm" style="font-size:.68rem;padding:.2rem .6rem;margin-right:auto" onclick="SmartAI.toggleChat();SmartAI.quickAsk('ما هي أهم 5 قرارات يجب أن يتخذها المسؤول الآن بناءً على البيانات الحالية؟')">🤖 اسأل AI</button>
+      </div>
+      ${adminRecs.map(r => '<div class="ai-insight-item"><span class="ai-insight-icon" style="color:' + r.color + '">' + r.icon + '</span><div class="ai-insight-text">' + r.text + '</div></div>').join('')}
+    </div>
+
+    ${best && worst && best !== worst ? `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem">
+      <div class="card" style="border-color:rgba(52,195,143,0.25)">
+        <div style="font-size:.82rem;font-weight:900;color:var(--green);margin-bottom:.7rem">🏆 أفضل مؤسسة أداءً</div>
+        <div style="font-size:1rem;font-weight:800;margin-bottom:.3rem">${escHtml(best.t.name)}</div>
+        <div class="ai-project-score ${best.scoreClass}" style="display:inline-flex;margin-bottom:.6rem">${best.score}/100</div>
+        <div style="font-size:.78rem;color:var(--muted);">${best.tp.length} مشروع • ${best.tWorkers.length} عامل • ربح: ${((best.tRev - best.tExp)/1e6).toFixed(1)}M دج</div>
+        ${best.strengths.slice(0,2).map(s => '<div class="ai-insight-item" style="padding:.2rem 0"><span>' + s.icon + '</span><span style="font-size:.73rem">' + s.text + '</span></div>').join('')}
+      </div>
+      <div class="card" style="border-color:rgba(240,78,106,0.2)">
+        <div style="font-size:.82rem;font-weight:900;color:var(--red);margin-bottom:.7rem">⚠️ تحتاج متابعة عاجلة</div>
+        <div style="font-size:1rem;font-weight:800;margin-bottom:.3rem">${escHtml(worst.t.name)}</div>
+        <div class="ai-project-score ${worst.scoreClass}" style="display:inline-flex;margin-bottom:.6rem">${worst.score}/100</div>
+        <div style="font-size:.78rem;color:var(--muted);">${worst.tp.length} مشروع • ${worst.tWorkers.length} عامل</div>
+        ${worst.issues.slice(0,2).map(i => '<div class="ai-insight-item" style="padding:.2rem 0"><span>' + i.icon + '</span><span style="font-size:.73rem">' + i.text + '</span></div>').join('')}
+        <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:.5rem;font-size:.72rem" onclick="SmartAI.toggleChat();SmartAI.quickAsk('حلّل وضع مؤسسة ${escHtml(worst.t.name)} بالتفصيل وأعطني خطة لتحسين أدائها')">🤖 تحليل مفصّل</button>
+      </div>
+    </div>
+    ` : ''}
+
+    <div style="font-size:.88rem;font-weight:900;color:var(--muted);margin-bottom:.8rem">📊 تحليل جميع المؤسسات</div>
+    <div class="ai-analysis-cards">
+      ${tenantInsights.map(ti => `
+        <div class="ai-analysis-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.7rem;gap:.5rem">
+            <div>
+              <div style="font-weight:800;font-size:.88rem">${escHtml(ti.t.name)}</div>
+              <div style="font-size:.7rem;color:var(--dim)">📍 ${escHtml(ti.t.wilaya || '—')} • ${escHtml(ti.plan?.name || '—')}</div>
+            </div>
+            <div class="ai-project-score ${ti.scoreClass}" style="font-size:.68rem;flex-shrink:0">${ti.score}/100</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;font-size:.75rem;margin-bottom:.7rem">
+            <div><span style="color:var(--dim)">المشاريع </span><strong>${ti.tp.length}</strong></div>
+            <div><span style="color:var(--dim)">العمال </span><strong>${ti.tWorkers.length}</strong></div>
+            <div><span style="color:var(--dim)">الإيراد </span><strong style="color:var(--green)">${(ti.tRev/1e6).toFixed(1)}M</strong></div>
+            <div><span style="color:var(--dim)">الربح </span><strong style="color:${ti.tRev - ti.tExp >= 0 ? 'var(--green)' : 'var(--red)'}">${((ti.tRev-ti.tExp)/1e6).toFixed(1)}M</strong></div>
+          </div>
+          ${ti.issues.length > 0 ? '<div style="font-size:.72rem;font-weight:800;color:#B89AFF;margin-bottom:.3rem">⚠️ تنبيهات:</div>' + ti.issues.slice(0,2).map(i => '<div style="display:flex;gap:.4rem;font-size:.72rem;padding:.15rem 0"><span>' + i.icon + '</span><span>' + i.text + '</span></div>').join('') : '<div style="font-size:.72rem;color:var(--green)">✅ أداء جيد</div>'}
+          <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:.6rem;font-size:.7rem;justify-content:center" onclick="SmartAI.toggleChat();SmartAI.quickAsk('حلّل أداء مؤسسة ${escHtml(ti.t.name)} بالتفصيل مع توصيات محددة')">🤖 تحليل</button>
+        </div>
+      `).join('')}
+    </div>
+
+    ${aiNotifs.length > 0 ? `<div class="card" style="margin-top:1rem;border-color:rgba(74,144,226,0.2)">
+      <div style="font-size:.88rem;font-weight:900;margin-bottom:.8rem;color:var(--blue);display:flex;align-items:center;gap:.5rem">
+        🔔 سجل إشعارات SmartAI
+        <button class="btn btn-ghost btn-sm" style="font-size:.65rem;padding:.15rem .5rem;margin-right:auto" onclick="localStorage.removeItem('ai_admin_notifications');renderAdminAIInsights()">🗑️ مسح</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.4rem">
+        ${aiNotifs.slice(0, 8).map(n => '<div style="display:flex;align-items:center;gap:.7rem;padding:.4rem .6rem;background:rgba(255,255,255,0.03);border-radius:8px;font-size:.78rem"><span style=\"color:var(--blue)\">🤖</span><span style=\"flex:1\">' + escHtml(n.msg) + '</span><span style=\"font-size:.65rem;color:var(--dim)\">' + new Date(n.ts).toLocaleTimeString('ar-DZ', {hour:'2-digit',minute:'2-digit'}) + '</span></div>').join('')}
+      </div>
+    </div>` : ''}
+  `;
 }
 
 function showAIUsageStats() {
@@ -5611,6 +5772,13 @@ function patchSmartAIWithSavedConfig() {
       return;
     }
   } catch(e) { return; }
+  // Override buildSystemPrompt to use admin prompt when admin
+  const origBuildPrompt = SmartAI.buildSystemPrompt.bind(SmartAI);
+  SmartAI.buildSystemPrompt = function() {
+    const user = Auth.getUser();
+    if (user && user.is_admin) return this.buildAdminSystemPrompt();
+    return origBuildPrompt();
+  };
   const origCallAPI = SmartAI.callAPI.bind(SmartAI);
   SmartAI.callAPI = async function(userMessage) {
     const cfg = getAIConfig();
@@ -5790,6 +5958,10 @@ Pages.admin = function() {
           <button id="adminTab_notif" onclick="switchAdminTab('notif')"
             style="flex:1;padding:.55rem 1rem;border-radius:10px;font-size:.82rem;font-weight:800;border:none;cursor:pointer;transition:all .2s;background:transparent;color:var(--muted)">
             📧 الإشعارات والبريد
+          </button>
+          <button id="adminTab_ai_insights" onclick="switchAdminTab('ai_insights')"
+            style="flex:1;padding:.55rem 1rem;border-radius:10px;font-size:.82rem;font-weight:800;border:none;cursor:pointer;transition:all .2s;background:transparent;color:var(--muted)">
+            📊 تحليلات SmartAI
           </button>
         </div>
 
@@ -6042,6 +6214,17 @@ Pages.admin = function() {
         <div id="adminTabContent_ai" style="display:none">
           ${renderAIProviderSettings()}
         </div><!-- END adminTabContent_ai -->
+
+        <!-- TAB CONTENT: AI Insights -->
+        <div id="adminTabContent_ai_insights" style="display:none">
+          <div id="adminAIInsightsRoot">
+            <div style="display:flex;align-items:center;justify-content:center;padding:3rem;flex-direction:column;gap:1rem;color:var(--muted)">
+              <div style="font-size:2.5rem">🤖</div>
+              <div style="font-size:.9rem">اضغط لتحميل تحليلات SmartAI...</div>
+              <button class="btn btn-purple btn-sm" onclick="renderAdminAIInsights()">🚀 تحميل التحليلات</button>
+            </div>
+          </div>
+        </div><!-- END adminTabContent_ai_insights -->
 
         <!-- Add Tenant Modal -->
         <div class="modal-overlay" id="addTenantModal">
@@ -6476,6 +6659,7 @@ function addProject() {
   projs.push({ id:DB.nextId('projects'), tenant_id:tid, name, project_type:document.getElementById('pType')?.value||'', wilaya:document.getElementById('pWilaya')?.value||'', client_name:document.getElementById('pClient')?.value||'', phone:document.getElementById('pPhone')?.value||'', budget:Number(document.getElementById('pBudget')?.value)||0, total_spent:0, progress:0, status:'active', color:document.getElementById('pColor')?.value||'#4A90E2', phase:document.getElementById('pPhase')?.value||'', description:document.getElementById('pDesc')?.value||'', start_date:document.getElementById('pStart')?.value||'', end_date:document.getElementById('pEnd')?.value||'', is_archived:false });
   DB.set('projects', projs);
   Toast.success('✅ تم إضافة المشروع');
+  try { SmartAI.notifyDataChange('add_project', name); } catch(e) {}
   App.navigate('projects');
 }
 
@@ -6502,7 +6686,9 @@ function saveProject() {
 function deleteProject(id,name) {
   if(!confirm(`حذف المشروع "${name}"؟`)) return;
   DB.set('projects', DB.get('projects').map(p=>p.id===id?{...p,is_archived:true}:p));
-  Toast.success('تم حذف المشروع'); App.navigate('projects');
+  Toast.success('تم حذف المشروع');
+  try { SmartAI.notifyDataChange('delete_project', name); } catch(e) {}
+  App.navigate('projects');
 }
 
 function addWorker() {
@@ -6510,7 +6696,9 @@ function addWorker() {
   if(!name||!role){Toast.error('أدخل الاسم والمهنة');return;}
   const tid=Auth.getUser().tenant_id; const ws=DB.get('workers');
   ws.push({ id:DB.nextId('workers'), tenant_id:tid, full_name:name, role, phone:document.getElementById('wPhone')?.value||'', national_id:document.getElementById('wNid')?.value||'', daily_salary:Number(document.getElementById('wSalary')?.value)||0, contract_type:document.getElementById('wContract')?.value||'daily', project_id:Number(document.getElementById('wProject')?.value)||null, hire_date:document.getElementById('wHire')?.value||'', color:document.getElementById('wColor')?.value||'#4A90E2' });
-  DB.set('workers',ws); Toast.success('✅ تم إضافة العامل'); App.navigate('workers');
+  DB.set('workers',ws); Toast.success('✅ تم إضافة العامل');
+  try { SmartAI.notifyDataChange('add_worker', name); } catch(e) {}
+  App.navigate('workers');
 }
 
 function editWorker(id) {
@@ -6598,7 +6786,9 @@ function addTx() {
     const projs=DB.get('projects'); const pidx=projs.findIndex(p=>p.id===pid);
     if(pidx>=0){projs[pidx].total_spent=DB.get('transactions').filter(t=>t.project_id===pid&&t.type==='expense').reduce((s,t)=>s+Number(t.amount),0);DB.set('projects',projs);}
   }
-  Toast.success('✅ تم إضافة المعاملة'); App.navigate('transactions');
+  Toast.success('✅ تم إضافة المعاملة');
+  try { SmartAI.notifyDataChange('add_transaction', (type === 'revenue' ? 'إيراد' : 'مصروف') + ': ' + amount.toLocaleString() + ' دج'); } catch(e) {}
+  App.navigate('transactions');
 }
 
 function deleteTx(id) {
@@ -6788,7 +6978,10 @@ function addTenant() {
   const newTenant={id:DB.nextId('tenants'),name,plan_id:planId,wilaya:'',is_active:true,subscription_status:'active'};
   tenants.push(newTenant); DB.set('tenants',tenants);
   users.push({id:DB.nextId('users'),tenant_id:newTenant.id,full_name:admin,email,password:pass,role:'admin',is_admin:false,is_active:true});
-  DB.set('users',users); Toast.success(L(`✅ تم إنشاء مؤسسة "${name}" بنجاح`,`✅ Entreprise "${name}" créée avec succès`)); App.navigate('admin');
+  DB.set('users',users);
+  Toast.success(L(`✅ تم إنشاء مؤسسة "${name}" بنجاح`,`✅ Entreprise "${name}" créée avec succès`));
+  try { SmartAI.notifyDataChange('add_tenant', name); } catch(e) {}
+  App.navigate('admin');
 }
 
 /* ══════════════════════════════════════════════════════
@@ -10052,26 +10245,121 @@ ${JSON.stringify(ctx, null, 2)}
   async autoAnalyze() {
     const user = Auth.getUser();
     if (!user || user.is_admin) return;
-
-    // تحقق هل تم التحليل اليوم
     const today = new Date().toISOString().split('T')[0];
     const lastAnalysis = sessionStorage.getItem('ai_last_analysis');
     if (lastAnalysis === today) return;
-
     const ctx = this.getContext();
     if (!ctx.مشاريع_في_خطر && ctx.المشاريع_المتأخرة === 0) return;
-
     sessionStorage.setItem('ai_last_analysis', today);
-
-    // إظهار تنبيه ذكي في الـ FAB
     if (ctx.مشاريع_في_خطر > 0 || ctx.المشاريع_المتأخرة > 0) {
       const badge = document.getElementById('aiFabBadge');
       if (badge) { badge.style.display = 'block'; badge.textContent = ctx.مشاريع_في_خطر + ctx.المشاريع_المتأخرة; }
-      // إشعار
       setTimeout(() => {
         Toast.warn(`🤖 SmartAI: ${ctx.مشاريع_في_خطر > 0 ? ctx.مشاريع_في_خطر + ' مشاريع في خطر!' : ''} ${ctx.المشاريع_المتأخرة > 0 ? ctx.المشاريع_المتأخرة + ' متأخرة' : ''} — اضغط على 🤖 للتحليل`);
       }, 3000);
     }
+  },
+
+  /* ── سياق المسؤول الشامل ── */
+  getAdminContext() {
+    try {
+      const tenants = DB.get('tenants');
+      const users = DB.get('users');
+      const projects = DB.get('projects');
+      const workers = DB.get('workers');
+      const txs = DB.get('transactions');
+      const activeTenants = tenants.filter(t => t.is_active);
+      const totalRevenue = txs.filter(t => t.type === 'revenue').reduce((s, t) => s + Number(t.amount), 0);
+      const totalExpense = txs.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
+      const activeProjects = projects.filter(p => !p.is_archived && p.status === 'active');
+      const delayedProjects = projects.filter(p => p.status === 'delayed');
+      const overBudgetProjects = projects.filter(p => p.budget > 0 && p.total_spent > p.budget);
+      const tenantSummaries = tenants.map(t => {
+        const tp = projects.filter(p => p.tenant_id === t.id && !p.is_archived);
+        const tw = workers.filter(w => w.tenant_id === t.id);
+        const tRev = txs.filter(tx => tx.tenant_id === t.id && tx.type === 'revenue').reduce((s, tx) => s + Number(tx.amount), 0);
+        const tExp = txs.filter(tx => tx.tenant_id === t.id && tx.type === 'expense').reduce((s, tx) => s + Number(tx.amount), 0);
+        return {
+          المؤسسة: t.name, الولاية: t.wilaya || '—',
+          الحالة: t.is_active ? 'نشطة' : 'موقوفة',
+          المشاريع: tp.length, المتأخرة: tp.filter(p => p.status === 'delayed').length,
+          العمال: tw.length,
+          الإيراد: tRev.toLocaleString() + ' دج',
+          الربح: (tRev - tExp).toLocaleString() + ' دج',
+          خطر: tp.filter(p => p.budget > 0 && p.total_spent > p.budget * 0.8 && p.progress < 60).length > 0 ? 'عالي' : 'منخفض'
+        };
+      });
+      return {
+        إجمالي_المؤسسات: tenants.length, المؤسسات_النشطة: activeTenants.length,
+        إجمالي_المشاريع: projects.filter(p => !p.is_archived).length,
+        المشاريع_النشطة: activeProjects.length, المشاريع_المتأخرة: delayedProjects.length,
+        المشاريع_المتجاوزة_للميزانية: overBudgetProjects.length,
+        إجمالي_العمال: workers.length,
+        إجمالي_الإيرادات: totalRevenue.toLocaleString() + ' دج',
+        إجمالي_الأرباح: (totalRevenue - totalExpense).toLocaleString() + ' دج',
+        تفاصيل_المؤسسات: tenantSummaries
+      };
+    } catch (e) { return {}; }
+  },
+
+  buildAdminSystemPrompt() {
+    const ctx = this.getAdminContext();
+    return `أنت SmartAI، مستشار استراتيجي ذكي لمنصة SmartStruct الجزائرية — تعمل مع المسؤول العام.
+
+**بيانات النظام الكاملة (${new Date().toLocaleDateString('ar-DZ')}):**
+${JSON.stringify(ctx, null, 2)}
+
+**دورك:**
+- تحليل أداء جميع المؤسسات المشتركة وتقديم رؤى شاملة
+- تحديد المؤسسات التي تحتاج دعماً أو تدخلاً عاجلاً
+- توصيات لتحسين المنصة وزيادة الاشتراكات
+- رصد المخاطر المالية والتشغيلية عبر جميع المؤسسات
+- استخدم الأرقام الحقيقية من البيانات أعلاه في كل تحليل
+- استخدم الإيموجي لتنظيم الإجابة ✅🔴📊💡
+- لا تتجاوز 400 كلمة إلا إذا طُلب التفصيل`;
+  },
+
+  async autoAnalyzeAdmin() {
+    const user = Auth.getUser();
+    if (!user || !user.is_admin) return;
+    const today = new Date().toISOString().split('T')[0];
+    if (sessionStorage.getItem('ai_admin_last_analysis') === today) return;
+    sessionStorage.setItem('ai_admin_last_analysis', today);
+    const ctx = this.getAdminContext();
+    const alerts = (ctx.المشاريع_المتأخرة || 0) + (ctx.المشاريع_المتجاوزة_للميزانية || 0);
+    if (alerts > 0) {
+      const badge = document.getElementById('aiFabBadge');
+      if (badge) { badge.style.display = 'block'; badge.textContent = alerts; }
+      setTimeout(() => Toast.warn(`🤖 SmartAI: ${alerts} تنبيه يستحق مراجعتك — اضغط 🤖 للتحليل`), 2500);
+    }
+  },
+
+  /* ── إشعار عند إضافة/حذف بيانات ── */
+  notifyDataChange(action, details) {
+    const user = Auth.getUser();
+    if (!user) return;
+    const msgs = {
+      add_project: `📁 مشروع جديد أُضيف: "${details}"`,
+      delete_project: `🗑️ حُذف مشروع: "${details}"`,
+      add_worker: `👷 عامل جديد: "${details}"`,
+      delete_worker: `🗑️ حُذف عامل: "${details}"`,
+      add_transaction: `💰 معاملة مالية جديدة: ${details}`,
+      add_tenant: `🏢 مؤسسة جديدة: "${details}"`,
+      update_project: `✏️ تحديث مشروع: "${details}"`,
+    };
+    const msg = msgs[action];
+    if (!msg) return;
+    Toast.info(`${msg} — 🤖 SmartAI يُحدّث التحليل`);
+    const badge = document.getElementById('aiFabBadge');
+    if (badge) { badge.style.display = 'block'; badge.textContent = '!'; }
+    try {
+      const notifKey = user.is_admin ? 'ai_admin_notifications' : `ai_notifs_${user.tenant_id}`;
+      const notifs = JSON.parse(localStorage.getItem(notifKey) || '[]');
+      notifs.unshift({ action, details, ts: Date.now(), msg });
+      localStorage.setItem(notifKey, JSON.stringify(notifs.slice(0, 50)));
+    } catch(e) {}
+    sessionStorage.removeItem('ai_last_analysis');
+    sessionStorage.removeItem('ai_admin_last_analysis');
   }
 };
 
@@ -10313,9 +10601,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const fab = document.getElementById('aiFab');
     if (!fab) return;
     const user = Auth.getUser();
-    fab.style.display = user && !user.is_admin ? 'flex' : 'none';
+    fab.style.display = user ? 'flex' : 'none';
     if (user && !user.is_admin) {
       setTimeout(() => SmartAI.autoAnalyze(), 2000);
+    }
+    if (user && user.is_admin) {
+      setTimeout(() => SmartAI.autoAnalyzeAdmin(), 2000);
     }
   }
   updateAIFabVisibility();
@@ -10499,6 +10790,512 @@ document.addEventListener('DOMContentLoaded', () => {
     touchTask = null; lastCol = null;
   }, {passive:true});
 })();
+
+/* ══════════════════════════════════════════════════════
+   🤖 ADMIN AI SYSTEM — ذكاء اصطناعي المسؤول
+   يحلل بيانات جميع المؤسسات ويرسل إشعارات تلقائية
+══════════════════════════════════════════════════════ */
+
+/* ── سياق المسؤول الشامل ── */
+SmartAI.getAdminContext = function() {
+  try {
+    const tenants = DB.get('tenants');
+    const users = DB.get('users');
+    const projects = DB.get('projects').filter(p => !p.is_archived);
+    const workers = DB.get('workers');
+    const txs = DB.get('transactions');
+    const plans = DB.get('plans');
+
+    const totalRevenue = txs.filter(t=>t.type==='revenue').reduce((s,t)=>s+Number(t.amount),0);
+    const totalExpense = txs.filter(t=>t.type==='expense').reduce((s,t)=>s+Number(t.amount),0);
+
+    const tenantSummaries = tenants.map(t => {
+      const tProjects = projects.filter(p=>p.tenant_id===t.id);
+      const tTxs = txs.filter(tx=>tx.tenant_id===t.id);
+      const tRev = tTxs.filter(tx=>tx.type==='revenue').reduce((s,tx)=>s+Number(tx.amount),0);
+      const tExp = tTxs.filter(tx=>tx.type==='expense').reduce((s,tx)=>s+Number(tx.amount),0);
+      const plan = plans.find(p=>p.id===t.plan_id);
+      return {
+        اسم: t.name,
+        الخطة: plan?.name||'—',
+        الاشتراك: t.subscription_status,
+        المشاريع: tProjects.length,
+        المشاريع_المتأخرة: tProjects.filter(p=>p.status==='delayed').length,
+        الإيراد: tRev.toLocaleString()+' دج',
+        المصروف: tExp.toLocaleString()+' دج',
+        الربح: (tRev-tExp).toLocaleString()+' دج',
+        نشط: t.is_active
+      };
+    });
+
+    return {
+      إجمالي_المؤسسات: tenants.length,
+      المؤسسات_النشطة: tenants.filter(t=>t.is_active).length,
+      المشاريع_الكلية: projects.length,
+      المشاريع_المتأخرة: projects.filter(p=>p.status==='delayed').length,
+      إجمالي_العمال: workers.length,
+      إجمالي_الإيرادات: totalRevenue.toLocaleString()+' دج',
+      إجمالي_المصاريف: totalExpense.toLocaleString()+' دج',
+      الربح_الكلي: (totalRevenue-totalExpense).toLocaleString()+' دج',
+      المؤسسات: tenantSummaries
+    };
+  } catch(e) { return {}; }
+};
+
+/* ── تحليل تلقائي للمسؤول عند تسجيل الدخول ── */
+SmartAI.autoAnalyzeAdmin = async function() {
+  const user = Auth.getUser();
+  if (!user || !user.is_admin) return;
+  const today = new Date().toISOString().split('T')[0];
+  const last = sessionStorage.getItem('ai_admin_analysis');
+  if (last === today) return;
+  sessionStorage.setItem('ai_admin_analysis', today);
+
+  const ctx = this.getAdminContext();
+  const delayed = ctx.المشاريع_المتأخرة || 0;
+  const inactive = (ctx.إجمالي_المؤسسات||0) - (ctx.المؤسسات_النشطة||0);
+
+  const badge = document.getElementById('aiFabBadge');
+  if (delayed > 0 || inactive > 0) {
+    if (badge) { badge.style.display = 'flex'; badge.textContent = delayed + inactive; }
+    const msgs = [];
+    if (delayed > 0) msgs.push(`⚠️ ${delayed} مشروع متأخر`);
+    if (inactive > 0) msgs.push(`🔴 ${inactive} مؤسسة موقوفة`);
+    Toast.warn(`🤖 SmartAI للمسؤول: ${msgs.join(' • ')} — اضغط على 🤖 للتحليل`);
+  }
+};
+
+/* ── System prompt خاص بالمسؤول ── */
+SmartAI.buildAdminSystemPrompt = function() {
+  const ctx = this.getAdminContext();
+  return `أنت SmartAI، مساعد ذكاء اصطناعي لمسؤول منصة SmartStruct — منصة إدارة مقاولة جزائرية SaaS.
+
+**بيانات المنصة الإجمالية (حقيقية):**
+${JSON.stringify(ctx, null, 2)}
+
+**دورك كمستشار للمسؤول:**
+- تحليل أداء المؤسسات المشتركة وتقديم توصيات
+- تحديد المؤسسات التي تحتاج تدخلاً أو متابعة
+- اقتراح تحسينات للمنصة أو سياسات التسعير
+- رصد المخاطر الإجمالية والفرص التجارية
+- تقارير موجزة وقابلة للتطبيق
+
+**تعليمات:**
+- اجب بالعربية الفصحى البسيطة
+- استخدم الأرقام الحقيقية من البيانات
+- كن موجزاً (أقل من 400 كلمة) ما لم يُطلب التفصيل
+- استخدم الإيموجي لتنظيم الإجابة بصرياً`;
+};
+
+/* ── تعديل callAPI ليتعرف على سياق المسؤول ── */
+(function patchAdminAI() {
+  const origBuildPrompt = SmartAI.buildSystemPrompt.bind(SmartAI);
+  SmartAI.buildSystemPrompt = function() {
+    const user = Auth.getUser();
+    if (user && user.is_admin) return SmartAI.buildAdminSystemPrompt();
+    return origBuildPrompt();
+  };
+
+  // تعديل رسالة الترحيب للمسؤول — استبدال كامل لـ toggleChat
+  const _origToggle = SmartAI.toggleChat.bind(SmartAI);
+  SmartAI.toggleChat = function() {
+    const user = Auth.getUser();
+    const wasOpen = this.isOpen;
+
+    if (user && user.is_admin) {
+      // للمسؤول: نُشغّل المنطق الأساسي يدوياً
+      this.isOpen = !this.isOpen;
+      const panel = document.getElementById('aiChatPanel');
+      if (!panel) return;
+      if (this.isOpen) {
+        panel.style.display = 'flex';
+        panel.style.flexDirection = 'column';
+        document.getElementById('aiFabBadge').style.display = 'none';
+        if (this.history.length === 0) {
+          setTimeout(() => {
+            const ctx = this.getAdminContext();
+            const greeting = `مرحباً بك في SmartAI 👑\n\nأنت تتحدث كـ **مسؤول المنصة**.\n\n📊 **إحصائيات المنصة:**\n• ${ctx.إجمالي_المؤسسات} مؤسسة مسجلة (${ctx.المؤسسات_النشطة} نشطة)\n• ${ctx.المشاريع_الكلية} مشروع إجمالي\n• الربح الكلي: ${ctx.الربح_الكلي}\n\n💡 **اسألني:**\n• حلّل أداء المؤسسات\n• ما هي المؤسسات الأكثر نشاطاً؟\n• ما المخاطر الإجمالية للمنصة؟`;
+            this.appendMessage('bot', greeting);
+          }, 300);
+        }
+        setTimeout(() => { document.getElementById('aiInput')?.focus(); }, 350);
+      } else {
+        panel.style.display = 'none';
+      }
+    } else {
+      _origToggle();
+    }
+  };
+})();
+
+/* ── إشعار AI عند إضافة أو حذف بيانات ── */
+(function patchDataOperationsWithAI() {
+  // Patch addTenant
+  if (typeof addTenant === 'function') {
+    const _addTenant = addTenant;
+    window.addTenant = function() {
+      const nameBefore = document.getElementById('atName')?.value?.trim();
+      _addTenant();
+      const tenants = DB.get('tenants');
+      if (tenants.length > 0) {
+        const newT = tenants[tenants.length - 1];
+        if (newT && newT.name === nameBefore) {
+          showAIDataNotification('add_tenant', `تمت إضافة مؤسسة جديدة: "${escHtml(newT.name)}". سيتم تحليل التأثير على المنصة...`, '#34C38F');
+          triggerAIDataAnalysis('tenant_added', { name: newT.name });
+        }
+      }
+    };
+  }
+
+  // Patch toggleTenant
+  if (typeof toggleTenant === 'function') {
+    const _toggleTenant = toggleTenant;
+    window.toggleTenant = function(id) {
+      const tenantBefore = DB.get('tenants').find(t=>t.id===id);
+      _toggleTenant(id);
+      if (tenantBefore) {
+        const action = tenantBefore.is_active ? 'تعليق' : 'تفعيل';
+        const color = tenantBefore.is_active ? '#F04E6A' : '#34C38F';
+        showAIDataNotification('toggle_tenant', `🤖 SmartAI: تم ${action} مؤسسة "${escHtml(tenantBefore.name)}"`, color);
+      }
+    };
+  }
+
+  // مراقبة DB.set لرصد تغييرات البيانات
+  const _origSet = DB.set.bind(DB);
+  DB.set = function(key, value) {
+    const oldLen = (() => { try { return (DB.get(key)||[]).length; } catch(e) { return 0; } })();
+    _origSet(key, value);
+    try {
+      const user = Auth.getUser();
+      if (!user) return;
+      const newLen = Array.isArray(value) ? value.length : 0;
+      const diff = newLen - oldLen;
+      const keyLabels = {
+        projects: { add: 'مشروع جديد تمت إضافته', del: 'تم حذف مشروع', icon: '🏗️' },
+        workers:  { add: 'عامل جديد تمت إضافته', del: 'تم حذف عامل', icon: '👷' },
+        transactions: { add: 'معاملة مالية جديدة', del: 'تم حذف معاملة مالية', icon: '💰' },
+        equipment: { add: 'معدة جديدة تمت إضافتها', del: 'تم حذف معدة', icon: '🔧' },
+        materials: { add: 'مادة جديدة تمت إضافتها', del: 'تم حذف مادة', icon: '📦' },
+      };
+      const label = keyLabels[key];
+      if (label && diff !== 0) {
+        const msg = diff > 0 ? label.add : label.del;
+        const color = diff > 0 ? '#4A90E2' : '#F04E6A';
+        showAIDataNotification('data_change', `${label.icon} ${msg}`, color);
+        triggerAIDataAnalysis(key + '_changed', { diff });
+      }
+    } catch(e) {}
+  };
+})();
+
+/* ── عرض إشعار AI أنيق ── */
+function showAIDataNotification(type, message, color) {
+  color = color || '#9B6DFF';
+  const id = 'ai_notif_' + Date.now();
+  const el = document.createElement('div');
+  el.id = id;
+  el.style.cssText = `
+    position:fixed;bottom:100px;left:1.5rem;z-index:9998;
+    background:rgba(12,18,32,0.95);border:1px solid ${color}40;
+    border-left:3px solid ${color};border-radius:12px;
+    padding:.8rem 1.2rem;max-width:320px;
+    display:flex;align-items:flex-start;gap:.7rem;
+    box-shadow:0 8px 32px rgba(0,0,0,.5);
+    animation:aiNotifIn .3s cubic-bezier(0.34,1.56,0.64,1) both;
+    font-family:'Tajawal',sans-serif;
+  `;
+  el.innerHTML = `
+    <div style="width:28px;height:28px;border-radius:8px;background:${color}20;border:1px solid ${color}40;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0">🤖</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:.72rem;font-weight:800;color:${color};margin-bottom:2px">SmartAI — تحديث تلقائي</div>
+      <div style="font-size:.8rem;color:#EDF2F7;line-height:1.4">${message}</div>
+    </div>
+    <button onclick="document.getElementById('${id}')?.remove()" style="background:none;border:none;color:#4A5B7A;cursor:pointer;font-size:.9rem;padding:.1rem;line-height:1">✕</button>
+  `;
+  // إضافة animation CSS إذا لم تكن موجودة
+  if (!document.getElementById('aiNotifAnimStyle')) {
+    const s = document.createElement('style');
+    s.id = 'aiNotifAnimStyle';
+    s.textContent = `
+      @keyframes aiNotifIn { from { opacity:0; transform:translateX(-20px) scale(.95); } to { opacity:1; transform:none; } }
+      @keyframes aiNotifOut { to { opacity:0; transform:translateX(-20px) scale(.95); } }
+    `;
+    document.head.appendChild(s);
+  }
+  document.body.appendChild(el);
+  setTimeout(() => {
+    if (document.getElementById(id)) {
+      el.style.animation = 'aiNotifOut .3s ease forwards';
+      setTimeout(() => el.remove(), 300);
+    }
+  }, 5000);
+}
+
+/* ── تحليل ذكي عند تغيير البيانات ── */
+async function triggerAIDataAnalysis(eventType, data) {
+  // تأخير قصير لتجنب تكرار الاستدعاءات
+  clearTimeout(window._aiDataAnalysisTimer);
+  window._aiDataAnalysisTimer = setTimeout(async () => {
+    const user = Auth.getUser();
+    if (!user) return;
+    const cfg = getAIConfig();
+    if (!cfg.apiKey) return; // لا نحلل بدون API key
+
+    const msgs = {
+      projects_changed: 'تم تغيير قائمة المشاريع، حلّل الوضع الجديد في جملة واحدة موجزة.',
+      workers_changed: 'تم تغيير قائمة العمال، أعطني ملاحظة موجزة عن التأثير.',
+      transactions_changed: 'تمت معاملة مالية جديدة، حلّل الوضع المالي الحالي في جملتين.',
+      tenant_added: 'تمت إضافة مؤسسة جديدة للمنصة، اعطني ملاحظة ترحيبية موجزة.',
+      equipment_changed: 'تم تحديث المعدات، أبدِ ملاحظة قصيرة.',
+      materials_changed: 'تم تحديث المواد، أبدِ ملاحظة قصيرة.',
+    };
+    const prompt = msgs[eventType];
+    if (!prompt) return;
+
+    try {
+      // استدعاء خفي بدون إضافة للسجل
+      const ctx = user.is_admin ? SmartAI.getAdminContext() : SmartAI.getContext();
+      const sysPrompt = user.is_admin ? SmartAI.buildAdminSystemPrompt() : SmartAI.buildSystemPrompt();
+      const body = {
+        model: cfg.model || 'claude-sonnet-4-6',
+        max_tokens: 150,
+        system: sysPrompt,
+        messages: [{ role: 'user', content: prompt }]
+      };
+      const headers = { 'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' };
+      if (cfg.provider === 'claude' || !cfg.provider) {
+        headers['x-api-key'] = cfg.apiKey;
+      }
+      const resp = await fetch('https://api.anthropic.com/v1/messages', { method:'POST', headers, body:JSON.stringify(body) });
+      if (!resp.ok) return;
+      const result = await resp.json();
+      const reply = result.content?.[0]?.text;
+      if (reply) {
+        showAIDataNotification('ai_insight', `💡 ${reply.substring(0, 150)}`, '#9B6DFF');
+      }
+    } catch(e) { /* صامت */ }
+  }, 1500);
+}
+
+
+
+</script>
+</body>
+</html>
+
+
+  // تحليل كل مؤسسة
+  const tenantInsights = tenants.map(t => {
+    const plan = plans.find(p=>p.id===t.plan_id);
+    const tProjects = projects.filter(p=>p.tenant_id===t.id);
+    const tWorkers = workers.filter(w=>w.tenant_id===t.id);
+    const tTxs = txs.filter(tx=>tx.tenant_id===t.id);
+    const tRev = tTxs.filter(tx=>tx.type==='revenue').reduce((s,tx)=>s+Number(tx.amount),0);
+    const tExp = tTxs.filter(tx=>tx.type==='expense').reduce((s,tx)=>s+Number(tx.amount),0);
+    const tProfit = tRev - tExp;
+    const delayed = tProjects.filter(p=>p.status==='delayed').length;
+    const overBudget = tProjects.filter(p=>p.budget>0 && p.total_spent>p.budget).length;
+
+    // حساب درجة الصحة
+    let score = 100;
+    if (!t.is_active) score -= 40;
+    if (t.subscription_status === 'expired') score -= 30;
+    if (delayed > 0) score -= Math.min(25, delayed * 8);
+    if (overBudget > 0) score -= Math.min(20, overBudget * 7);
+    if (tProjects.length === 0) score -= 15;
+    score = Math.max(0, score);
+
+    const scoreColor = score>=80?'var(--green)':score>=60?'var(--gold)':score>=40?'var(--orange)':'var(--red)';
+    const scoreLabel = score>=80?'ممتاز':score>=60?'جيد':score>=40?'يحتاج متابعة':'خطر';
+
+    return { t, plan, tProjects, tWorkers, tRev, tExp, tProfit, delayed, overBudget, score, scoreColor, scoreLabel };
+  });
+
+  // توصيات المسؤول
+  const adminRecs = [];
+  const expiredTenants = tenants.filter(t=>t.subscription_status==='expired');
+  if (expiredTenants.length > 0) adminRecs.push({ icon:'🔴', priority:'عالية', color:'var(--red)', text:`${expiredTenants.length} مؤسسة منتهي اشتراكها — تواصل معهم لتجديد الاشتراك` });
+  const trialTenants = tenants.filter(t=>t.subscription_status==='trial');
+  if (trialTenants.length > 0) adminRecs.push({ icon:'⏳', priority:'متوسطة', color:'var(--gold)', text:`${trialTenants.length} مؤسسة في فترة التجربة — فرصة للتحويل إلى اشتراك مدفوع` });
+  const lowScoreTenants = tenantInsights.filter(ti=>ti.score<40);
+  if (lowScoreTenants.length > 0) adminRecs.push({ icon:'⚠️', priority:'عالية', color:'var(--orange)', text:`${lowScoreTenants.length} مؤسسة في وضع حرج: ${lowScoreTenants.map(ti=>ti.t.name).join('، ')}` });
+  const topRevTenant = tenantInsights.sort((a,b)=>b.tRev-a.tRev)[0];
+  if (topRevTenant && topRevTenant.tRev > 0) adminRecs.push({ icon:'🏆', priority:'معلومة', color:'var(--blue)', text:`أعلى مؤسسة إيراداً: ${topRevTenant.t.name} بـ ${topRevTenant.tRev.toLocaleString()} دج` });
+  if (adminRecs.length === 0) adminRecs.push({ icon:'✅', priority:'جيد', color:'var(--green)', text:'المنصة تعمل بشكل ممتاز — جميع المؤسسات في وضع جيد' });
+
+  const cfg = getAIConfig();
+  const aiReady = !!(cfg.apiKey && cfg.status === 'active');
+
+  root.innerHTML = `
+    <!-- Header -->
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem">
+      <div style="display:flex;align-items:center;gap:1rem">
+        <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,rgba(52,195,143,.2),rgba(74,144,226,.2));border:1px solid rgba(52,195,143,.3);display:flex;align-items:center;justify-content:center;font-size:1.6rem">📊</div>
+        <div>
+          <div style="font-size:1.15rem;font-weight:900">تحليلات SmartAI الشاملة</div>
+          <div style="font-size:.78rem;color:var(--muted)">رؤية إجمالية بالذكاء الاصطناعي لجميع مؤسسات المنصة</div>
+          <div style="font-size:.7rem;color:var(--dim);margin-top:.2rem">📅 ${new Date().toLocaleDateString('ar-DZ',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+        <button class="btn btn-purple btn-sm" onclick="SmartAI.toggleChat();SmartAI.quickAsk('حلّل أداء جميع المؤسسات وأعطني توصيات استراتيجية مفصلة')">🤖 تحليل SmartAI</button>
+        <button class="btn btn-ghost btn-sm" onclick="renderAdminAIInsights()">🔄 تحديث</button>
+      </div>
+    </div>
+
+    ${!aiReady ? `
+    <div style="background:rgba(232,184,75,.06);border:1px solid rgba(232,184,75,.2);border-radius:12px;padding:1rem 1.3rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.8rem">
+      <span style="font-size:1.3rem">⚡</span>
+      <div>
+        <div style="font-size:.85rem;font-weight:800;color:var(--gold)">فعّل SmartAI للحصول على تحليلات أكثر ذكاءً</div>
+        <div style="font-size:.76rem;color:var(--muted)">أضف API key في تبويب "إعدادات SmartAI" للحصول على توصيات AI تلقائية عند كل تغيير</div>
+      </div>
+      <button class="btn btn-gold btn-sm" style="margin-right:auto" onclick="switchAdminTab('ai')">⚙️ إعداد</button>
+    </div>` : `
+    <div style="background:rgba(52,195,143,.06);border:1px solid rgba(52,195,143,.2);border-radius:12px;padding:.8rem 1.2rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.8rem">
+      <span style="color:var(--green);font-size:1.1rem">●</span>
+      <div style="font-size:.82rem;font-weight:700;color:var(--green)">SmartAI مفعّل — سيرسل تحليلاً تلقائياً عند كل تغيير في البيانات</div>
+    </div>`}
+
+    <!-- KPIs شاملة -->
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.8rem;margin-bottom:1.5rem">
+      <div class="stat-card" style="border-color:rgba(52,195,143,.2)">
+        <div class="stat-icon">🏢</div>
+        <div class="stat-value" style="color:var(--green)">${tenants.filter(t=>t.is_active).length}/${tenants.length}</div>
+        <div class="stat-label">مؤسسات نشطة</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(74,144,226,.2)">
+        <div class="stat-icon">🏗️</div>
+        <div class="stat-value" style="color:var(--blue)">${projects.length}</div>
+        <div class="stat-label">مشاريع كلية</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(240,78,106,.2)">
+        <div class="stat-icon">⏰</div>
+        <div class="stat-value" style="color:var(--red)">${projects.filter(p=>p.status==='delayed').length}</div>
+        <div class="stat-label">مشاريع متأخرة</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(232,184,75,.2)">
+        <div class="stat-icon">💰</div>
+        <div class="stat-value" style="color:var(--gold);font-size:.9rem">${(totalRevenue/1000000).toFixed(1)}M</div>
+        <div class="stat-label">إجمالي الإيرادات (دج)</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(155,109,255,.2)">
+        <div class="stat-icon">📈</div>
+        <div class="stat-value" style="color:${totalProfit>=0?'var(--green)':'var(--red)'};font-size:.9rem">${(totalProfit/1000000).toFixed(1)}M</div>
+        <div class="stat-label">الربح الكلي (دج)</div>
+      </div>
+    </div>
+
+    <!-- توصيات المسؤول -->
+    <div class="card" style="margin-bottom:1.5rem;border-color:rgba(155,109,255,.25)">
+      <div style="font-size:.9rem;font-weight:900;margin-bottom:1rem;color:#B89AFF;display:flex;align-items:center;gap:.5rem">
+        🎯 توصيات SmartAI للمسؤول
+        <span style="font-size:.7rem;font-weight:700;background:rgba(155,109,255,.15);color:#9B6DFF;border:1px solid rgba(155,109,255,.3);padding:2px 8px;border-radius:20px">${adminRecs.length} توصية</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.6rem">
+        ${adminRecs.map(r=>`
+          <div style="display:flex;align-items:flex-start;gap:.8rem;padding:.7rem 1rem;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:10px;border-right:3px solid ${r.color}">
+            <span style="font-size:1.1rem">${r.icon}</span>
+            <div style="flex:1">
+              <div style="font-size:.82rem;color:var(--text);font-weight:600">${r.text}</div>
+              <div style="font-size:.7rem;color:var(--dim);margin-top:2px">الأولوية: <span style="color:${r.color};font-weight:700">${r.priority}</span></div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- تحليل المؤسسات -->
+    <div style="font-size:.9rem;font-weight:800;color:var(--muted);margin-bottom:.8rem">🏢 تحليل المؤسسات — درجة الصحة والأداء</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;margin-bottom:1.5rem">
+      ${tenantInsights.length ? tenantInsights.map(({ t, plan, tProjects, tWorkers, tRev, tExp, tProfit, delayed, overBudget, score, scoreColor, scoreLabel }) => `
+        <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:1.2rem;transition:var(--transition);position:relative;overflow:hidden">
+          <!-- Score bar background -->
+          <div style="position:absolute;top:0;right:0;width:${score}%;height:3px;background:${scoreColor};border-radius:3px 0 0 0;transition:width .6s ease"></div>
+          
+          <!-- Header -->
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1rem">
+            <div style="display:flex;align-items:center;gap:.7rem">
+              <div style="width:36px;height:36px;border-radius:10px;background:rgba(232,184,75,.1);border:1px solid rgba(232,184,75,.2);display:flex;align-items:center;justify-content:center;font-size:1.1rem">🏢</div>
+              <div>
+                <div style="font-weight:800;font-size:.9rem">${escHtml(t.name)}</div>
+                <div style="font-size:.7rem;color:var(--dim)">${escHtml(plan?.name||'—')} • ${t.subscription_status==='active'?'<span style="color:var(--green)">نشط</span>':t.subscription_status==='trial'?'<span style="color:var(--gold)">تجريبي</span>':'<span style="color:var(--red)">منتهي</span>'}</div>
+              </div>
+            </div>
+            <div style="text-align:left">
+              <div style="font-size:1.1rem;font-weight:900;color:${scoreColor}">${score}</div>
+              <div style="font-size:.65rem;color:${scoreColor};font-weight:700">${scoreLabel}</div>
+            </div>
+          </div>
+
+          <!-- Grid Stats -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;font-size:.78rem;margin-bottom:.8rem">
+            <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:.5rem .7rem">
+              <div style="color:var(--dim)">المشاريع</div>
+              <div style="font-weight:800;color:var(--blue)">${tProjects.length} <span style="color:var(--red);font-size:.7rem">${delayed>0?`(${delayed} متأخر)`:''}</span></div>
+            </div>
+            <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:.5rem .7rem">
+              <div style="color:var(--dim)">العمال</div>
+              <div style="font-weight:800;color:var(--purple)">${tWorkers.length}</div>
+            </div>
+            <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:.5rem .7rem">
+              <div style="color:var(--dim)">الإيراد</div>
+              <div style="font-weight:800;color:var(--green);font-size:.76rem">${(tRev/1000000).toFixed(2)}M دج</div>
+            </div>
+            <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:.5rem .7rem">
+              <div style="color:var(--dim)">الربح</div>
+              <div style="font-weight:800;color:${tProfit>=0?'var(--green)':'var(--red)'};font-size:.76rem">${(tProfit/1000000).toFixed(2)}M دج</div>
+            </div>
+          </div>
+
+          <!-- Issues -->
+          ${delayed>0||overBudget>0||!t.is_active ? `
+          <div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.7rem">
+            ${delayed>0?`<span style="background:rgba(240,78,106,.1);color:var(--red);border:1px solid rgba(240,78,106,.2);border-radius:20px;font-size:.65rem;font-weight:700;padding:2px 8px">⏰ ${delayed} متأخر</span>`:''}
+            ${overBudget>0?`<span style="background:rgba(232,184,75,.1);color:var(--gold);border:1px solid rgba(232,184,75,.2);border-radius:20px;font-size:.65rem;font-weight:700;padding:2px 8px">💸 تجاوز ميزانية</span>`:''}
+            ${!t.is_active?`<span style="background:rgba(240,78,106,.1);color:var(--red);border:1px solid rgba(240,78,106,.2);border-radius:20px;font-size:.65rem;font-weight:700;padding:2px 8px">⛔ موقوفة</span>`:''}
+          </div>` : ''}
+
+          <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;font-size:.75rem"
+            onclick="SmartAI.toggleChat();SmartAI.quickAsk('حلّل مؤسسة ${escHtml(t.name).replace(/'/g,'\\\'').replace(/"/g,'&quot;')} بالتفصيل وأعطني توصيات محددة لتحسين أدائها')">
+            🤖 تحليل مفصّل
+          </button>
+        </div>
+      `).join('') : `
+        <div class="empty" style="grid-column:1/-1">
+          <div class="empty-icon">🏢</div>
+          <div class="empty-title">لا توجد مؤسسات مسجلة بعد</div>
+        </div>
+      `}
+    </div>
+
+    <!-- مقارنة الخطط -->
+    <div class="card" style="margin-bottom:1.5rem">
+      <div style="font-size:.9rem;font-weight:800;margin-bottom:1rem">📋 توزيع المؤسسات حسب الخطة</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.8rem">
+        ${plans.map((p,i)=>{
+          const cnt = tenants.filter(t=>t.plan_id===p.id).length;
+          const pct = tenants.length ? Math.round(cnt/tenants.length*100) : 0;
+          const colors = ['var(--blue)','var(--gold)','var(--purple)'];
+          const c = colors[i]||'var(--muted)';
+          return `<div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:1rem">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+              <div style="font-weight:800;font-size:.85rem">${escHtml(p.name)}</div>
+              <div style="font-size:1.3rem;font-weight:900;color:${c}">${cnt}</div>
+            </div>
+            <div style="height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;margin-bottom:.4rem">
+              <div style="height:100%;width:${pct}%;background:${c};border-radius:2px;transition:width .6s ease"></div>
+            </div>
+            <div style="font-size:.7rem;color:var(--dim)">${pct}% من المؤسسات • ${(p.price_monthly||p.price||0).toLocaleString()} دج/شهر</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+
 
 </script>
 </body>
