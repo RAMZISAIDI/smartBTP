@@ -5602,158 +5602,226 @@ function switchAdminTab(tab) {
    🤖 ADMIN AI INSIGHTS DASHBOARD
 ══════════════════════════════════════════════════════ */
 function renderAdminAIInsights() {
-  const root = document.getElementById('adminAIInsightsRoot');
+  var root = document.getElementById('adminAIInsightsRoot');
   if (!root) return;
 
-  const tenants = DB.get('tenants');
-  const projects = DB.get('projects');
-  const workers = DB.get('workers');
-  const txs = DB.get('transactions');
-  const plans = DB.get('plans') || [];
+  var tenants = DB.get('tenants');
+  var projects = DB.get('projects');
+  var workers = DB.get('workers');
+  var txs = DB.get('transactions');
+  var plans = DB.get('plans') || [];
 
-  const tenantInsights = tenants.map(t => {
-    const tp = projects.filter(p => p.tenant_id === t.id && !p.is_archived);
-    const tRev = txs.filter(tx => tx.tenant_id === t.id && tx.type === 'revenue').reduce((s, tx) => s + Number(tx.amount), 0);
-    const tExp = txs.filter(tx => tx.tenant_id === t.id && tx.type === 'expense').reduce((s, tx) => s + Number(tx.amount), 0);
-    const tWorkers = workers.filter(w => w.tenant_id === t.id);
-    const delayed = tp.filter(p => p.status === 'delayed').length;
-    const overBudget = tp.filter(p => p.budget > 0 && p.total_spent > p.budget).length;
-    const plan = plans.find(p => p.id === t.plan_id);
-    let score = 100;
-    const issues = [], strengths = [];
+  var tenantInsights = tenants.map(function(t) {
+    var tp = projects.filter(function(p) { return p.tenant_id === t.id && !p.is_archived; });
+    var tRev = txs.filter(function(tx) { return tx.tenant_id === t.id && tx.type === 'revenue'; }).reduce(function(s, tx) { return s + Number(tx.amount); }, 0);
+    var tExp = txs.filter(function(tx) { return tx.tenant_id === t.id && tx.type === 'expense'; }).reduce(function(s, tx) { return s + Number(tx.amount); }, 0);
+    var tWorkers = workers.filter(function(w) { return w.tenant_id === t.id; });
+    var delayed = tp.filter(function(p) { return p.status === 'delayed'; }).length;
+    var overBudget = tp.filter(function(p) { return p.budget > 0 && p.total_spent > p.budget; }).length;
+    var plan = plans.find(function(p) { return p.id === t.plan_id; });
+    var score = 100;
+    var issues = [], strengths = [];
     if (!t.is_active) { score -= 50; issues.push({ icon: '⏸️', text: 'المؤسسة موقوفة' }); }
     if (delayed > 0) { score -= delayed * 15; issues.push({ icon: '⏰', text: delayed + ' مشروع متأخر' }); }
     if (overBudget > 0) { score -= overBudget * 20; issues.push({ icon: '💸', text: overBudget + ' مشروع تجاوز الميزانية' }); }
     if (t.subscription_status === 'expired') { score -= 30; issues.push({ icon: '🔴', text: 'الاشتراك منتهي' }); }
     if (tRev > 0 && (tRev - tExp) / tRev > 0.15) strengths.push({ icon: '💰', text: 'هامش ربح ممتاز: ' + Math.round((tRev - tExp) / tRev * 100) + '%' });
-    if (tp.filter(p => p.status === 'completed').length > 0) strengths.push({ icon: '✅', text: tp.filter(p => p.status === 'completed').length + ' مشروع مكتمل' });
+    if (tp.filter(function(p) { return p.status === 'completed'; }).length > 0) strengths.push({ icon: '✅', text: tp.filter(function(p) { return p.status === 'completed'; }).length + ' مشروع مكتمل' });
     score = Math.max(0, Math.min(100, score));
-    const scoreClass = score >= 80 ? 'ai-score-excellent' : score >= 60 ? 'ai-score-good' : score >= 40 ? 'ai-score-warn' : 'ai-score-danger';
-    return { t, tp, tRev, tExp, tWorkers, delayed, overBudget, plan, score, scoreClass, issues, strengths };
+    var scoreClass = score >= 80 ? 'ai-score-excellent' : score >= 60 ? 'ai-score-good' : score >= 40 ? 'ai-score-warn' : 'ai-score-danger';
+    var scoreColor = score >= 80 ? 'var(--green)' : score >= 60 ? 'var(--gold)' : score >= 40 ? 'var(--orange)' : 'var(--red)';
+    return { t: t, tp: tp, tRev: tRev, tExp: tExp, tWorkers: tWorkers, delayed: delayed, overBudget: overBudget, plan: plan, score: score, scoreClass: scoreClass, scoreColor: scoreColor, issues: issues, strengths: strengths };
   });
 
-  const totalRev = txs.filter(t => t.type === 'revenue').reduce((s, t) => s + Number(t.amount), 0);
-  const totalExp = txs.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
-  const totalDelayed = projects.filter(p => p.status === 'delayed').length;
-  const totalOverBudget = projects.filter(p => p.budget > 0 && p.total_spent > p.budget).length;
-  const avgScore = tenantInsights.length > 0 ? Math.round(tenantInsights.reduce((s, ti) => s + ti.score, 0) / tenantInsights.length) : 0;
-  const sorted = [...tenantInsights].sort((a, b) => b.score - a.score);
-  const best = sorted[0];
-  const worst = sorted[sorted.length - 1];
+  var totalRev = txs.filter(function(t) { return t.type === 'revenue'; }).reduce(function(s, t) { return s + Number(t.amount); }, 0);
+  var totalExp = txs.filter(function(t) { return t.type === 'expense'; }).reduce(function(s, t) { return s + Number(t.amount); }, 0);
+  var totalProfit = totalRev - totalExp;
+  var totalDelayed = projects.filter(function(p) { return p.status === 'delayed'; }).length;
+  var totalOverBudget = projects.filter(function(p) { return p.budget > 0 && p.total_spent > p.budget; }).length;
+  var avgScore = tenantInsights.length > 0 ? Math.round(tenantInsights.reduce(function(s, ti) { return s + ti.score; }, 0) / tenantInsights.length) : 0;
+  var sorted = tenantInsights.slice().sort(function(a, b) { return b.score - a.score; });
+  var best = sorted[0];
+  var worst = sorted[sorted.length - 1];
+  var cfg = getAIConfig();
+  var aiReady = !!(cfg.apiKey && cfg.status === 'active');
 
-  const adminRecs = [];
+  var adminRecs = [];
   if (totalDelayed > 0) adminRecs.push({ icon: '🚨', color: 'var(--red)', text: totalDelayed + ' مشروع متأخر عبر المنصة — تواصل مع المؤسسات المعنية' });
   if (totalOverBudget > 0) adminRecs.push({ icon: '💸', color: 'var(--orange)', text: totalOverBudget + ' مشروع تجاوز الميزانية — راجع خطط التمويل' });
-  const expiredSubs = tenants.filter(t => t.subscription_status === 'expired').length;
+  var expiredSubs = tenants.filter(function(t) { return t.subscription_status === 'expired'; }).length;
   if (expiredSubs > 0) adminRecs.push({ icon: '🔔', color: 'var(--gold)', text: expiredSubs + ' مؤسسة اشتراكها منتهٍ — فرصة لتجديد الاشتراكات' });
-  const trialSubs = tenants.filter(t => t.subscription_status === 'trial').length;
+  var trialSubs = tenants.filter(function(t) { return t.subscription_status === 'trial'; }).length;
   if (trialSubs > 0) adminRecs.push({ icon: '⏳', color: 'var(--blue)', text: trialSubs + ' مؤسسة في فترة تجريبية — ابدأ محادثات التحويل للخطط المدفوعة' });
   if (adminRecs.length === 0) adminRecs.push({ icon: '✅', color: 'var(--green)', text: 'كل المؤسسات في وضع ممتاز — استمر في المتابعة الدورية' });
 
-  const aiNotifs = (() => { try { return JSON.parse(localStorage.getItem('ai_admin_notifications') || '[]'); } catch(e) { return []; } })();
+  var aiNotifs = [];
+  try { aiNotifs = JSON.parse(localStorage.getItem('ai_admin_notifications') || '[]'); } catch(e) {}
 
-  root.innerHTML = `
-    <div class="ai-page-header" style="margin-bottom:1.2rem">
-      <div class="ai-page-icon">📊</div>
-      <div style="flex:1">
-        <div style="font-size:1.1rem;font-weight:900;margin-bottom:.25rem">تحليلات SmartAI — رؤية شاملة للمنصة</div>
-        <div style="font-size:.78rem;color:var(--muted)">تحليل ذكي لجميع المؤسسات • ${new Date().toLocaleDateString('ar-DZ', {weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
-      </div>
-      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-        <button class="btn btn-purple btn-sm" onclick="SmartAI.toggleChat();SmartAI.quickAsk('أعطني تحليلاً شاملاً لأداء جميع المؤسسات على المنصة مع أبرز المخاطر والفرص')">🤖 تحليل AI مفصّل</button>
-        <button class="btn btn-ghost btn-sm" onclick="renderAdminAIInsights()">🔄 تحديث</button>
-      </div>
-    </div>
+  var today = new Date().toLocaleDateString('ar-DZ', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  var profitMargin = totalRev > 0 ? Math.round((totalRev - totalExp) / totalRev * 100) : 0;
 
-    <div class="stats-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:1.2rem">
-      <div class="stat-card" style="border-color:rgba(155,109,255,0.2)">
-        <div class="stat-icon">🏆</div>
-        <div class="stat-value" style="color:#9B6DFF">${avgScore}<span style="font-size:.7rem">/100</span></div>
-        <div class="stat-label">متوسط صحة المنصة</div>
-      </div>
-      <div class="stat-card" style="border-color:rgba(52,195,143,0.2)">
-        <div class="stat-icon">💰</div>
-        <div class="stat-value" style="color:var(--green);font-size:.95rem">${((totalRev - totalExp) / 1e6).toFixed(1)}M</div>
-        <div class="stat-label">إجمالي الأرباح (دج)</div>
-      </div>
-      <div class="stat-card" style="border-color:rgba(240,78,106,0.2)">
-        <div class="stat-icon">🚨</div>
-        <div class="stat-value" style="color:var(--red)">${totalDelayed}</div>
-        <div class="stat-label">مشاريع متأخرة</div>
-      </div>
-      <div class="stat-card" style="border-color:rgba(232,184,75,0.2)">
-        <div class="stat-icon">💸</div>
-        <div class="stat-value" style="color:var(--gold)">${totalOverBudget}</div>
-        <div class="stat-label">تجاوزت الميزانية</div>
-      </div>
-      <div class="stat-card" style="border-color:rgba(74,144,226,0.2)">
-        <div class="stat-icon">📈</div>
-        <div class="stat-value" style="color:var(--blue);font-size:.9rem">${totalRev > 0 ? Math.round((totalRev - totalExp) / totalRev * 100) : 0}%</div>
-        <div class="stat-label">هامش الربح الإجمالي</div>
-      </div>
-    </div>
+  /* ── Build HTML using concatenation to avoid nested template literal issues ── */
+  var html = '';
 
-    <div class="card" style="margin-bottom:1.2rem;border-color:rgba(155,109,255,0.25)">
-      <div style="font-size:.88rem;font-weight:900;margin-bottom:.8rem;color:#B89AFF;display:flex;align-items:center;gap:.5rem">
-        🎯 توصيات SmartAI الفورية
-        <button class="btn btn-purple btn-sm" style="font-size:.68rem;padding:.2rem .6rem;margin-right:auto" onclick="SmartAI.toggleChat();SmartAI.quickAsk('ما هي أهم 5 قرارات يجب أن يتخذها المسؤول الآن بناءً على البيانات الحالية؟')">🤖 اسأل AI</button>
-      </div>
-      ${adminRecs.map(r => '<div class="ai-insight-item"><span class="ai-insight-icon" style="color:' + r.color + '">' + r.icon + '</span><div class="ai-insight-text">' + r.text + '</div></div>').join('')}
-    </div>
+  /* Header */
+  html += '<div class="ai-page-header" style="margin-bottom:1.2rem">';
+  html += '<div class="ai-page-icon">📊</div>';
+  html += '<div style="flex:1">';
+  html += '<div style="font-size:1.1rem;font-weight:900;margin-bottom:.25rem">تحليلات SmartAI — رؤية شاملة للمنصة</div>';
+  html += '<div style="font-size:.78rem;color:var(--muted)">تحليل ذكي لجميع المؤسسات • ' + today + '</div>';
+  html += '</div>';
+  html += '<div style="display:flex;gap:.5rem;flex-wrap:wrap">';
+  html += '<button class="btn btn-purple btn-sm" onclick="SmartAI.toggleChat();SmartAI.quickAsk(\'أعطني تحليلاً شاملاً لأداء جميع المؤسسات على المنصة مع أبرز المخاطر والفرص\')">🤖 تحليل AI مفصّل</button>';
+  html += '<button class="btn btn-ghost btn-sm" onclick="renderAdminAIInsights()">🔄 تحديث</button>';
+  html += '</div></div>';
 
-    ${best && worst && best !== worst ? `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem">
-      <div class="card" style="border-color:rgba(52,195,143,0.25)">
-        <div style="font-size:.82rem;font-weight:900;color:var(--green);margin-bottom:.7rem">🏆 أفضل مؤسسة أداءً</div>
-        <div style="font-size:1rem;font-weight:800;margin-bottom:.3rem">${escHtml(best.t.name)}</div>
-        <div class="ai-project-score ${best.scoreClass}" style="display:inline-flex;margin-bottom:.6rem">${best.score}/100</div>
-        <div style="font-size:.78rem;color:var(--muted);">${best.tp.length} مشروع • ${best.tWorkers.length} عامل • ربح: ${((best.tRev - best.tExp)/1e6).toFixed(1)}M دج</div>
-        ${best.strengths.slice(0,2).map(s => '<div class="ai-insight-item" style="padding:.2rem 0"><span>' + s.icon + '</span><span style="font-size:.73rem">' + s.text + '</span></div>').join('')}
-      </div>
-      <div class="card" style="border-color:rgba(240,78,106,0.2)">
-        <div style="font-size:.82rem;font-weight:900;color:var(--red);margin-bottom:.7rem">⚠️ تحتاج متابعة عاجلة</div>
-        <div style="font-size:1rem;font-weight:800;margin-bottom:.3rem">${escHtml(worst.t.name)}</div>
-        <div class="ai-project-score ${worst.scoreClass}" style="display:inline-flex;margin-bottom:.6rem">${worst.score}/100</div>
-        <div style="font-size:.78rem;color:var(--muted);">${worst.tp.length} مشروع • ${worst.tWorkers.length} عامل</div>
-        ${worst.issues.slice(0,2).map(i => '<div class="ai-insight-item" style="padding:.2rem 0"><span>' + i.icon + '</span><span style="font-size:.73rem">' + i.text + '</span></div>').join('')}
-        <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:.5rem;font-size:.72rem" onclick="SmartAI.toggleChat();SmartAI.quickAsk('حلّل وضع مؤسسة ${escHtml(worst.t.name)} بالتفصيل وأعطني خطة لتحسين أدائها')">🤖 تحليل مفصّل</button>
-      </div>
-    </div>
-    ` : ''}
+  /* AI Status Banner */
+  if (!aiReady) {
+    html += '<div style="background:rgba(232,184,75,.06);border:1px solid rgba(232,184,75,.2);border-radius:12px;padding:.9rem 1.2rem;margin-bottom:1.2rem;display:flex;align-items:center;gap:.8rem">';
+    html += '<span style="font-size:1.3rem">⚡</span><div style="flex:1">';
+    html += '<div style="font-size:.82rem;font-weight:800;color:var(--gold)">فعّل SmartAI للحصول على تحليلات أكثر ذكاءً</div>';
+    html += '<div style="font-size:.74rem;color:var(--muted)">أضف API key في تبويب إعدادات SmartAI للحصول على توصيات تلقائية</div>';
+    html += '</div><button class="btn btn-gold btn-sm" onclick="switchAdminTab(\'ai\')">⚙️ إعداد</button></div>';
+  } else {
+    html += '<div style="background:rgba(52,195,143,.06);border:1px solid rgba(52,195,143,.2);border-radius:12px;padding:.7rem 1.2rem;margin-bottom:1.2rem;display:flex;align-items:center;gap:.8rem">';
+    html += '<span style="color:var(--green)">●</span>';
+    html += '<div style="font-size:.82rem;font-weight:700;color:var(--green)">SmartAI مفعّل — سيرسل تحليلاً تلقائياً عند كل تغيير في البيانات</div>';
+    html += '</div>';
+  }
 
-    <div style="font-size:.88rem;font-weight:900;color:var(--muted);margin-bottom:.8rem">📊 تحليل جميع المؤسسات</div>
-    <div class="ai-analysis-cards">
-      ${tenantInsights.map(ti => `
-        <div class="ai-analysis-card">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.7rem;gap:.5rem">
-            <div>
-              <div style="font-weight:800;font-size:.88rem">${escHtml(ti.t.name)}</div>
-              <div style="font-size:.7rem;color:var(--dim)">📍 ${escHtml(ti.t.wilaya || '—')} • ${escHtml(ti.plan?.name || '—')}</div>
-            </div>
-            <div class="ai-project-score ${ti.scoreClass}" style="font-size:.68rem;flex-shrink:0">${ti.score}/100</div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;font-size:.75rem;margin-bottom:.7rem">
-            <div><span style="color:var(--dim)">المشاريع </span><strong>${ti.tp.length}</strong></div>
-            <div><span style="color:var(--dim)">العمال </span><strong>${ti.tWorkers.length}</strong></div>
-            <div><span style="color:var(--dim)">الإيراد </span><strong style="color:var(--green)">${(ti.tRev/1e6).toFixed(1)}M</strong></div>
-            <div><span style="color:var(--dim)">الربح </span><strong style="color:${ti.tRev - ti.tExp >= 0 ? 'var(--green)' : 'var(--red)'}">${((ti.tRev-ti.tExp)/1e6).toFixed(1)}M</strong></div>
-          </div>
-          ${ti.issues.length > 0 ? '<div style="font-size:.72rem;font-weight:800;color:#B89AFF;margin-bottom:.3rem">⚠️ تنبيهات:</div>' + ti.issues.slice(0,2).map(i => '<div style="display:flex;gap:.4rem;font-size:.72rem;padding:.15rem 0"><span>' + i.icon + '</span><span>' + i.text + '</span></div>').join('') : '<div style="font-size:.72rem;color:var(--green)">✅ أداء جيد</div>'}
-          <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:.6rem;font-size:.7rem;justify-content:center" onclick="SmartAI.toggleChat();SmartAI.quickAsk('حلّل أداء مؤسسة ${escHtml(ti.t.name)} بالتفصيل مع توصيات محددة')">🤖 تحليل</button>
-        </div>
-      `).join('')}
-    </div>
+  /* KPIs */
+  html += '<div class="stats-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:1.2rem">';
+  html += '<div class="stat-card" style="border-color:rgba(155,109,255,0.2)"><div class="stat-icon">🏆</div><div class="stat-value" style="color:#9B6DFF">' + avgScore + '<span style="font-size:.7rem">/100</span></div><div class="stat-label">متوسط صحة المنصة</div></div>';
+  html += '<div class="stat-card" style="border-color:rgba(52,195,143,0.2)"><div class="stat-icon">💰</div><div class="stat-value" style="color:var(--green);font-size:.95rem">' + (totalProfit / 1e6).toFixed(1) + 'M</div><div class="stat-label">إجمالي الأرباح (دج)</div></div>';
+  html += '<div class="stat-card" style="border-color:rgba(240,78,106,0.2)"><div class="stat-icon">🚨</div><div class="stat-value" style="color:var(--red)">' + totalDelayed + '</div><div class="stat-label">مشاريع متأخرة</div></div>';
+  html += '<div class="stat-card" style="border-color:rgba(232,184,75,0.2)"><div class="stat-icon">💸</div><div class="stat-value" style="color:var(--gold)">' + totalOverBudget + '</div><div class="stat-label">تجاوزت الميزانية</div></div>';
+  html += '<div class="stat-card" style="border-color:rgba(74,144,226,0.2)"><div class="stat-icon">📈</div><div class="stat-value" style="color:var(--blue);font-size:.9rem">' + profitMargin + '%</div><div class="stat-label">هامش الربح الإجمالي</div></div>';
+  html += '</div>';
 
-    ${aiNotifs.length > 0 ? `<div class="card" style="margin-top:1rem;border-color:rgba(74,144,226,0.2)">
-      <div style="font-size:.88rem;font-weight:900;margin-bottom:.8rem;color:var(--blue);display:flex;align-items:center;gap:.5rem">
-        🔔 سجل إشعارات SmartAI
-        <button class="btn btn-ghost btn-sm" style="font-size:.65rem;padding:.15rem .5rem;margin-right:auto" onclick="localStorage.removeItem('ai_admin_notifications');renderAdminAIInsights()">🗑️ مسح</button>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:.4rem">
-        ${aiNotifs.slice(0, 8).map(n => '<div style="display:flex;align-items:center;gap:.7rem;padding:.4rem .6rem;background:rgba(255,255,255,0.03);border-radius:8px;font-size:.78rem"><span style=\"color:var(--blue)\">🤖</span><span style=\"flex:1\">' + escHtml(n.msg) + '</span><span style=\"font-size:.65rem;color:var(--dim)\">' + new Date(n.ts).toLocaleTimeString('ar-DZ', {hour:'2-digit',minute:'2-digit'}) + '</span></div>').join('')}
-      </div>
-    </div>` : ''}
-  `;
+  /* Recommendations */
+  html += '<div class="card" style="margin-bottom:1.2rem;border-color:rgba(155,109,255,0.25)">';
+  html += '<div style="font-size:.88rem;font-weight:900;margin-bottom:.8rem;color:#B89AFF;display:flex;align-items:center;gap:.5rem">🎯 توصيات SmartAI الفورية';
+  html += '<button class="btn btn-purple btn-sm" style="font-size:.68rem;padding:.2rem .6rem;margin-right:auto" onclick="SmartAI.toggleChat();SmartAI.quickAsk(\'ما هي أهم 5 قرارات يجب أن يتخذها المسؤول الآن بناءً على البيانات الحالية؟\')">🤖 اسأل AI</button>';
+  html += '</div>';
+  adminRecs.forEach(function(r) {
+    html += '<div class="ai-insight-item"><span class="ai-insight-icon" style="color:' + r.color + '">' + r.icon + '</span><div class="ai-insight-text">' + r.text + '</div></div>';
+  });
+  html += '</div>';
+
+  /* Best / Worst */
+  if (best && worst && best !== worst) {
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem">';
+    /* Best */
+    html += '<div class="card" style="border-color:rgba(52,195,143,0.25)">';
+    html += '<div style="font-size:.82rem;font-weight:900;color:var(--green);margin-bottom:.7rem">🏆 أفضل مؤسسة أداءً</div>';
+    html += '<div style="font-size:1rem;font-weight:800;margin-bottom:.3rem">' + escHtml(best.t.name) + '</div>';
+    html += '<div class="ai-project-score ' + best.scoreClass + '" style="display:inline-flex;margin-bottom:.6rem">' + best.score + '/100</div>';
+    html += '<div style="font-size:.78rem;color:var(--muted);">' + best.tp.length + ' مشروع • ' + best.tWorkers.length + ' عامل • ربح: ' + ((best.tRev - best.tExp)/1e6).toFixed(1) + 'M دج</div>';
+    best.strengths.slice(0,2).forEach(function(s) {
+      html += '<div class="ai-insight-item" style="padding:.2rem 0"><span>' + s.icon + '</span><span style="font-size:.73rem">' + s.text + '</span></div>';
+    });
+    html += '</div>';
+    /* Worst */
+    html += '<div class="card" style="border-color:rgba(240,78,106,0.2)">';
+    html += '<div style="font-size:.82rem;font-weight:900;color:var(--red);margin-bottom:.7rem">⚠️ تحتاج متابعة عاجلة</div>';
+    html += '<div style="font-size:1rem;font-weight:800;margin-bottom:.3rem">' + escHtml(worst.t.name) + '</div>';
+    html += '<div class="ai-project-score ' + worst.scoreClass + '" style="display:inline-flex;margin-bottom:.6rem">' + worst.score + '/100</div>';
+    html += '<div style="font-size:.78rem;color:var(--muted);">' + worst.tp.length + ' مشروع • ' + worst.tWorkers.length + ' عامل</div>';
+    worst.issues.slice(0,2).forEach(function(i) {
+      html += '<div class="ai-insight-item" style="padding:.2rem 0"><span>' + i.icon + '</span><span style="font-size:.73rem">' + i.text + '</span></div>';
+    });
+    html += '<button class="btn btn-ghost btn-sm" style="width:100%;margin-top:.5rem;font-size:.72rem" onclick="SmartAI.toggleChat();SmartAI.quickAsk(\'حلّل وضع مؤسسة ' + escHtml(worst.t.name).replace(/'/g, "\\'") + ' بالتفصيل وأعطني خطة تحسين\')">🤖 تحليل مفصّل</button>';
+    html += '</div>';
+    html += '</div>';
+  }
+
+  /* All Institutions */
+  html += '<div style="font-size:.88rem;font-weight:900;color:var(--muted);margin-bottom:.8rem">📊 تحليل جميع المؤسسات</div>';
+  html += '<div class="ai-analysis-cards">';
+
+  if (tenantInsights.length === 0) {
+    html += '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🏢</div><div class="empty-title">لا توجد مؤسسات مسجلة بعد</div></div>';
+  } else {
+    tenantInsights.forEach(function(ti) {
+      var profitColor = (ti.tRev - ti.tExp) >= 0 ? 'var(--green)' : 'var(--red)';
+      html += '<div class="ai-analysis-card" style="position:relative;overflow:hidden">';
+      /* Score bar */
+      html += '<div style="position:absolute;top:0;right:0;width:' + ti.score + '%;height:3px;background:' + ti.scoreColor + ';border-radius:3px 0 0 0"></div>';
+      /* Header */
+      html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.7rem;gap:.5rem">';
+      html += '<div>';
+      html += '<div style="font-weight:800;font-size:.88rem">' + escHtml(ti.t.name) + '</div>';
+      html += '<div style="font-size:.7rem;color:var(--dim)">📍 ' + escHtml(ti.t.wilaya || '—') + ' • ' + escHtml(ti.plan ? ti.plan.name : '—') + '</div>';
+      html += '</div>';
+      html += '<div class="ai-project-score ' + ti.scoreClass + '" style="font-size:.68rem;flex-shrink:0">' + ti.score + '/100</div>';
+      html += '</div>';
+      /* Stats */
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;font-size:.75rem;margin-bottom:.7rem">';
+      html += '<div><span style="color:var(--dim)">المشاريع </span><strong>' + ti.tp.length + '</strong></div>';
+      html += '<div><span style="color:var(--dim)">العمال </span><strong>' + ti.tWorkers.length + '</strong></div>';
+      html += '<div><span style="color:var(--dim)">الإيراد </span><strong style="color:var(--green)">' + (ti.tRev/1e6).toFixed(1) + 'M</strong></div>';
+      html += '<div><span style="color:var(--dim)">الربح </span><strong style="color:' + profitColor + '">' + ((ti.tRev-ti.tExp)/1e6).toFixed(1) + 'M</strong></div>';
+      html += '</div>';
+      /* Issues */
+      if (ti.issues.length > 0) {
+        html += '<div style="font-size:.72rem;font-weight:800;color:#B89AFF;margin-bottom:.3rem">⚠️ تنبيهات:</div>';
+        ti.issues.slice(0,2).forEach(function(iss) {
+          html += '<div style="display:flex;gap:.4rem;font-size:.72rem;padding:.15rem 0"><span>' + iss.icon + '</span><span>' + iss.text + '</span></div>';
+        });
+      } else {
+        html += '<div style="font-size:.72rem;color:var(--green)">✅ أداء جيد</div>';
+      }
+      /* Action button */
+      html += '<button class="btn btn-ghost btn-sm" style="width:100%;margin-top:.6rem;font-size:.7rem;justify-content:center" onclick="SmartAI.toggleChat();SmartAI.quickAsk(\'حلّل أداء مؤسسة ' + escHtml(ti.t.name).replace(/'/g, "\\'") + ' بالتفصيل مع توصيات محددة\')">🤖 تحليل</button>';
+      html += '</div>';
+    });
+  }
+
+  html += '</div>';
+
+  /* Plans distribution */
+  html += '<div class="card" style="margin-top:1rem;margin-bottom:1.2rem">';
+  html += '<div style="font-size:.88rem;font-weight:900;margin-bottom:.8rem">📋 توزيع المؤسسات حسب الخطة</div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.8rem">';
+  var planColors = ['var(--blue)', 'var(--gold)', 'var(--purple)'];
+  plans.forEach(function(p, idx) {
+    var cnt = tenants.filter(function(t) { return t.plan_id === p.id; }).length;
+    var pct = tenants.length ? Math.round(cnt / tenants.length * 100) : 0;
+    var c = planColors[idx] || 'var(--muted)';
+    var price = (p.price_monthly || p.price || 0).toLocaleString();
+    html += '<div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:1rem">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">';
+    html += '<div style="font-weight:800;font-size:.85rem">' + escHtml(p.name) + '</div>';
+    html += '<div style="font-size:1.3rem;font-weight:900;color:' + c + '">' + cnt + '</div>';
+    html += '</div>';
+    html += '<div style="height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;margin-bottom:.4rem">';
+    html += '<div style="height:100%;width:' + pct + '%;background:' + c + ';border-radius:2px"></div>';
+    html += '</div>';
+    html += '<div style="font-size:.7rem;color:var(--dim)">' + pct + '% من المؤسسات • ' + price + ' دج/شهر</div>';
+    html += '</div>';
+  });
+  html += '</div></div>';
+
+  /* AI Notifications log */
+  if (aiNotifs.length > 0) {
+    html += '<div class="card" style="margin-top:.5rem;border-color:rgba(74,144,226,0.2)">';
+    html += '<div style="font-size:.88rem;font-weight:900;margin-bottom:.8rem;color:var(--blue);display:flex;align-items:center;gap:.5rem">';
+    html += '🔔 سجل إشعارات SmartAI';
+    html += '<button class="btn btn-ghost btn-sm" style="font-size:.65rem;padding:.15rem .5rem;margin-right:auto" onclick="localStorage.removeItem(\'ai_admin_notifications\');renderAdminAIInsights()">🗑️ مسح</button>';
+    html += '</div>';
+    html += '<div style="display:flex;flex-direction:column;gap:.4rem">';
+    aiNotifs.slice(0, 8).forEach(function(n) {
+      var timeStr = new Date(n.ts).toLocaleTimeString('ar-DZ', {hour:'2-digit',minute:'2-digit'});
+      html += '<div style="display:flex;align-items:center;gap:.7rem;padding:.4rem .6rem;background:rgba(255,255,255,0.03);border-radius:8px;font-size:.78rem">';
+      html += '<span style="color:var(--blue)">🤖</span>';
+      html += '<span style="flex:1">' + escHtml(n.msg || '') + '</span>';
+      html += '<span style="font-size:.65rem;color:var(--dim)">' + timeStr + '</span>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+  }
+
+  root.innerHTML = html;
 }
 
 function showAIUsageStats() {
