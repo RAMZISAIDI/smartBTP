@@ -9095,6 +9095,655 @@ function printInvoiceWindow(id) {
 }
 
 /* ══════════════════════════════════════════════════════
+   MISSING PAGES — الصفحات المفقودة
+══════════════════════════════════════════════════════ */
+
+/* ─── INVENTORY (المخزون) ─── */
+Pages.inventory = function() {
+  const tid = Auth.getUser().tenant_id;
+  const materials = DB.get('materials').filter(m => m.tenant_id === tid);
+  const projects  = DB.get('projects').filter(p => p.tenant_id === tid && !p.is_archived);
+  const lowStock  = materials.filter(m => m.quantity <= (m.min_quantity || 0));
+  const totalValue = materials.reduce((s,m) => s + Number(m.quantity||0)*Number(m.unit_price||0), 0);
+  const filterProj = sessionStorage.getItem('inv_proj') || 'all';
+  let filtered = filterProj === 'all' ? materials : materials.filter(m => String(m.project_id) === filterProj);
+
+  return layoutHTML('materials', L('المخزون','Stock'), `
+    <div class="page-header">
+      <div>
+        <div class="page-title">📦 ${L('إدارة المخزون','Gestion du stock')}</div>
+        <div class="page-sub">${materials.length} ${L('صنف','article(s)')} — ${lowStock.length} ${L('نقص','en rupture')}</div>
+      </div>
+      <div class="page-actions">
+        ${canDo('materials')?`<button class="btn btn-gold" onclick="App.navigate('materials')">+ ${L('إضافة مادة','Ajouter matériau')}</button>`:''}
+      </div>
+    </div>
+    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:1.5rem">
+      <div class="stat-card"><div class="stat-icon">📦</div><div class="stat-value">${materials.length}</div><div class="stat-label">${L('إجمالي الأصناف','Total articles')}</div></div>
+      <div class="stat-card" style="border-color:rgba(240,78,106,0.2)"><div class="stat-icon">⚠️</div><div class="stat-value" style="color:var(--red)">${lowStock.length}</div><div class="stat-label">${L('نقص في المخزون','Stock insuffisant')}</div></div>
+      <div class="stat-card" style="border-color:rgba(232,184,75,0.2)"><div class="stat-icon">💰</div><div class="stat-value" style="font-size:1rem">${fmt(totalValue)}</div><div class="stat-label">${L('قيمة المخزون (دج)','Valeur stock (DA)')}</div></div>
+    </div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem">
+      <button class="btn ${filterProj==='all'?'btn-gold':'btn-ghost'} btn-sm" onclick="sessionStorage.setItem('inv_proj','all');App.navigate('inventory')">${L('الكل','Tout')}</button>
+      ${projects.map(p=>`<button class="btn ${filterProj===String(p.id)?'btn-gold':'btn-ghost'} btn-sm" onclick="sessionStorage.setItem('inv_proj','${p.id}');App.navigate('inventory')">${escHtml(p.name)}</button>`).join('')}
+    </div>
+    <div class="card">
+      ${filtered.length === 0 ? `<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">${L('لا يوجد مخزون','Aucun stock')}</div></div>` : `
+      <table class="table">
+        <thead><tr>
+          <th>${L('المادة','Matériau')}</th><th>${L('المشروع','Projet')}</th>
+          <th>${L('الكمية','Qté')}</th><th>${L('الحد الأدنى','Seuil min')}</th>
+          <th>${L('سعر الوحدة','Prix unit.')}</th><th>${L('القيمة الإجمالية','Valeur totale')}</th><th>${L('الحالة','État')}</th>
+        </tr></thead>
+        <tbody>
+          ${filtered.map(m => {
+            const proj = projects.find(p=>p.id===m.project_id);
+            const isLow = m.quantity <= (m.min_quantity||0);
+            const val = Number(m.quantity||0)*Number(m.unit_price||0);
+            return `<tr>
+              <td><div style="font-weight:700">${escHtml(m.name)}</div><div style="font-size:.72rem;color:var(--dim)">${escHtml(m.unit||'')} ${m.supplier?'• '+escHtml(m.supplier):''}</div></td>
+              <td style="font-size:.8rem">${proj?escHtml(proj.name):'—'}</td>
+              <td style="font-weight:800;color:${isLow?'var(--red)':'var(--green)'}">${m.quantity}</td>
+              <td style="color:var(--dim)">${m.min_quantity||0}</td>
+              <td style="font-family:monospace">${fmt(m.unit_price)}</td>
+              <td style="font-family:monospace;font-weight:700">${fmt(val)}</td>
+              <td>${isLow?`<span class="badge badge-delayed">${L('نقص','Rupture')}</span>`:`<span class="badge badge-active">${L('متوفر','Disponible')}</span>`}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`}
+    </div>
+  `);
+};
+
+/* ─── DOCUMENTS (الوثائق) ─── */
+Pages.documents = function() {
+  const tid = Auth.getUser().tenant_id;
+  const projects = DB.get('projects').filter(p=>p.tenant_id===tid && !p.is_archived);
+  const docs = DB.get('documents').filter(d=>d.tenant_id===tid);
+
+  return layoutHTML('documents', L('الوثائق','Documents'), `
+    <div class="page-header">
+      <div>
+        <div class="page-title">📄 ${L('إدارة الوثائق','Gestion des documents')}</div>
+        <div class="page-sub">${docs.length} ${L('وثيقة','document(s)')}</div>
+      </div>
+      <div class="page-actions">
+        ${canDo('documents')?`<button class="btn btn-gold" data-modal-open="addDocModal">+ ${L('وثيقة جديدة','Nouveau document')}</button>`:''}
+      </div>
+    </div>
+    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:1.5rem">
+      <div class="stat-card"><div class="stat-icon">📄</div><div class="stat-value">${docs.length}</div><div class="stat-label">${L('إجمالي الوثائق','Total documents')}</div></div>
+      <div class="stat-card"><div class="stat-icon">🏗️</div><div class="stat-value">${projects.length}</div><div class="stat-label">${L('المشاريع','Projets')}</div></div>
+      <div class="stat-card"><div class="stat-icon">📂</div><div class="stat-value">${[...new Set(docs.map(d=>d.category||'عام'))].length}</div><div class="stat-label">${L('الفئات','Catégories')}</div></div>
+    </div>
+    ${docs.length === 0 ? `
+    <div class="card"><div class="empty">
+      <div class="empty-icon">📄</div>
+      <div class="empty-title">${L('لا توجد وثائق بعد','Aucun document')}</div>
+      <div class="empty-desc">${L('أضف وثائق مشاريعك: عقود، تصاريح، رخص البناء...','Ajoutez vos documents: contrats, permis, plans...')}</div>
+      ${canDo('documents')?`<button class="btn btn-gold" data-modal-open="addDocModal">+ ${L('إضافة وثيقة','Ajouter')}</button>`:''}
+    </div></div>` : `
+    <div class="card">
+      <div class="grid-cards">
+        ${docs.map(d => {
+          const proj = projects.find(p=>p.id===d.project_id);
+          const icons = {contract:'📜', permit:'🪪', plan:'📐', report:'📊', invoice:'🧾', other:'📄'};
+          return `<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:1rem">
+            <div style="font-size:2rem;margin-bottom:.5rem">${icons[d.category]||'📄'}</div>
+            <div style="font-weight:800;font-size:.9rem;margin-bottom:.3rem">${escHtml(d.name)}</div>
+            <div style="font-size:.72rem;color:var(--dim);margin-bottom:.5rem">${proj?escHtml(proj.name):'—'} ${d.date?'• '+fmtDate(d.date):''}</div>
+            <div style="font-size:.72rem;background:rgba(232,184,75,.1);color:var(--gold);border-radius:6px;padding:2px 8px;display:inline-block">${escHtml(d.category||'عام')}</div>
+            ${d.notes?`<div style="font-size:.72rem;color:var(--muted);margin-top:.5rem;border-top:1px solid rgba(255,255,255,.05);padding-top:.5rem">${escHtml(d.notes)}</div>`:''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`}
+    <!-- Modal إضافة وثيقة -->
+    <div class="modal-overlay" id="addDocModal">
+      <div class="modal">
+        <div class="modal-header"><div class="modal-title">📄 ${L('إضافة وثيقة','Ajouter document')}</div><button class="modal-close" data-modal-close>✕</button></div>
+        <div class="modal-body">
+          <div class="form-group"><label class="form-label">${L('اسم الوثيقة','Nom du document')} *</label><input class="form-input" id="docName" placeholder="${L('عقد بناء...','Contrat...')}"></div>
+          <div class="form-group"><label class="form-label">${L('الفئة','Catégorie')}</label>
+            <select class="form-select" id="docCat">
+              <option value="contract">${L('عقد','Contrat')}</option>
+              <option value="permit">${L('تصريح/رخصة','Permis')}</option>
+              <option value="plan">${L('مخطط','Plan')}</option>
+              <option value="report">${L('تقرير','Rapport')}</option>
+              <option value="invoice">${L('فاتورة','Facture')}</option>
+              <option value="other">${L('أخرى','Autre')}</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">${L('المشروع','Projet')}</label>
+            <select class="form-select" id="docProj">
+              <option value="">${L('غير مرتبط','Aucun')}</option>
+              ${projects.map(p=>`<option value="${p.id}">${escHtml(p.name)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">${L('التاريخ','Date')}</label><input class="form-input" id="docDate" type="date" value="${todayStr()}"></div>
+          <div class="form-group"><label class="form-label">${L('ملاحظات','Notes')}</label><textarea class="form-input" id="docNotes" rows="2"></textarea></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" data-modal-close>${L('إلغاء','Annuler')}</button>
+          <button class="btn btn-gold" onclick="saveDocument()">${L('حفظ','Enregistrer')}</button>
+        </div>
+      </div>
+    </div>
+  `);
+};
+window.saveDocument = function() {
+  const name = document.getElementById('docName')?.value.trim();
+  if (!name) { Toast.error(L('أدخل اسم الوثيقة','Nom requis')); return; }
+  const tid = Auth.getUser().tenant_id;
+  const docs = DB.get('documents');
+  docs.push({ id: DB.nextId('documents'), tenant_id: tid, name, category: document.getElementById('docCat')?.value||'other', project_id: Number(document.getElementById('docProj')?.value)||null, date: document.getElementById('docDate')?.value||todayStr(), notes: document.getElementById('docNotes')?.value||'' });
+  DB.set('documents', docs);
+  Toast.success(L('✅ تم حفظ الوثيقة','✅ Document enregistré'));
+  App.navigate('documents');
+};
+
+/* ─── TEAM (الفريق) ─── */
+Pages.team = function() {
+  const tid = Auth.getUser().tenant_id;
+  const users = DB.get('users').filter(u => u.tenant_id === tid);
+  const ROLE_NAMES_LOCAL = { admin: L('مدير','Admin'), manager: L('مشرف','Manager'), accountant: L('محاسب','Comptable'), viewer: L('قارئ','Lecteur') };
+
+  return layoutHTML('team', L('الفريق','Équipe'), `
+    <div class="page-header">
+      <div>
+        <div class="page-title">👥 ${L('إدارة الفريق','Gestion de l\'équipe')}</div>
+        <div class="page-sub">${users.length} ${L('مستخدم','utilisateur(s)')}</div>
+      </div>
+      <div class="page-actions">
+        ${canDo('team')?`<button class="btn btn-gold" data-modal-open="addUserModal">+ ${L('مستخدم جديد','Nouvel utilisateur')}</button>`:''}
+      </div>
+    </div>
+    <div class="card">
+      ${users.length === 0 ? `<div class="empty"><div class="empty-icon">👥</div><div class="empty-title">${L('لا يوجد مستخدمون','Aucun utilisateur')}</div></div>` : `
+      <table class="table">
+        <thead><tr><th>${L('الاسم','Nom')}</th><th>${L('البريد الإلكتروني','Email')}</th><th>${L('الدور','Rôle')}</th><th>${L('الحالة','Statut')}</th><th></th></tr></thead>
+        <tbody>
+          ${users.map(u => `<tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:.6rem">
+                <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#9B6DFF,#6B3FD4);display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:800;color:#fff;flex-shrink:0">${escHtml((u.full_name||'?')[0])}</div>
+                <div>
+                  <div style="font-weight:700">${escHtml(u.full_name)}</div>
+                  ${u.phone?`<div style="font-size:.72rem;color:var(--dim)">${escHtml(u.phone)}</div>`:''}
+                </div>
+              </div>
+            </td>
+            <td style="font-size:.82rem">${escHtml(u.email)}</td>
+            <td><span style="background:rgba(155,109,255,.15);color:#B89AFF;border-radius:20px;padding:2px 10px;font-size:.72rem;font-weight:700">${ROLE_NAMES_LOCAL[u.role]||u.role}</span></td>
+            <td>${u.is_active?`<span class="badge badge-active">${L('نشط','Actif')}</span>`:`<span class="badge badge-delayed">${L('معطل','Inactif')}</span>`}</td>
+            <td>${u.id !== Auth.getUser().id && canDo('team')?`<button class="btn btn-ghost btn-sm" onclick="toggleUserActive(${u.id},${!u.is_active})">${u.is_active?L('تعطيل','Désactiver'):L('تفعيل','Activer')}</button>`:''}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`}
+    </div>
+    <!-- Modal -->
+    <div class="modal-overlay" id="addUserModal">
+      <div class="modal">
+        <div class="modal-header"><div class="modal-title">👤 ${L('إضافة مستخدم','Ajouter utilisateur')}</div><button class="modal-close" data-modal-close>✕</button></div>
+        <div class="modal-body">
+          <div class="form-group"><label class="form-label">${L('الاسم الكامل','Nom complet')} *</label><input class="form-input" id="newUserName"></div>
+          <div class="form-group"><label class="form-label">${L('البريد الإلكتروني','Email')} *</label><input class="form-input" id="newUserEmail" type="email"></div>
+          <div class="form-group"><label class="form-label">${L('كلمة المرور','Mot de passe')} *</label><input class="form-input" id="newUserPass" type="password"></div>
+          <div class="form-group"><label class="form-label">${L('الدور','Rôle')}</label>
+            <select class="form-select" id="newUserRole">
+              <option value="manager">${L('مشرف','Manager')}</option>
+              <option value="accountant">${L('محاسب','Comptable')}</option>
+              <option value="viewer">${L('قارئ','Lecteur')}</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" data-modal-close>${L('إلغاء','Annuler')}</button>
+          <button class="btn btn-gold" onclick="saveNewUser()">${L('إضافة','Ajouter')}</button>
+        </div>
+      </div>
+    </div>
+  `);
+};
+window.saveNewUser = function() {
+  const name=document.getElementById('newUserName')?.value.trim(), email=document.getElementById('newUserEmail')?.value.trim(), pass=document.getElementById('newUserPass')?.value;
+  if(!name||!email||!pass){Toast.error(L('أكمل جميع الحقول','Remplissez tous les champs'));return;}
+  const users=DB.get('users');
+  if(users.find(u=>u.email===email.toLowerCase())){Toast.error(L('البريد مستخدم','Email déjà utilisé'));return;}
+  users.push({id:DB.nextId('users'),tenant_id:Auth.getUser().tenant_id,full_name:name,email:email.toLowerCase(),password:pass,role:document.getElementById('newUserRole')?.value||'viewer',is_admin:false,is_active:true});
+  DB.set('users',users);
+  Toast.success(L('✅ تم إضافة المستخدم','✅ Utilisateur ajouté'));
+  App.navigate('team');
+};
+window.toggleUserActive = function(id, active) {
+  const users=DB.get('users'); const u=users.find(x=>x.id===id); if(u){u.is_active=active;DB.set('users',users);App.navigate('team');}
+};
+
+/* ─── COMPARE (مقارنة المشاريع) ─── */
+Pages.compare = function() {
+  const tid = Auth.getUser().tenant_id;
+  const projects = DB.get('projects').filter(p=>p.tenant_id===tid && !p.is_archived);
+  const txs = DB.get('transactions').filter(t=>t.tenant_id===tid);
+
+  return layoutHTML('compare', L('مقارنة المشاريع','Comparer projets'), `
+    <div class="page-header">
+      <div>
+        <div class="page-title">⚖️ ${L('مقارنة المشاريع','Comparer les projets')}</div>
+        <div class="page-sub">${projects.length} ${L('مشروع','projet(s)')}</div>
+      </div>
+    </div>
+    ${projects.length < 2 ? `<div class="card"><div class="empty"><div class="empty-icon">⚖️</div><div class="empty-title">${L('تحتاج مشروعين على الأقل للمقارنة','Besoin d\'au moins 2 projets')}</div><button class="btn btn-gold" data-nav="projects">+ ${L('إضافة مشروع','Ajouter')}</button></div></div>` : `
+    <div class="card" style="overflow-x:auto">
+      <table class="table" style="min-width:700px">
+        <thead><tr>
+          <th>${L('المعيار','Critère')}</th>
+          ${projects.map(p=>`<th style="color:${p.color}">${escHtml(p.name)}</th>`).join('')}
+        </tr></thead>
+        <tbody>
+          ${[
+            [L('الحالة','Statut'), p=>statusBadge(p.status)],
+            [L('التقدم','Avancement'), p=>`<div class="progress-bar" style="width:100px;display:inline-flex"><div class="progress-fill" style="background:${p.color}" data-width="${p.progress}"></div></div> ${p.progress}%`],
+            [L('الميزانية (دج)','Budget (DA)'), p=>`<span style="font-family:monospace">${fmt(p.budget)}</span>`],
+            [L('المنفق (دج)','Dépensé (DA)'), p=>`<span style="font-family:monospace;color:${p.total_spent>p.budget?'var(--red)':'var(--green)'}">${fmt(p.total_spent)}</span>`],
+            [L('المتبقي (دج)','Restant (DA)'), p=>`<span style="font-family:monospace;color:${p.budget-p.total_spent<0?'var(--red)':'var(--green)'}">${fmt(p.budget-p.total_spent)}</span>`],
+            [L('نسبة الإنفاق','% Dépense'), p=>{const r=p.budget>0?Math.round(p.total_spent/p.budget*100):0;return`<span style="color:${r>100?'var(--red)':r>85?'var(--orange)':'var(--green)'}">${r}%</span>`}],
+            [L('الإيرادات (دج)','Revenus (DA)'), p=>`<span style="font-family:monospace">${fmt(txs.filter(t=>t.project_id===p.id&&t.type==='revenue').reduce((s,t)=>s+Number(t.amount),0))}</span>`],
+            [L('المصاريف (دج)','Dépenses (DA)'), p=>`<span style="font-family:monospace">${fmt(txs.filter(t=>t.project_id===p.id&&t.type==='expense').reduce((s,t)=>s+Number(t.amount),0))}</span>`],
+            [L('تاريخ الانتهاء','Échéance'), p=>p.end_date?fmtDate(p.end_date):'—'],
+          ].map(([label,fn])=>`<tr><td style="font-weight:700;color:var(--dim)">${label}</td>${projects.map(p=>`<td>${fn(p)}</td>`).join('')}</tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`}
+  `);
+};
+
+/* ─── CALENDAR (التقويم) ─── */
+Pages.calendar = function() {
+  const tid = Auth.getUser().tenant_id;
+  const projects = DB.get('projects').filter(p=>p.tenant_id===tid && !p.is_archived);
+  const now = new Date();
+  const monthParam = sessionStorage.getItem('cal_month');
+  const current = monthParam ? new Date(monthParam+'-01') : new Date(now.getFullYear(), now.getMonth(), 1);
+  const year = current.getFullYear(), month = current.getMonth();
+  const monthLabel = current.toLocaleDateString('ar-DZ', {year:'numeric', month:'long'});
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const prevMonth = new Date(year, month-1, 1).toISOString().slice(0,7);
+  const nextMonth = new Date(year, month+1, 1).toISOString().slice(0,7);
+  const todayStr2 = now.toISOString().split('T')[0];
+
+  // جمع أحداث المشاريع
+  const events = {};
+  projects.forEach(p => {
+    if (p.start_date) events[p.start_date] = [...(events[p.start_date]||[]), {label:`🚀 ${p.name}`, color:p.color}];
+    if (p.end_date)   events[p.end_date]   = [...(events[p.end_date]||[]),   {label:`🏁 ${p.name}`, color:p.color}];
+  });
+
+  let cells = '';
+  const offset = (firstDay + 6) % 7; // الاثنين أول أيام الأسبوع
+  for (let i = 0; i < offset; i++) cells += `<div style="min-height:80px"></div>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayEvents = events[dateStr] || [];
+    const isToday = dateStr === todayStr2;
+    cells += `<div style="min-height:80px;padding:.4rem;background:${isToday?'rgba(232,184,75,0.08)':'rgba(255,255,255,0.02)'};border:1px solid ${isToday?'rgba(232,184,75,0.4)':'rgba(255,255,255,0.05)'};border-radius:8px">
+      <div style="font-size:.78rem;font-weight:${isToday?'900':'600'};color:${isToday?'var(--gold)':'var(--dim)'};margin-bottom:.25rem">${d}</div>
+      ${dayEvents.map(e=>`<div style="font-size:.62rem;background:${e.color}22;border-left:3px solid ${e.color};padding:2px 4px;border-radius:0 4px 4px 0;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${e.label}</div>`).join('')}
+    </div>`;
+  }
+
+  return layoutHTML('calendar', L('التقويم','Calendrier'), `
+    <div class="page-header">
+      <div>
+        <div class="page-title">📅 ${L('تقويم المشاريع','Calendrier des projets')}</div>
+        <div class="page-sub">${monthLabel}</div>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-ghost btn-sm" onclick="sessionStorage.setItem('cal_month','${prevMonth}');App.navigate('calendar')">← ${L('السابق','Préc.')}</button>
+        <button class="btn btn-ghost btn-sm" onclick="sessionStorage.removeItem('cal_month');App.navigate('calendar')">${L('اليوم','Aujourd\'hui')}</button>
+        <button class="btn btn-ghost btn-sm" onclick="sessionStorage.setItem('cal_month','${nextMonth}');App.navigate('calendar')">${L('التالي','Suiv.')} →</button>
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:.3rem;margin-bottom:.5rem">
+        ${['الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت','الأحد'].map(d=>`<div style="text-align:center;font-size:.72rem;font-weight:700;color:var(--dim);padding:.3rem">${d}</div>`).join('')}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:.3rem">${cells}</div>
+      <div style="margin-top:1rem;display:flex;flex-wrap:wrap;gap:.5rem">
+        ${projects.map(p=>`<div style="display:flex;align-items:center;gap:.3rem;font-size:.72rem"><div style="width:10px;height:10px;border-radius:2px;background:${p.color}"></div>${escHtml(p.name)}</div>`).join('')}
+      </div>
+    </div>
+  `);
+};
+
+/* ─── MAP (خريطة الولايات) ─── */
+Pages.map = function() {
+  const tid = Auth.getUser().tenant_id;
+  const projects = DB.get('projects').filter(p=>p.tenant_id===tid && !p.is_archived);
+  const byWilaya = {};
+  projects.forEach(p => {
+    if (!p.wilaya) return;
+    if (!byWilaya[p.wilaya]) byWilaya[p.wilaya] = [];
+    byWilaya[p.wilaya].push(p);
+  });
+  const wilayas = Object.keys(byWilaya).sort();
+
+  return layoutHTML('map', L('خريطة الولايات','Carte des wilayas'), `
+    <div class="page-header">
+      <div>
+        <div class="page-title">🗺️ ${L('توزيع المشاريع جغرافياً','Répartition géographique')}</div>
+        <div class="page-sub">${wilayas.length} ${L('ولاية','wilaya(s)')}</div>
+      </div>
+    </div>
+    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:1.5rem">
+      <div class="stat-card"><div class="stat-icon">🗺️</div><div class="stat-value">${wilayas.length}</div><div class="stat-label">${L('ولايات مغطاة','Wilayas couvertes')}</div></div>
+      <div class="stat-card"><div class="stat-icon">🏗️</div><div class="stat-value">${projects.length}</div><div class="stat-label">${L('إجمالي المشاريع','Total projets')}</div></div>
+      <div class="stat-card"><div class="stat-icon">📍</div><div class="stat-value">${wilayas.length > 0 ? wilayas.reduce((a,b)=>byWilaya[a]?.length>=byWilaya[b]?.length?a:b,'') : '—'}</div><div class="stat-label">${L('أكثر ولاية نشاطاً','Wilaya la + active')}</div></div>
+    </div>
+    ${projects.length === 0 ? `<div class="card"><div class="empty"><div class="empty-icon">🗺️</div><div class="empty-title">${L('لا توجد مشاريع بمواقع','Aucun projet avec localisation')}</div></div></div>` : `
+    <div class="card">
+      <div style="display:flex;flex-direction:column;gap:.8rem">
+        ${wilayas.map(w => {
+          const wProjects = byWilaya[w];
+          const totalBudget = wProjects.reduce((s,p)=>s+Number(p.budget||0),0);
+          return `<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:1rem">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem">
+              <div style="display:flex;align-items:center;gap:.6rem">
+                <div style="font-size:1.3rem">📍</div>
+                <div>
+                  <div style="font-weight:800">${escHtml(w)}</div>
+                  <div style="font-size:.72rem;color:var(--dim)">${wProjects.length} ${L('مشروع','projet(s)')} — ${fmt(totalBudget)} ${L('دج','DA')}</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:.3rem;flex-wrap:wrap">
+                ${wProjects.map(p=>`<span style="background:${p.color}22;color:${p.color};border:1px solid ${p.color}44;border-radius:20px;padding:2px 8px;font-size:.68rem;font-weight:700">${escHtml(p.name)}</span>`).join('')}
+              </div>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="background:linear-gradient(90deg,${wProjects.map(p=>p.color).join(',')})" data-width="${Math.round(wProjects.length/projects.length*100)}"></div></div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`}
+  `);
+};
+
+/* ─── SIMULATOR (محاكي الأرباح) ─── */
+Pages.simulator = function() {
+  const tid = Auth.getUser().tenant_id;
+  const projects = DB.get('projects').filter(p=>p.tenant_id===tid && !p.is_archived);
+  const avgBudget = projects.length ? Math.round(projects.reduce((s,p)=>s+Number(p.budget||0),0)/projects.length) : 5000000;
+
+  return layoutHTML('simulator', L('محاكي الأرباح','Simulateur de profits'), `
+    <div class="page-header">
+      <div>
+        <div class="page-title">🧮 ${L('محاكي الأرباح','Simulateur de profits')}</div>
+        <div class="page-sub">${L('احسب ربحية مشروعك قبل البدء','Calculez la rentabilité avant de commencer')}</div>
+      </div>
+    </div>
+    <div class="simulator-container">
+      <div class="card">
+        <div style="font-size:.9rem;font-weight:800;margin-bottom:1rem">⚙️ ${L('معطيات المشروع','Paramètres du projet')}</div>
+        <div class="form-group">
+          <label class="form-label">${L('ميزانية المشروع (دج)','Budget du projet (DA)')}</label>
+          <input class="form-input" id="simBudget" type="number" value="${avgBudget}" oninput="runSimulator()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${L('تكاليف العمالة %','% Coût main-d\'œuvre')}</label>
+          <input class="form-input" id="simLabor" type="number" value="35" min="0" max="100" oninput="runSimulator()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${L('تكاليف المواد %','% Coût matériaux')}</label>
+          <input class="form-input" id="simMat" type="number" value="40" min="0" max="100" oninput="runSimulator()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${L('تكاليف المعدات %','% Coût équipements')}</label>
+          <input class="form-input" id="simEq" type="number" value="10" min="0" max="100" oninput="runSimulator()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${L('تكاليف أخرى %','% Autres coûts')}</label>
+          <input class="form-input" id="simOther" type="number" value="5" min="0" max="100" oninput="runSimulator()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${L('نسبة الضريبة %','% TVA')}</label>
+          <input class="form-input" id="simTax" type="number" value="19" min="0" max="50" oninput="runSimulator()">
+        </div>
+      </div>
+      <div>
+        <div class="simulator-result-card card" id="simResultCard">
+          <div style="font-size:.85rem;color:var(--dim);margin-bottom:.5rem">${L('هامش الربح الصافي','Marge bénéficiaire nette')}</div>
+          <div class="sim-result-val" id="simMarginVal">—</div>
+          <div id="simRating" class="sim-rating">—</div>
+        </div>
+        <div class="sim-metrics" id="simMetrics" style="margin-top:1rem">
+          <div class="sim-metric"><div class="sim-metric-val" id="simRevVal">—</div><div class="sim-metric-lbl">${L('الإيراد الصافي','Revenu net')}</div></div>
+          <div class="sim-metric"><div class="sim-metric-val" id="simCostVal">—</div><div class="sim-metric-lbl">${L('إجمالي التكاليف','Total coûts')}</div></div>
+          <div class="sim-metric"><div class="sim-metric-val" id="simProfitVal">—</div><div class="sim-metric-lbl">${L('الربح الصافي','Profit net')}</div></div>
+          <div class="sim-metric"><div class="sim-metric-val" id="simTaxVal">—</div><div class="sim-metric-lbl">${L('الضريبة','TVA')}</div></div>
+        </div>
+      </div>
+    </div>
+  `);
+};
+function runSimulator() {
+  const budget = Number(document.getElementById('simBudget')?.value)||0;
+  const labor  = Number(document.getElementById('simLabor')?.value||35)/100;
+  const mat    = Number(document.getElementById('simMat')?.value||40)/100;
+  const eq     = Number(document.getElementById('simEq')?.value||10)/100;
+  const other  = Number(document.getElementById('simOther')?.value||5)/100;
+  const tax    = Number(document.getElementById('simTax')?.value||19)/100;
+  const totalCostPct = labor+mat+eq+other;
+  const totalCost = Math.round(budget * totalCostPct);
+  const taxAmt = Math.round(budget * tax);
+  const netRevenue = budget - taxAmt;
+  const profit = netRevenue - totalCost;
+  const margin = netRevenue > 0 ? Math.round(profit/netRevenue*100) : 0;
+  const mv = document.getElementById('simMarginVal'); if(mv) mv.textContent = margin+'%';
+  const rv = document.getElementById('simRevVal'); if(rv) rv.textContent = (netRevenue/1000000).toFixed(2)+'M';
+  const cv = document.getElementById('simCostVal'); if(cv) cv.textContent = (totalCost/1000000).toFixed(2)+'M';
+  const pv = document.getElementById('simProfitVal'); if(pv) { pv.textContent = (profit/1000000).toFixed(2)+'M'; pv.style.color = profit>=0?'var(--green)':'var(--red)'; }
+  const tv = document.getElementById('simTaxVal'); if(tv) tv.textContent = (taxAmt/1000000).toFixed(2)+'M';
+  const rating = document.getElementById('simRating');
+  if(rating) {
+    if(margin>=20){rating.className='sim-rating green';rating.textContent='🌟 '+L('ممتاز — استثمار رابح','Excellent — Investissement rentable');}
+    else if(margin>=10){rating.className='sim-rating yellow';rating.textContent='⚠️ '+L('مقبول — مخاطر متوسطة','Acceptable — Risque modéré');}
+    else{rating.className='sim-rating red';rating.textContent='🔴 '+L('خسارة — راجع التكاليف','Perte — Revoir les coûts');}
+  }
+}
+
+/* ─── BANK REPORT (التقرير البنكي) ─── */
+Pages.bankReport = function() {
+  const tid = Auth.getUser().tenant_id;
+  const tenant = Auth.getTenant();
+  const projects = DB.get('projects').filter(p=>p.tenant_id===tid && !p.is_archived);
+  const txs = DB.get('transactions').filter(t=>t.tenant_id===tid);
+  const revenue = txs.filter(t=>t.type==='revenue').reduce((s,t)=>s+Number(t.amount),0);
+  const expense = txs.filter(t=>t.type==='expense').reduce((s,t)=>s+Number(t.amount),0);
+  const profit = revenue - expense;
+  const totalBudget = projects.reduce((s,p)=>s+Number(p.budget||0),0);
+
+  return layoutHTML('bank_report', L('التقرير البنكي','Rapport bancaire'), `
+    <div class="page-header">
+      <div>
+        <div class="page-title">🏦 ${L('التقرير المالي للبنك','Rapport financier bancaire')}</div>
+        <div class="page-sub">${L('ملف مالي شامل للتقديم للبنك','Dossier financier complet pour banque')}</div>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-gold" onclick="window.print()">🖨️ ${L('طباعة','Imprimer')}</button>
+      </div>
+    </div>
+    <div class="bank-report-preview">
+      <div class="bank-report-header">
+        <div>
+          <div class="bank-report-logo">▦ SmartStruct</div>
+          <div style="font-size:.85rem;color:#555;margin-top:.2rem">${L('منصة إدارة مشاريع المقاولة الجزائرية','Plateforme BTP algérienne')}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:1.3rem;font-weight:900;color:#1a3a5c">${L('التقرير المالي الشامل','Rapport Financier Complet')}</div>
+          <div style="font-size:.8rem;color:#777">${L('تاريخ الإصدار:','Date d\'émission:')} ${new Date().toLocaleDateString('ar-DZ')}</div>
+          ${tenant?.rc_number?`<div style="font-size:.75rem;color:#777">RC: ${escHtml(tenant.rc_number)}</div>`:''}
+        </div>
+      </div>
+      <div class="bank-report-section">
+        <div class="bank-report-section-title">🏢 ${L('معلومات المؤسسة','Informations de l\'entreprise')}</div>
+        <div class="bank-report-row"><span>${L('الاسم','Nom')}</span><span style="font-weight:700">${escHtml(tenant?.name||'—')}</span></div>
+        <div class="bank-report-row"><span>${L('الولاية','Wilaya')}</span><span>${escHtml(tenant?.wilaya||'—')}</span></div>
+        ${tenant?.nif?`<div class="bank-report-row"><span>NIF</span><span>${escHtml(tenant.nif)}</span></div>`:''}
+        ${tenant?.nis?`<div class="bank-report-row"><span>NIS</span><span>${escHtml(tenant.nis)}</span></div>`:''}
+        ${tenant?.rc_number?`<div class="bank-report-row"><span>RC</span><span>${escHtml(tenant.rc_number)}</span></div>`:''}
+      </div>
+      <div class="bank-report-section">
+        <div class="bank-report-section-title">📊 ${L('الملخص المالي','Résumé financier')}</div>
+        <div class="bank-report-row"><span>${L('إجمالي الإيرادات','Total revenus')}</span><span style="font-weight:700;color:#1a5c3a">${fmt(revenue)} ${L('دج','DA')}</span></div>
+        <div class="bank-report-row"><span>${L('إجمالي المصاريف','Total dépenses')}</span><span style="font-weight:700;color:#8b0000">${fmt(expense)} ${L('دج','DA')}</span></div>
+        <div class="bank-report-row" style="border-top:2px solid #1a3a5c;padding-top:.5rem"><span style="font-weight:800">${L('صافي الربح','Profit net')}</span><span style="font-weight:900;font-size:1.1rem;color:${profit>=0?'#1a5c3a':'#8b0000'}">${fmt(profit)} ${L('دج','DA')}</span></div>
+        <div class="bank-report-row"><span>${L('إجمالي ميزانية المشاريع','Budget total projets')}</span><span style="font-weight:700">${fmt(totalBudget)} ${L('دج','DA')}</span></div>
+        <div class="bank-report-row"><span>${L('هامش الربح','Marge bénéficiaire')}</span><span style="font-weight:700">${revenue>0?Math.round(profit/revenue*100):0}%</span></div>
+      </div>
+      <div class="bank-report-section">
+        <div class="bank-report-section-title">🏗️ ${L('المشاريع','Projets')}</div>
+        <div class="bank-report-row"><span>${L('عدد المشاريع','Nombre de projets')}</span><span style="font-weight:700">${projects.length}</span></div>
+        <div class="bank-report-row"><span>${L('نشطة','Actifs')}</span><span>${projects.filter(p=>p.status==='active').length}</span></div>
+        <div class="bank-report-row"><span>${L('مكتملة','Terminés')}</span><span>${projects.filter(p=>p.status==='completed').length}</span></div>
+        ${projects.map(p=>`<div class="bank-report-row"><span>${escHtml(p.name)}</span><span style="font-weight:700">${fmt(p.budget)} ${L('دج','DA')}</span></div>`).join('')}
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:1.5rem">
+        <div class="bank-report-stamp">${L('SmartStruct','SmartStruct')}<br>${L('توثيق رسمي','Officiel')}<br>${new Date().getFullYear()}</div>
+      </div>
+      <div style="font-size:.72rem;color:#aaa;text-align:center;margin-top:1.5rem;border-top:1px solid #eee;padding-top:.8rem">
+        SmartStruct — ${L('منصة إدارة مشاريع المقاولة الجزائرية','Plateforme algérienne de gestion BTP')} — ${new Date().toLocaleDateString('ar-DZ')}
+      </div>
+    </div>
+  `);
+};
+
+/* ─── AUDIT LOG (سجل النشاط) ─── */
+Pages.auditLog = function() {
+  const tid = Auth.getUser().tenant_id;
+  const log = (DB.get('audit_log')||[]).filter(e=>e.tenant_id===tid).reverse().slice(0,100);
+
+  return layoutHTML('audit_log', L('سجل النشاط','Journal d\'activité'), `
+    <div class="page-header">
+      <div>
+        <div class="page-title">📋 ${L('سجل النشاط','Journal d\'activité')}</div>
+        <div class="page-sub">${log.length} ${L('حدث','événement(s)')}</div>
+      </div>
+    </div>
+    <div class="card">
+      ${log.length === 0 ? `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">${L('سجل النشاط فارغ','Journal vide')}</div><div class="empty-desc">${L('ستظهر هنا جميع العمليات التي تتم في النظام','Toutes les opérations apparaîtront ici')}</div></div>` : `
+      <div style="display:flex;flex-direction:column">
+        ${log.map(e=>{
+          const icons = {create:'🟢',edit:'🔵',delete:'🔴',login:'👤',export:'📤'};
+          return `<div class="audit-log-item">
+            <div class="audit-avatar">${icons[e.action]||'📝'}</div>
+            <div style="flex:1">
+              <div class="audit-action">${escHtml(e.message||e.action||'—')}</div>
+              ${e.before||e.after?`<div class="audit-before-after">
+                ${e.before?`<span class="audit-before">قبل: ${escHtml(String(e.before)).slice(0,40)}</span>`:''}
+                ${e.after?`<span class="audit-after">بعد: ${escHtml(String(e.after)).slice(0,40)}</span>`:''}
+              </div>`:''}
+              <div class="audit-time">${escHtml(e.user||'')} ${e.created_at?'• '+new Date(e.created_at).toLocaleString('ar-DZ'):''}</div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`}
+    </div>
+  `);
+};
+
+/* ─── OBLIGATIONS (الالتزامات) ─── */
+Pages.obligations = function() {
+  const tid = Auth.getUser().tenant_id;
+  const obligations = DB.get('obligations').filter(o=>o.tenant_id===tid);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const pending = obligations.filter(o=>o.status!=='done');
+  const overdue = pending.filter(o=>o.due_date&&new Date(o.due_date)<today);
+  const upcoming = pending.filter(o=>o.due_date&&new Date(o.due_date)>=today&&new Date(o.due_date)<=new Date(today.getTime()+30*86400000));
+
+  function getDaysLabel(dueDate) {
+    if (!dueDate) return '';
+    const diff = Math.ceil((new Date(dueDate)-today)/86400000);
+    if (diff < 0) return { label: `متأخر ${Math.abs(diff)} يوم`, cls: 'ob-urgent' };
+    if (diff === 0) return { label: 'اليوم', cls: 'ob-urgent' };
+    if (diff <= 7) return { label: `${diff} أيام`, cls: 'ob-soon' };
+    return { label: `${diff} يوم`, cls: 'ob-ok' };
+  }
+
+  return layoutHTML('obligations', L('الالتزامات','Obligations'), `
+    <div class="page-header">
+      <div>
+        <div class="page-title">📌 ${L('الالتزامات والمواعيد','Obligations & échéances')}</div>
+        <div class="page-sub">${overdue.length} ${L('متأخرة','en retard')} — ${upcoming.length} ${L('قريبة','prochainement')}</div>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-gold" data-modal-open="addObModal">+ ${L('التزام جديد','Nouvelle obligation')}</button>
+      </div>
+    </div>
+    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:1.5rem">
+      <div class="stat-card" style="border-color:rgba(240,78,106,0.2)"><div class="stat-icon">🔴</div><div class="stat-value" style="color:var(--red)">${overdue.length}</div><div class="stat-label">${L('متأخرة','En retard')}</div></div>
+      <div class="stat-card" style="border-color:rgba(232,184,75,0.2)"><div class="stat-icon">⏰</div><div class="stat-value" style="color:var(--gold)">${upcoming.length}</div><div class="stat-label">${L('خلال 30 يوم','Dans 30 jours')}</div></div>
+      <div class="stat-card" style="border-color:rgba(52,195,143,0.2)"><div class="stat-icon">✅</div><div class="stat-value" style="color:var(--green)">${obligations.filter(o=>o.status==='done').length}</div><div class="stat-label">${L('مكتملة','Complètes')}</div></div>
+    </div>
+    <div class="card">
+      ${obligations.length === 0 ? `<div class="empty"><div class="empty-icon">📌</div><div class="empty-title">${L('لا توجد التزامات','Aucune obligation')}</div><div class="empty-desc">${L('أضف مواعيد الضرائب، الرخص، العقود...','Ajoutez impôts, permis, contrats...')}</div></div>` : `
+      <div style="display:flex;flex-direction:column">
+        ${obligations.map(o => {
+          const days = getDaysLabel(o.due_date);
+          const isDone = o.status === 'done';
+          return `<div class="obligation-item" style="opacity:${isDone?.6:1}">
+            <div class="obligation-dot" style="background:${isDone?'var(--green)':overdue.some(x=>x.id===o.id)?'var(--red)':upcoming.some(x=>x.id===o.id)?'var(--gold)':'var(--border2)'}"></div>
+            <div style="flex:1">
+              <div class="obligation-title" style="text-decoration:${isDone?'line-through':''}">${escHtml(o.title)}</div>
+              ${o.description?`<div style="font-size:.72rem;color:var(--dim)">${escHtml(o.description)}</div>`:''}
+            </div>
+            ${o.amount?`<div class="obligation-amount">${fmt(o.amount)} دج</div>`:''}
+            ${days.label?`<div class="obligation-days ${days.cls}">${days.label}</div>`:''}
+            <div style="display:flex;gap:.3rem">
+              ${!isDone?`<button class="btn btn-green btn-sm" onclick="doneObligation(${o.id})">✓</button>`:''}
+              <button class="btn btn-ghost btn-sm" onclick="deleteObligation(${o.id})">🗑️</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`}
+    </div>
+    <!-- Modal -->
+    <div class="modal-overlay" id="addObModal">
+      <div class="modal">
+        <div class="modal-header"><div class="modal-title">📌 ${L('إضافة التزام','Ajouter obligation')}</div><button class="modal-close" data-modal-close>✕</button></div>
+        <div class="modal-body">
+          <div class="form-group"><label class="form-label">${L('العنوان','Titre')} *</label><input class="form-input" id="obTitle" placeholder="${L('ضريبة TVA...','TVA trimestrielle...')}"></div>
+          <div class="form-group"><label class="form-label">${L('الوصف','Description')}</label><textarea class="form-input" id="obDesc" rows="2"></textarea></div>
+          <div class="form-group"><label class="form-label">${L('تاريخ الاستحقاق','Date d\'échéance')}</label><input class="form-input" id="obDate" type="date"></div>
+          <div class="form-group"><label class="form-label">${L('المبلغ (اختياري)','Montant (optionnel)')}</label><input class="form-input" id="obAmount" type="number" placeholder="0"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" data-modal-close>${L('إلغاء','Annuler')}</button>
+          <button class="btn btn-gold" onclick="saveObligation()">${L('حفظ','Enregistrer')}</button>
+        </div>
+      </div>
+    </div>
+  `);
+};
+window.saveObligation = function() {
+  const title = document.getElementById('obTitle')?.value.trim();
+  if (!title) { Toast.error(L('أدخل العنوان','Titre requis')); return; }
+  const tid = Auth.getUser().tenant_id;
+  const obs = DB.get('obligations');
+  obs.push({ id:DB.nextId('obligations'), tenant_id:tid, title, description:document.getElementById('obDesc')?.value||'', due_date:document.getElementById('obDate')?.value||'', amount:Number(document.getElementById('obAmount')?.value)||0, status:'pending', created_at:new Date().toISOString() });
+  DB.set('obligations', obs);
+  Toast.success(L('✅ تم الحفظ','✅ Enregistré'));
+  App.navigate('obligations');
+};
+window.doneObligation = function(id) {
+  const obs=DB.get('obligations'); const o=obs.find(x=>x.id===id); if(o){o.status='done';DB.set('obligations',obs);App.navigate('obligations');}
+};
+window.deleteObligation = function(id) {
+  if(!confirm(L('حذف الالتزام؟','Supprimer?')))return;
+  DB.set('obligations', DB.get('obligations').filter(o=>o.id!==id));
+  App.navigate('obligations');
+};
+
+/* ══════════════════════════════════════════════════════
    STARTUP — تشغيل التطبيق
 ══════════════════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
