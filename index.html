@@ -8547,3 +8547,23 @@ function printInvoiceWindow(id) {
   ${inv.description?`<div style="clear:both;margin-top:16px;padding:10px;background:#f9f9f9;border-radius:6px;font-size:11px;color:#555"><strong>${isAr?'ملاحظات:':'Notes / Conditions:'}</strong><br>${escHtml(inv.description)}</div>`:''}
   <div class="footer">SmartStruct — ${isAr?'منصة إدارة مشاريع المقاولة الجزائرية':'Plateforme algérienne de gestion BTP'}<br>${isAr?'تم إنشاؤها بتاريخ:':'Généré le:'} ${new Date().toLocaleDateString(isAr?'ar-DZ':'fr-DZ')} — ${escHtml(inv.number)}</div>
   </body></html>
+  `);
+  win.document.close();
+}
+
+/* ══════════════════════════════════════════════════════
+   STARTUP — تشغيل التطبيق
+══════════════════════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', () => {
+  DB.init();
+  Auth.load();
+  const hash = window.location.hash.replace('#','');
+  if (hash === 'admin' && Auth.getUser()?.is_admin) {
+    App.navigate('admin');
+  } else {
+    App.navigate(Auth.getUser() ? (Auth.getUser().is_admin ? 'admin' : 'dashboard') : 'landing');
+  }
+});
+</script>
+</body>
+</html>
