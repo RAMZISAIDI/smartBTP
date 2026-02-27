@@ -3106,6 +3106,10 @@ const App = {
   currentPage: 'landing',
   params: {},
   navigate(page, params={}) {
+    // إيقاف تايمر SmartAI عند مغادرة Dashboard
+    if (this.currentPage === 'dashboard' && page !== 'dashboard') {
+      if (window._smartAIRefreshTimer) { clearInterval(window._smartAIRefreshTimer); window._smartAIRefreshTimer = null; }
+    }
     this.currentPage = page; this.params = params; this.render();
     window.scrollTo(0,0);
   },
@@ -3166,8 +3170,16 @@ const App = {
       this.animateBars();
       if (this.currentPage === 'analytics') setTimeout(initAnalyticsCharts, 150);
       if (this.currentPage === 'simulator') setTimeout(runSimulator, 100);
-      applyDOMTranslation(); // ← RADICAL FIX: translate every text node after render
+      applyDOMTranslation();
     }
+    // ── إظهار/إخفاء روبوت SmartAI حسب الصفحة ──
+    // الروبوت يظهر فقط لصفحات المؤسسة — مخفي كلياً عند المسؤول
+    const _fab   = document.getElementById('aiFab');
+    const _panel = document.getElementById('aiChatPanel');
+    const _user  = Auth.getUser();
+    const _showBot = !!(_user && !_user.is_admin);
+    if (_fab)   _fab.style.display   = _showBot ? '' : 'none';
+    if (_panel && !_showBot) { _panel.style.display = 'none'; try { SmartAI.isOpen = false; } catch(e){} }
   },
   bindEvents() {
     document.querySelectorAll('[data-nav]').forEach(el => {
@@ -4422,101 +4434,8 @@ Pages.dashboard = function() {
       </div>
     </div>
 
-    <!-- 🤖 SmartAI TENANT ANALYTICS — تحليلات الذكاء الاصطناعي للمؤسسة -->
-    <div class="card" style="margin-top:1.2rem;border-color:rgba(155,109,255,0.3);background:linear-gradient(135deg,rgba(155,109,255,0.04),rgba(107,63,212,0.02))">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;flex-wrap:wrap;gap:.6rem">
-        <div style="display:flex;align-items:center;gap:.8rem">
-          <div style="width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,#9B6DFF,#6B3FD4);display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 6px 18px rgba(155,109,255,0.4)">🤖</div>
-          <div>
-            <div style="font-size:.95rem;font-weight:900">تحليلات SmartAI</div>
-            <div style="font-size:.72rem;color:var(--muted)">ذكاء اصطناعي مخصص لمؤسستك</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-          <button class="btn btn-purple btn-sm" onclick="SmartAI.toggleChat();SmartAI.quickAsk('حلّل وضع مؤسستي بالتفصيل وأعطني توصيات استراتيجية')">🤖 تحليل شامل</button>
-          <button class="btn btn-ghost btn-sm" onclick="SmartAI.toggleChat();SmartAI.quickAsk('ما هي أولوياتي الآن؟')">🎯 أولوياتي</button>
-          <button class="btn btn-ghost btn-sm" onclick="SmartAI.toggleChat()">💬 دردشة</button>
-        </div>
-      </div>
-
-      <!-- مؤشرات AI السريعة -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.8rem;margin-bottom:1.2rem">
-        ${(()=>{
-          const riskCount = risks.length;
-          const dangerCount = risks.filter(r=>r.level==='danger').length;
-          const totalBudgetUsed = totalBudget>0?Math.round(totalSpent/totalBudget*100):0;
-          const profitMarginPct = revenue>0?Math.round(((revenue-expense)/revenue)*100):0;
-          const aiScore = health.score;
-          return `
-            <div style="background:rgba(155,109,255,0.08);border:1px solid rgba(155,109,255,0.2);border-radius:14px;padding:1rem;text-align:center">
-              <div style="font-size:1.6rem;font-weight:900;color:#9B6DFF;font-family:'JetBrains Mono',monospace">${aiScore}</div>
-              <div style="font-size:.68rem;color:var(--dim);margin-top:3px;font-weight:700">نقاط الصحة AI</div>
-            </div>
-            <div style="background:rgba(${dangerCount>0?'240,78,106':'52,195,143'},0.08);border:1px solid rgba(${dangerCount>0?'240,78,106':'52,195,143'},0.2);border-radius:14px;padding:1rem;text-align:center">
-              <div style="font-size:1.6rem;font-weight:900;color:${dangerCount>0?'var(--red)':'var(--green)'};font-family:'JetBrains Mono',monospace">${riskCount}</div>
-              <div style="font-size:.68rem;color:var(--dim);margin-top:3px;font-weight:700">تنبيهات نشطة</div>
-            </div>
-            <div style="background:rgba(232,184,75,0.08);border:1px solid rgba(232,184,75,0.2);border-radius:14px;padding:1rem;text-align:center">
-              <div style="font-size:1.6rem;font-weight:900;color:var(--gold);font-family:'JetBrains Mono',monospace">${totalBudgetUsed}%</div>
-              <div style="font-size:.68rem;color:var(--dim);margin-top:3px;font-weight:700">استهلاك الميزانية</div>
-            </div>
-            <div style="background:rgba(${profitMarginPct>10?'52,195,143':profitMarginPct>0?'232,184,75':'240,78,106'},0.08);border:1px solid rgba(${profitMarginPct>10?'52,195,143':profitMarginPct>0?'232,184,75':'240,78,106'},0.2);border-radius:14px;padding:1rem;text-align:center">
-              <div style="font-size:1.6rem;font-weight:900;color:${profitMarginPct>10?'var(--green)':profitMarginPct>0?'var(--gold)':'var(--red)'};font-family:'JetBrains Mono',monospace">${profitMarginPct}%</div>
-              <div style="font-size:.68rem;color:var(--dim);margin-top:3px;font-weight:700">هامش الربح</div>
-            </div>
-          `;
-        })()}
-      </div>
-
-      <!-- توصيات AI الفورية -->
-      <div style="margin-bottom:.8rem">
-        <div style="font-size:.82rem;font-weight:900;color:#B89AFF;margin-bottom:.7rem;display:flex;align-items:center;gap:.4rem">
-          🎯 توصيات فورية
-          <span style="font-size:.65rem;background:rgba(155,109,255,0.15);border:1px solid rgba(155,109,255,0.3);padding:2px 8px;border-radius:20px;font-weight:800">${risks.length + (revenue-expense<0?1:0) + (totalBudget>0&&totalSpent/totalBudget>0.85?1:0)} توصية</span>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:.5rem">
-          ${(()=>{
-            const recs = [];
-            if (risks.filter(r=>r.level==='danger').length > 0) {
-              recs.push({ icon:'🚨', color:'var(--red)', text:`${risks.filter(r=>r.level==='danger').length} مشروع في خطر — راجع الميزانية والتقدم فوراً`, action: "SmartAI.quickAsk('أعطني خطة إنقاذ للمشاريع في خطر')" });
-            }
-            if (risks.filter(r=>r.level==='warn').length > 0) {
-              recs.push({ icon:'⚠️', color:'var(--orange)', text:`${risks.filter(r=>r.level==='warn').length} تنبيه تحتاج متابعة`, action: "SmartAI.quickAsk('ما هي أبرز المخاطر المالية في مشاريعي؟')" });
-            }
-            if (revenue-expense < 0) {
-              recs.push({ icon:'💸', color:'var(--red)', text:'الميزانية في العجز — المصاريف تفوق الإيرادات', action: "SmartAI.quickAsk('كيف أحسّن الوضع المالي لمؤسستي؟')" });
-            } else if (revenue > 0) {
-              recs.push({ icon:'✅', color:'var(--green)', text:`هامش الربح ${revenue>0?Math.round(((revenue-expense)/revenue)*100):0}% — وضع مالي جيد`, action: '' });
-            }
-            if (totalBudget > 0 && totalSpent/totalBudget > 0.85) {
-              recs.push({ icon:'📊', color:'var(--gold)', text:`استهلكت ${Math.round(totalSpent/totalBudget*100)}% من الميزانية الإجمالية`, action: "SmartAI.quickAsk('كيف أتحكم في الميزانية المتبقية؟')" });
-            }
-            if (projects.filter(p=>p.status==='active').length === 0 && projects.length === 0) {
-              recs.push({ icon:'🏗️', color:'var(--blue)', text:'لا توجد مشاريع — ابدأ بإضافة أول مشروع', action: "App.navigate('projects')" });
-            }
-            if (recs.length === 0) {
-              recs.push({ icon:'🌟', color:'var(--green)', text:'كل شيء يسير بشكل ممتاز! استمر في المتابعة الدورية', action: '' });
-            }
-            return recs.map(r=>`
-              <div style="display:flex;align-items:center;gap:.7rem;padding:.6rem .8rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-right:3px solid ${r.color};border-radius:0 10px 10px 0">
-                <span style="font-size:1.1rem;flex-shrink:0">${r.icon}</span>
-                <span style="font-size:.8rem;flex:1">${r.text}</span>
-                ${r.action ? `<button class="btn btn-ghost btn-sm" style="font-size:.68rem;padding:.15rem .5rem;flex-shrink:0" onclick="${r.action}">AI ←</button>` : ''}
-              </div>
-            `).join('');
-          })()}
-        </div>
-      </div>
-
-      <!-- أزرار AI سريعة -->
-      <div style="display:flex;flex-wrap:wrap;gap:.5rem;padding-top:.8rem;border-top:1px solid rgba(155,109,255,0.1)">
-        <button class="ai-quick-btn" onclick="SmartAI.toggleChat();SmartAI.quickAsk('حلّل مشاريعي وأعطني توصيات')">📊 تحليل مشاريعي</button>
-        <button class="ai-quick-btn" onclick="SmartAI.toggleChat();SmartAI.quickAsk('ما هي أبرز المخاطر المالية؟')">⚠️ المخاطر المالية</button>
-        <button class="ai-quick-btn" onclick="SmartAI.toggleChat();SmartAI.quickAsk('توقع ربحي هذا الشهر وأعطني أرقاماً دقيقة')">💰 توقع الربح</button>
-        <button class="ai-quick-btn" onclick="SmartAI.toggleChat();SmartAI.quickAsk('ماذا يجب أن أفعل الآن كأولويات قصوى؟')">🎯 أولوياتي</button>
-        <button class="ai-quick-btn" onclick="SmartAI.toggleChat();SmartAI.quickAsk('كيف يمكنني تحسين هامش الربح في مشاريعي؟')">📈 تحسين الربحية</button>
-      </div>
-    </div>
+    <!-- 🤖 SmartAI TENANT ANALYTICS — يُحدَّث تلقائياً كل 5 ثوانٍ -->
+    <div id="smartAITenantPanel" style="margin-top:1.2rem"></div>
   `);
 
   // Run charts and animations after render
@@ -4564,8 +4483,184 @@ Pages.dashboard = function() {
         }
       });
     }
+    // رسم لوحة SmartAI وتشغيل التحديث التلقائي
+    renderSmartAITenantPanel();
+    if (window._smartAIRefreshTimer) clearInterval(window._smartAIRefreshTimer);
+    window._smartAIRefreshTimer = setInterval(() => {
+      if (document.getElementById('smartAITenantPanel')) {
+        renderSmartAITenantPanel();
+      } else {
+        clearInterval(window._smartAIRefreshTimer);
+      }
+    }, 5000); // تحديث كل 5 ثوانٍ
   }, 100);
 };
+
+/* ══════════════════════════════════════════════════════
+   🤖 renderSmartAITenantPanel — تحديث دائم لأرقام SmartAI
+   تُستدعى كل 5 ثوانٍ وعند كل تغيير في البيانات
+══════════════════════════════════════════════════════ */
+function renderSmartAITenantPanel() {
+  const root = document.getElementById('smartAITenantPanel');
+  if (!root) return;
+
+  const user    = Auth.getUser();
+  if (!user || user.is_admin) { root.innerHTML = ''; return; }
+  const tid     = user.tenant_id;
+
+  // ── قراءة البيانات الحية مباشرة من localStorage ──
+  const projects  = DB.get('projects').filter(p => p.tenant_id === tid && !p.is_archived);
+  const workers   = DB.get('workers').filter(w => w.tenant_id === tid);
+  const txs       = DB.get('transactions').filter(t => t.tenant_id === tid);
+  const materials = DB.get('materials').filter(m => m.tenant_id === tid);
+  const invoices  = (DB.get('invoices') || []).filter(i => i.tenant_id === tid);
+  const attendance = DB.get('attendance') || [];
+  const today     = new Date().toISOString().split('T')[0];
+
+  const revenue  = txs.filter(t => t.type === 'revenue').reduce((s,t) => s + Number(t.amount), 0);
+  const expense  = txs.filter(t => t.type === 'expense').reduce((s,t) => s + Number(t.amount), 0);
+  const profit   = revenue - expense;
+  const profitMarginPct = revenue > 0 ? Math.round((profit / revenue) * 100) : 0;
+
+  const totalBudget = projects.reduce((s,p) => s + Number(p.budget || 0), 0);
+  const totalSpent  = projects.reduce((s,p) => s + Number(p.total_spent || 0), 0);
+  const budgetUsedPct = totalBudget > 0 ? Math.round(totalSpent / totalBudget * 100) : 0;
+
+  const todayAtt     = attendance.filter(a => a.date === today && workers.find(w => w.id === a.worker_id));
+  const presentToday = todayAtt.filter(a => a.status === 'present').length;
+
+  const activeCount    = projects.filter(p => p.status === 'active').length;
+  const delayedCount   = projects.filter(p => p.status === 'delayed').length;
+  const completedCount = projects.filter(p => p.status === 'completed').length;
+  const overBudgetProjects = projects.filter(p => p.budget > 0 && p.total_spent > p.budget);
+
+  // حساب درجة الصحة AI
+  let aiScore = 100;
+  if (delayedCount > 0)              aiScore -= delayedCount * 15;
+  if (overBudgetProjects.length > 0) aiScore -= overBudgetProjects.length * 20;
+  if (profit < 0)                    aiScore -= 25;
+  if (budgetUsedPct > 90)            aiScore -= 10;
+  aiScore = Math.max(0, Math.min(100, aiScore));
+  const aiScoreColor = aiScore >= 75 ? '#34C38F' : aiScore >= 50 ? '#E8B84B' : '#F04E6A';
+
+  // حساب التنبيهات
+  const alerts = [];
+  projects.forEach(p => {
+    if (p.status === 'delayed') alerts.push({ level: 'danger', text: `مشروع "${p.name}" متأخر` });
+    if (p.budget > 0 && p.total_spent > p.budget) alerts.push({ level: 'danger', text: `"${p.name}" تجاوز الميزانية بـ ${fmt(p.total_spent - p.budget)} دج` });
+    if (p.budget > 0 && p.total_spent / p.budget > 0.85 && p.total_spent <= p.budget) alerts.push({ level: 'warn', text: `"${p.name}" استهلك ${Math.round(p.total_spent/p.budget*100)}% من ميزانيته` });
+  });
+  const lowStock = materials.filter(m => m.quantity <= (m.min_quantity || 0));
+  if (lowStock.length > 0) alerts.push({ level: 'warn', text: `${lowStock.length} مادة وصلت للحد الأدنى` });
+  const pendingInvoices = invoices.filter(i => i.status === 'pending');
+  if (pendingInvoices.length > 0) alerts.push({ level: 'warn', text: `${pendingInvoices.length} فاتورة لم تُحصَّل بعد` });
+  if (profit < 0) alerts.push({ level: 'danger', text: 'المصاريف تفوق الإيرادات — عجز مالي' });
+
+  const dangerCount = alerts.filter(a => a.level === 'danger').length;
+
+  // ── توصيات ذكية ──
+  const recs = [];
+  if (dangerCount > 0) recs.push({ icon:'🚨', color:'var(--red)',    text:`${dangerCount} خطر فوري — تدخّل سريع مطلوب`,                   action:"SmartAI.quickAsk('أعطني خطة إنقاذ فورية للمشاريع في خطر')" });
+  const warnCount = alerts.filter(a => a.level === 'warn').length;
+  if (warnCount > 0)   recs.push({ icon:'⚠️',  color:'var(--orange)', text:`${warnCount} تنبيه يستحق المتابعة`,                             action:"SmartAI.quickAsk('ما هي أبرز المخاطر في مشاريعي؟')" });
+  if (profit < 0)      recs.push({ icon:'💸',  color:'var(--red)',    text:'عجز مالي — المصاريف تفوق الإيرادات',                           action:"SmartAI.quickAsk('كيف أحسّن الوضع المالي لمؤسستي؟')" });
+  else if (profitMarginPct > 15) recs.push({ icon:'✅', color:'var(--green)', text:`هامش ربح ممتاز ${profitMarginPct}% — استمر في نفس الاستراتيجية`, action:'' });
+  else if (revenue > 0) recs.push({ icon:'📈', color:'var(--gold)',   text:`هامش الربح ${profitMarginPct}% — يمكن تحسينه`,                 action:"SmartAI.quickAsk('كيف أرفع هامش الربح في مشاريعي؟')" });
+  if (budgetUsedPct > 85 && totalBudget > 0) recs.push({ icon:'📊', color:'var(--gold)', text:`استهلاك الميزانية ${budgetUsedPct}% — راقب المصاريف`, action:"SmartAI.quickAsk('كيف أتحكم في ميزانية المشاريع؟')" });
+  if (projects.length === 0) recs.push({ icon:'🏗️', color:'var(--blue)', text:'لا توجد مشاريع بعد — ابدأ بإضافة مشروعك الأول', action:"App.navigate('projects')" });
+  if (recs.length === 0) recs.push({ icon:'🌟', color:'var(--green)', text:'وضعك ممتاز! كل شيء على ما يرام', action:'' });
+
+  // وقت آخر تحديث
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('ar-DZ', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+
+  // ── بناء HTML ──
+  root.innerHTML = `
+  <div class="card" style="border-color:rgba(155,109,255,0.3);background:linear-gradient(135deg,rgba(155,109,255,0.04),rgba(107,63,212,0.02))">
+
+    <!-- رأس اللوحة -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;flex-wrap:wrap;gap:.6rem">
+      <div style="display:flex;align-items:center;gap:.8rem">
+        <div style="width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,#9B6DFF,#6B3FD4);display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 6px 18px rgba(155,109,255,0.4)">🤖</div>
+        <div>
+          <div style="font-size:.95rem;font-weight:900">تحليلات SmartAI</div>
+          <div style="font-size:.68rem;color:var(--muted);display:flex;align-items:center;gap:.4rem">
+            <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#34C38F;animation:blink 1.5s infinite"></span>
+            تحديث مباشر — آخر تحديث ${timeStr}
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <button class="btn btn-purple btn-sm" onclick="SmartAI.toggleChat();SmartAI.quickAsk('حلّل وضع مؤسستي بالتفصيل وأعطني توصيات استراتيجية')">🤖 تحليل شامل</button>
+        <button class="btn btn-ghost btn-sm" onclick="SmartAI.toggleChat();SmartAI.quickAsk('ما هي أولوياتي الآن؟')">🎯 أولوياتي</button>
+        <button class="btn btn-ghost btn-sm" onclick="renderSmartAITenantPanel()" title="تحديث فوري">🔄</button>
+      </div>
+    </div>
+
+    <!-- مؤشرات AI الحية -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.75rem;margin-bottom:1.2rem">
+      <div style="background:rgba(155,109,255,0.08);border:1px solid rgba(155,109,255,0.22);border-radius:14px;padding:.9rem;text-align:center">
+        <div style="font-size:1.7rem;font-weight:900;color:${aiScoreColor};font-variant-numeric:tabular-nums">${aiScore}</div>
+        <div style="font-size:.66rem;color:var(--dim);margin-top:3px;font-weight:700">نقاط الصحة AI</div>
+        <div style="height:3px;background:rgba(255,255,255,.06);border-radius:2px;margin-top:.5rem;overflow:hidden">
+          <div style="height:100%;width:${aiScore}%;background:${aiScoreColor};border-radius:2px;transition:width .8s ease"></div>
+        </div>
+      </div>
+      <div style="background:rgba(${dangerCount>0?'240,78,106':'52,195,143'},0.08);border:1px solid rgba(${dangerCount>0?'240,78,106':'52,195,143'},0.22);border-radius:14px;padding:.9rem;text-align:center">
+        <div style="font-size:1.7rem;font-weight:900;color:${dangerCount>0?'var(--red)':'var(--green)'};font-variant-numeric:tabular-nums">${alerts.length}</div>
+        <div style="font-size:.66rem;color:var(--dim);margin-top:3px;font-weight:700">تنبيهات نشطة</div>
+        <div style="font-size:.6rem;color:${dangerCount>0?'var(--red)':'var(--muted)'};margin-top:.25rem">${dangerCount>0?dangerCount+' خطر فوري':'لا أخطار'}</div>
+      </div>
+      <div style="background:rgba(232,184,75,0.08);border:1px solid rgba(232,184,75,0.22);border-radius:14px;padding:.9rem;text-align:center">
+        <div style="font-size:1.7rem;font-weight:900;color:${budgetUsedPct>85?'var(--red)':'var(--gold)'};font-variant-numeric:tabular-nums">${budgetUsedPct}%</div>
+        <div style="font-size:.66rem;color:var(--dim);margin-top:3px;font-weight:700">استهلاك الميزانية</div>
+        <div style="height:3px;background:rgba(255,255,255,.06);border-radius:2px;margin-top:.5rem;overflow:hidden">
+          <div style="height:100%;width:${Math.min(budgetUsedPct,100)}%;background:${budgetUsedPct>85?'var(--red)':'var(--gold)'};border-radius:2px;transition:width .8s ease"></div>
+        </div>
+      </div>
+      <div style="background:rgba(${profitMarginPct>10?'52,195,143':profitMarginPct>=0?'232,184,75':'240,78,106'},0.08);border:1px solid rgba(${profitMarginPct>10?'52,195,143':profitMarginPct>=0?'232,184,75':'240,78,106'},0.22);border-radius:14px;padding:.9rem;text-align:center">
+        <div style="font-size:1.7rem;font-weight:900;color:${profitMarginPct>10?'var(--green)':profitMarginPct>=0?'var(--gold)':'var(--red)'};font-variant-numeric:tabular-nums">${profitMarginPct}%</div>
+        <div style="font-size:.66rem;color:var(--dim);margin-top:3px;font-weight:700">هامش الربح</div>
+        <div style="font-size:.6rem;color:var(--dim);margin-top:.25rem">${fmt(profit)} دج</div>
+      </div>
+      <div style="background:rgba(74,144,226,0.08);border:1px solid rgba(74,144,226,0.22);border-radius:14px;padding:.9rem;text-align:center">
+        <div style="font-size:1.7rem;font-weight:900;color:var(--blue);font-variant-numeric:tabular-nums">${activeCount}</div>
+        <div style="font-size:.66rem;color:var(--dim);margin-top:3px;font-weight:700">مشاريع نشطة</div>
+        <div style="font-size:.6rem;color:${delayedCount>0?'var(--red)':'var(--muted)'};margin-top:.25rem">${delayedCount>0?delayedCount+' متأخر':completedCount+' مكتمل'}</div>
+      </div>
+      <div style="background:rgba(155,109,255,0.06);border:1px solid rgba(155,109,255,0.15);border-radius:14px;padding:.9rem;text-align:center">
+        <div style="font-size:1.7rem;font-weight:900;color:var(--purple);font-variant-numeric:tabular-nums">${presentToday}<span style="font-size:.9rem">/${workers.length}</span></div>
+        <div style="font-size:.66rem;color:var(--dim);margin-top:3px;font-weight:700">حضور اليوم</div>
+        <div style="font-size:.6rem;color:var(--muted);margin-top:.25rem">${workers.length>0?Math.round(presentToday/workers.length*100)+'% حضور':'لا عمال'}</div>
+      </div>
+    </div>
+
+    <!-- توصيات AI الفورية -->
+    <div style="margin-bottom:.9rem">
+      <div style="font-size:.82rem;font-weight:900;color:#B89AFF;margin-bottom:.6rem;display:flex;align-items:center;gap:.4rem">
+        🎯 توصيات فورية
+        <span style="font-size:.62rem;background:rgba(155,109,255,0.15);border:1px solid rgba(155,109,255,0.3);padding:2px 8px;border-radius:20px;font-weight:800">${recs.length}</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.45rem">
+        ${recs.map(r => `
+          <div style="display:flex;align-items:center;gap:.7rem;padding:.55rem .85rem;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.055);border-right:3px solid ${r.color};border-radius:0 10px 10px 0;transition:background .15s" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.025)'">
+            <span style="font-size:1.05rem;flex-shrink:0">${r.icon}</span>
+            <span style="font-size:.79rem;flex:1;line-height:1.4">${r.text}</span>
+            ${r.action ? `<button class="btn btn-ghost btn-sm" style="font-size:.65rem;padding:.12rem .45rem;flex-shrink:0" onclick="${r.action}">AI ←</button>` : ''}
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- أزرار سريعة -->
+    <div style="display:flex;flex-wrap:wrap;gap:.45rem;padding-top:.75rem;border-top:1px solid rgba(155,109,255,0.12)">
+      <button class="ai-quick-btn" onclick="SmartAI.toggleChat();SmartAI.quickAsk('حلّل مشاريعي وأعطني توصيات مفصلة')">📊 تحليل المشاريع</button>
+      <button class="ai-quick-btn" onclick="SmartAI.toggleChat();SmartAI.quickAsk('ما هي أبرز المخاطر المالية لدي؟')">⚠️ المخاطر</button>
+      <button class="ai-quick-btn" onclick="SmartAI.toggleChat();SmartAI.quickAsk('توقع أرباحي هذا الشهر بأرقام دقيقة')">💰 توقع الأرباح</button>
+      <button class="ai-quick-btn" onclick="SmartAI.toggleChat();SmartAI.quickAsk('ماذا يجب أن أفعل الآن؟')">🎯 أولوياتي</button>
+      <button class="ai-quick-btn" onclick="SmartAI.toggleChat();SmartAI.quickAsk('كيف أحسّن هامش الربح في مشاريعي؟')">📈 تحسين الربح</button>
+    </div>
+  </div>`;
+}
 
 /* ─── PROJECTS ─── */
 Pages.projects = function() {
