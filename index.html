@@ -5312,9 +5312,44 @@ function renderTenantSmartAIAnalytics(projects, txs, workers, equip, attendance,
     </div>`;
   }).join('');
 
+  // ── شريط الميزانية لكل مشروع (pre-computed) ──
+  const budgetBarsHTML = projects.length === 0
+    ? `<div style="font-size:.78rem;color:var(--dim);text-align:center;padding:.5rem">لا توجد مشاريع</div>`
+    : projects.slice(0,4).map(p => {
+        const pct = p.budget > 0 ? Math.min(100, Math.round(p.total_spent/p.budget*100)) : 0;
+        const bc  = pct >= 100 ? 'var(--red)' : pct >= 85 ? '#FF7043' : pct >= 60 ? 'var(--gold)' : 'var(--green)';
+        return '<div style="margin-bottom:.55rem">'
+          + '<div style="display:flex;justify-content:space-between;font-size:.68rem;margin-bottom:2px">'
+          + '<span style="color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escHtml(p.name) + '</span>'
+          + '<span style="color:' + bc + ';font-weight:800">' + pct + '%</span>'
+          + '</div>'
+          + '<div style="height:5px;background:rgba(255,255,255,.07);border-radius:3px">'
+          + '<div style="height:5px;background:' + bc + ';border-radius:3px;width:' + pct + '%;transition:width 1s ease"></div>'
+          + '</div></div>';
+      }).join('');
+
+  // ── تنبيهات HTML (pre-computed) ──
+  const alertsHTML = alerts.length === 0
+    ? `<div style="padding:.7rem 1rem;background:rgba(52,195,143,0.06);border:1px solid rgba(52,195,143,0.2);border-radius:10px;display:flex;align-items:center;gap:.6rem"><span>✅</span><span style="font-size:.8rem;color:var(--green);font-weight:700">لا توجد تنبيهات — مؤسستك في وضع ممتاز</span></div>`
+    : alerts.map(a => {
+        const bgClr = a.type==='danger' ? '240,78,106' : '232,184,75';
+        const txtClr= a.type==='danger' ? 'var(--red)' : 'var(--gold)';
+        return '<div style="padding:.55rem .9rem;background:rgba(' + bgClr + ',0.06);border:1px solid rgba(' + bgClr + ',0.2);border-radius:9px;display:flex;align-items:center;gap:.6rem;margin-bottom:.4rem">'
+          + '<span style="font-size:.95rem">' + a.icon + '</span>'
+          + '<span style="font-size:.78rem;color:' + txtClr + ';font-weight:700">' + a.text + '</span>'
+          + '</div>';
+      }).join('');
+
   // ── تحديد لون مؤشر الصحة المالية ──
   const profitPct = revenue > 0 ? Math.round(netProfit / revenue * 100) : 0;
   const profitColor = profitPct >= 15 ? '#34C38F' : profitPct >= 0 ? '#E8B84B' : '#F04E6A';
+  const growthHTML = revenueGrowth !== null
+    ? `<span style="color:${revenueGrowth>=0?'var(--green)':'var(--red)'};margin-right:.3rem">${revenueGrowth>=0?'▲':'▼'} ${Math.abs(revenueGrowth)}%</span>`
+    : '';
+  const equipMaintHTML = equipMaint ? `<div style="color:var(--gold)">🔧 ${equipMaint} صيانة</div>` : '';
+  const attChartHTML = workers.length === 0
+    ? `<div style="font-size:.78rem;color:var(--dim);text-align:center;padding:1rem">لا يوجد عمال مسجلون</div>`
+    : `<div style="display:flex;gap:3px;align-items:flex-end;height:58px">${attBars}</div><div style="display:flex;justify-content:space-between;margin-top:.4rem;font-size:.6rem;color:var(--dim)"><span>منذ 7 أيام</span><span>اليوم</span></div>`;
 
   return `
   <div class="card" style="margin-top:1.5rem;border-color:rgba(155,109,255,0.3);background:linear-gradient(135deg,rgba(155,109,255,0.04),rgba(52,195,143,0.02))" id="tenant-smartai-analytics">
@@ -5351,7 +5386,7 @@ function renderTenantSmartAIAnalytics(projects, txs, workers, equip, attendance,
         <div style="font-size:1rem;font-weight:900;color:var(--green);line-height:1.2;font-family:monospace">${fmt(monthRev)}</div>
         <div style="font-size:.65rem;margin-top:.3rem;color:var(--dim)">
           دج
-          ${revenueGrowth !== null ? `<span style="color:${revenueGrowth>=0?'var(--green)':'var(--red)'};margin-right:.3rem">${revenueGrowth>=0?'▲':'▼'} ${Math.abs(revenueGrowth)}%</span>` : ''}
+          ${growthHTML}
         </div>
       </div>
 
@@ -5381,30 +5416,14 @@ function renderTenantSmartAIAnalytics(projects, txs, workers, equip, attendance,
       <!-- شريط الميزانية vs المنفق -->
       <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:.9rem">
         <div style="font-size:.75rem;font-weight:800;margin-bottom:.7rem">💼 الميزانية مقابل الإنفاق</div>
-        ${projects.length === 0 ? `<div style="font-size:.78rem;color:var(--dim);text-align:center;padding:.5rem">لا توجد مشاريع</div>` : projects.slice(0,4).map(p => {
-          const pct = p.budget > 0 ? Math.min(100, Math.round(p.total_spent/p.budget*100)) : 0;
-          const bc  = pct >= 100 ? 'var(--red)' : pct >= 85 ? '#FF7043' : pct >= 60 ? 'var(--gold)' : 'var(--green)';
-          return `<div style="margin-bottom:.55rem">
-            <div style="display:flex;justify-content:space-between;font-size:.68rem;margin-bottom:2px">
-              <span style="color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.name)}</span>
-              <span style="color:${bc};font-weight:800">${pct}%</span>
-            </div>
-            <div style="height:5px;background:rgba(255,255,255,.07);border-radius:3px">
-              <div style="height:5px;background:${bc};border-radius:3px;width:${pct}%;transition:width 1s ease"></div>
-            </div>
-          </div>`;
-        }).join('')}
+        ${budgetBarsHTML}
         ${projects.length > 0 ? `<div style="font-size:.65rem;color:var(--dim);margin-top:.4rem">متوسط التقدم: <strong style="color:var(--text)">${avgProgress}%</strong></div>` : ''}
       </div>
 
       <!-- حضور آخر 7 أيام mini chart -->
       <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:.9rem">
         <div style="font-size:.75rem;font-weight:800;margin-bottom:.7rem">📅 الحضور — آخر 7 أيام</div>
-        ${workers.length === 0 ? `<div style="font-size:.78rem;color:var(--dim);text-align:center;padding:1rem">لا يوجد عمال مسجلون</div>` : `
-        <div style="display:flex;gap:3px;align-items:flex-end;height:58px">${attBars}</div>
-        <div style="display:flex;justify-content:space-between;margin-top:.4rem;font-size:.6rem;color:var(--dim)">
-          <span>منذ 7 أيام</span><span>اليوم</span>
-        </div>`}
+        ${attChartHTML}
       </div>
 
       <!-- المعدات -->
@@ -5413,7 +5432,7 @@ function renderTenantSmartAIAnalytics(projects, txs, workers, equip, attendance,
         <div style="font-size:1.4rem;font-weight:900;color:#B89AFF">${equip.length}</div>
         <div style="font-size:.65rem;color:var(--dim);margin-top:.2rem">
           <div style="color:var(--green)">✅ ${equipActive} نشطة</div>
-          ${equipMaint ? `<div style="color:var(--gold)">🔧 ${equipMaint} صيانة</div>` : ''}
+          ${equipMaintHTML}
         </div>
         <div style="margin-top:.5rem;width:100%">
           <div style="height:4px;background:rgba(255,255,255,.07);border-radius:3px">
@@ -5426,17 +5445,7 @@ function renderTenantSmartAIAnalytics(projects, txs, workers, equip, attendance,
 
     <!-- تنبيهات SmartAI -->
     <div id="tenant-smartai-alerts">
-      ${alerts.length === 0 ? `
-        <div style="padding:.7rem 1rem;background:rgba(52,195,143,0.06);border:1px solid rgba(52,195,143,0.2);border-radius:10px;display:flex;align-items:center;gap:.6rem">
-          <span>✅</span>
-          <span style="font-size:.8rem;color:var(--green);font-weight:700">لا توجد تنبيهات — مؤسستك في وضع ممتاز</span>
-        </div>` :
-        alerts.map(a => `
-        <div style="padding:.55rem .9rem;background:rgba(${a.type==='danger'?'240,78,106':'232,184,75'},0.06);border:1px solid rgba(${a.type==='danger'?'240,78,106':'232,184,75'},0.2);border-radius:9px;display:flex;align-items:center;gap:.6rem;margin-bottom:.4rem">
-          <span style="font-size:.95rem">${a.icon}</span>
-          <span style="font-size:.78rem;color:${a.type==='danger'?'var(--red)':'var(--gold)'};font-weight:700">${a.text}</span>
-        </div>`).join('')
-      }
+      ${alertsHTML}
     </div>
   </div>`;
 }
