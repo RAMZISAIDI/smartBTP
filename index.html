@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SmartBTP v11.0 — نظام التحليل المالي الذكي للمقاولين الجزائريين</title>
+<title>SmartBTP v11.0 — منصة إدارة مشاريع المقاولة الجزائرية</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -1863,7 +1863,17 @@ const WILAYAS = [
   // الولايات الجديدة (49-58)
   "تيميمون","برج باجي مختار","أولاد جلال","بني عباس","عين صالح","عين قزام","تقرت","جانت","المغير","المنيعة"
 ];
-const PHASES = ["دراسة وتصميم","تحضير وتجهيز الموقع","أعمال الحفر والأساسات","الهيكل الخرساني","البناء والجدران","التسقيف","تمديدات الكهرباء","تمديدات السباكة","التشطيبات الداخلية","التشطيبات الخارجية","تركيب المعدات","اختبار وتسليم","ضمان ومتابعة","الاستلام النهائي"];
+const PHASES = [
+  "دراسة وتصميم","تحضير وتجهيز الموقع","أعمال الحفر والأساسات",
+  "الهيكل الخرساني","البناء والجدران","التسقيف",
+  "تمديدات الكهرباء","تمديدات السباكة والصرف",
+  "أعمال التكييف والتهوية","أعمال الحدادة والمعادن",
+  "أعمال النجارة والأبواب","أعمال الأرضيات والبلاط",
+  "التشطيبات الداخلية","التشطيبات الخارجية",
+  "أعمال الطرق والتهيئة","أعمال الشبكات والاتصالات",
+  "أعمال الطاقة الشمسية","أعمال العزل والحماية",
+  "تركيب المعدات","اختبار وتسليم","ضمان ومتابعة","الاستلام النهائي"
+];
 const PROJECT_TYPES = [
   {value:'building', label:'🏗️ بناء وإنشاء', icon:'🏗️'},
   {value:'electrical', label:'⚡ كهرباء وتمديدات', icon:'⚡'},
@@ -2878,14 +2888,14 @@ Pages.landing = function() {
           <span>${L('BTP','BTP')}</span>
         </div>
         <h1 class="hero-title">
-          ${L('أدِر مشاريع البناء','Gérez vos chantiers')}<br>
+          ${L('أدِر مشاريعك المقاولاتية','Gérez vos projets de sous-traitance')}<br>
           <span class="grad">${L('بذكاء مالي','avec intelligence')}</span>
-          ${L('حقيقي','financière')}
+          ${L('حقيقي','financière réelle')}
         </h1>
         <p class="hero-sub">
           ${L(
-            'SmartBTP — النظام الأول في الجزائر للتحليل المالي الذكي لمشاريع البناء. تتبع الأرباح، تنبأ بالمخاطر، وأدر عمالك في مكان واحد.',
-            'SmartBTP — le premier système en Algérie d\'analyse financière intelligente pour le BTP. Suivez vos profits, anticipez les risques, gérez vos équipes.'
+            'SmartBTP — النظام الأول في الجزائر للتحليل المالي الذكي لمشاريع المقاولة. بناء، كهرباء، سباكة، طرق، تهيئة وأكثر — تتبع الأرباح، تنبأ بالمخاطر، وأدر عمالك في مكان واحد.',
+            'SmartBTP — le premier système en Algérie d\'analyse financière pour tous types de sous-traitance BTP. Suivi des profits, anticipation des risques, gestion des équipes.'
           )}
         </p>
         <div class="trial-hero-box">
@@ -2924,31 +2934,31 @@ Pages.landing = function() {
       <!-- Feature Pills -->
       <div class="hero-features-grid">
         <div class="hero-feat-pill">
-          <span class="hero-feat-icon" style="color:var(--blue)">📊</span>
+          <span class="hero-feat-icon" style="color:var(--blue)">🏗️</span>
+          <div>
+            <div class="hero-feat-title">${L('بناء • كهرباء • سباكة','Bâtiment · Électricité · Plomberie')}</div>
+            <div class="hero-feat-sub">${L('جميع أنواع المقاولة مدعومة','Tous types de sous-traitance')}</div>
+          </div>
+        </div>
+        <div class="hero-feat-pill">
+          <span class="hero-feat-icon" style="color:var(--gold)">📊</span>
           <div>
             <div class="hero-feat-title">${L('تحليل مالي ذكي','Analyse financière IA')}</div>
             <div class="hero-feat-sub">${L('تقارير لحظية دقيقة','Rapports temps réel')}</div>
           </div>
         </div>
         <div class="hero-feat-pill">
-          <span class="hero-feat-icon" style="color:var(--gold)">⚠️</span>
-          <div>
-            <div class="hero-feat-title">${L('تتبع المخاطر','Suivi des risques')}</div>
-            <div class="hero-feat-sub">${L('تنبيه فوري بالانحرافات','Alertes instantanées')}</div>
-          </div>
-        </div>
-        <div class="hero-feat-pill">
           <span class="hero-feat-icon" style="color:var(--green)">👥</span>
           <div>
-            <div class="hero-feat-title">${L('إدارة العمالة','Gestion du personnel')}</div>
-            <div class="hero-feat-sub">${L('حضور وأجور مباشرة','Présence & salaires')}</div>
+            <div class="hero-feat-title">${L('إدارة العمالة والمعدات','Personnel & équipements')}</div>
+            <div class="hero-feat-sub">${L('حضور وأجور وصيانة','Présence, salaires & maintenance')}</div>
           </div>
         </div>
         <div class="hero-feat-pill">
-          <span class="hero-feat-icon" style="color:var(--purple)">📄</span>
+          <span class="hero-feat-icon" style="color:var(--purple)">⚠️</span>
           <div>
-            <div class="hero-feat-title">${L('تصدير PDF تلقائي','Export PDF auto')}</div>
-            <div class="hero-feat-sub">${L('تقارير احترافية جاهزة','Rapports professionnels')}</div>
+            <div class="hero-feat-title">${L('تتبع المخاطر والميزانية','Risques & budget')}</div>
+            <div class="hero-feat-sub">${L('تنبيه فوري بالانحرافات','Alertes instantanées')}</div>
           </div>
         </div>
       </div>
@@ -2989,7 +2999,7 @@ Pages.landing = function() {
       <div class="section-center">
         <div class="section-tag">${L('الميزات الرئيسية','Fonctionnalités clés')}</div>
         <h2 class="section-title">${L('كل ما تحتاجه لإدارة مشاريعك','Tout ce dont vous avez besoin')}</h2>
-        <p class="section-sub">${L('نظام شامل يغطي جميع جوانب إدارة مشاريع البناء من البداية حتى التسليم النهائي','Système complet couvrant tous les aspects de la gestion de chantier, du début à la livraison')}</p>
+        <p class="section-sub">${L('نظام شامل يغطي جميع أنواع مشاريع المقاولة — بناء، كهرباء، سباكة، طرق، تكييف، حدادة، نجارة وأكثر','Système complet pour tous types de chantiers : bâtiment, électricité, plomberie, routes, CVC, serrurerie et plus')}</p>
       </div>
       <div class="features-grid">
         ${[
@@ -3137,7 +3147,7 @@ Pages.landing = function() {
     <section class="cta-section" id="contact">
       <div class="cta-box">
         <div style="font-size:3rem;margin-bottom:1rem;display:inline-block;animation:floatUp 3s ease infinite">🏗️</div>
-        <h2 class="cta-title">${L('ابدأ إدارة مشاريعك اليوم','Gérez vos chantiers dès aujourd\'hui')}</h2>
+        <h2 class="cta-title">${L('ابدأ إدارة مشاريعك المقاولاتية اليوم','Gérez tous vos chantiers dès aujourd\'hui')}</h2>
         <p class="cta-sub">${L('انضم إلى أكثر من 500 مؤسسة جزائرية — التجربة المجانية 14 يوم بدون أي التزام','Rejoignez plus de 500 entreprises algériennes — Essai gratuit 14 jours sans engagement')}</p>
         <div style="display:flex;align-items:center;justify-content:center;gap:1rem;flex-wrap:wrap">
           <button class="btn-trial btn-lg" onclick="showRegisterPanel()" style="animation:pulse 2s infinite">
@@ -3201,8 +3211,8 @@ Pages.login = function(mode) {
               <div style="font-size:.68rem;opacity:.7">${L('بدون بطاقة بنكية','Sans carte bancaire')}</div>
             </div>
           </div>
-          <div class="login-left-title">${L('أدِر مشاريعك بذكاء','Gérez vos chantiers intelligemment')}</div>
-          <div class="login-left-sub">${L('منصة التحليل المالي الذكي لمقاولي البناء الجزائريين','Plateforme d\'analyse financière intelligente pour les entrepreneurs algériens en BTP')}</div>
+          <div class="login-left-title">${L('أدِر مشاريعك المقاولاتية بذكاء','Gérez vos projets intelligemment')}</div>
+          <div class="login-left-sub">${L('منصة التحليل المالي الذكي لجميع مقاولي الجزائر — بناء، كهرباء، سباكة، طرق وأكثر','Plateforme d\'analyse financière pour tous les entrepreneurs algériens BTP')}</div>
           <div class="login-left-features">
             ${[
               L('🧠 مؤشر صحة المؤسسة الذكي','🧠 Score de santé intelligent'),
@@ -3292,7 +3302,7 @@ function renderRegisterForm(L) {
       </div>
       <div class="form-group">
         <label class="form-label">${L('اسم المؤسسة','Nom de l\'entreprise')} *</label>
-        <input class="form-input" id="regCompany" type="text" placeholder="${L('مؤسسة البناء الجزائري','Entreprise BTP Algérie')}">
+        <input class="form-input" id="regCompany" type="text" placeholder="${L('مؤسسة المقاولة الجزائرية','Entreprise BTP Algérie')}">
       </div>
     </div>
     <div class="form-group">
@@ -4066,7 +4076,7 @@ Pages.projects = function() {
         <div class="modal-title">🏗️ ${L('إضافة مشروع جديد','Ajouter un projet')}</div>
         <div class="form-group"><label class="form-label">${L('نوع المشروع *','Type de projet *')}</label><select class="form-select" id="pType"><option value="">${L('اختر نوع المشروع...','Choisir un type...')}</option>${PROJECT_TYPES.map(t=>`<option value="${t.value}">${t.label}</option>`).join('')}</select></div>
         <div class="form-grid-2">
-          <div class="form-group"><label class="form-label">${L('اسم المشروع *','Nom du projet *')}</label><input class="form-input" id="pName" placeholder="${L('بناء عمارة...','Construction...')}"></div>
+          <div class="form-group"><label class="form-label">${L('اسم المشروع *','Nom du projet *')}</label><input class="form-input" id="pName" placeholder="${L('اسم المشروع...','Construction...')}"></div>
           <div class="form-group"><label class="form-label">${L('الولاية','Wilaya')}</label><select class="form-select" id="pWilaya"><option value="">${L('اختر...','Choisir...')}</option>${WILAYAS.map(w=>`<option>${w}</option>`).join('')}</select></div>
           <div class="form-group"><label class="form-label">${L('اسم العميل','Nom client')}</label><input class="form-input" id="pClient" placeholder="${L('عبد القادر...','Client...')}"></div>
           <div class="form-group"><label class="form-label">${L('هاتف العميل','Tél. client')}</label><input class="form-input" id="pPhone" placeholder="0550..."></div>
@@ -4266,9 +4276,23 @@ Pages.transactions = function() {
   }).join('');
 
   const RCATS_AR = ["دفعة عميل","دفعة مقدمة","دفعة مرحلية","استلام نهائي","إيراد آخر"];
-  const ECATS_AR = ["مواد البناء","حديد تسليح","أسمنت","رمل وحصى","طوب","رواتب العمال","مستحقات المقاولين","اكراءات المعدات","وقود","صيانة","نقل ومواصلات","مصاريف إدارية","أخرى"];
+  const ECATS_AR = [
+    "مواد البناء","حديد تسليح","أسمنت","رمل وحصى","طوب وبلوك",
+    "مواد كهربائية","كابلات وأسلاك","مواد السباكة","أنابيب وتوصيلات",
+    "مواد التكييف","مواد الحدادة","مواد النجارة","مواد الأرضيات",
+    "مواد الدهن","مواد العزل","مواد الطاقة الشمسية","مواد الطرق",
+    "رواتب العمال","مستحقات المقاولين من الباطن",
+    "اكراءات المعدات","وقود","صيانة المعدات","نقل ومواصلات","مصاريف إدارية","أخرى"
+  ];
   const RCATS_FR = ["Acompte client","Avance","Paiement partiel","Réception finale","Autre revenu"];
-  const ECATS_FR = ["Matériaux","Fer à béton","Ciment","Sable et gravier","Brique","Salaires","Sous-traitants","Location engins","Carburant","Maintenance","Transport","Frais admin","Autres"];
+  const ECATS_FR = [
+    "Matériaux bâtiment","Fer à béton","Ciment","Sable et gravier","Brique/Bloc",
+    "Matériaux électriques","Câbles et fils","Matériaux plomberie","Tuyaux et raccords",
+    "Matériaux CVC","Matériaux métallerie","Matériaux menuiserie","Matériaux revêtement",
+    "Matériaux peinture","Matériaux étanchéité","Matériaux solaire","Matériaux VRD",
+    "Salaires","Sous-traitants",
+    "Location engins","Carburant","Maintenance engins","Transport","Frais admin","Autres"
+  ];
   const RCATS = I18N.currentLang==='ar' ? RCATS_AR : RCATS_FR;
   const ECATS = I18N.currentLang==='ar' ? ECATS_AR : ECATS_FR;
 
@@ -4945,7 +4969,7 @@ Pages.admin = function() {
         <div class="modal-overlay" id="addTenantModal">
           <div class="modal">
             <div class="modal-title">🏢 ${L('إضافة مؤسسة جديدة','Ajouter une nouvelle entreprise')}</div>
-            <div class="form-group"><label class="form-label">${L('اسم الشركة','Nom de l\'entreprise')} *</label><input class="form-input" id="atName" placeholder="${L('مؤسسة البناء...','Entreprise BTP...')}"></div>
+            <div class="form-group"><label class="form-label">${L('اسم الشركة','Nom de l\'entreprise')} *</label><input class="form-input" id="atName" placeholder="${L('مؤسسة المقاولة...','Entreprise BTP...')}"></div>
             <div class="form-group"><label class="form-label">${L('بريد المسؤول','Email administrateur')} *</label><input class="form-input" id="atEmail" type="email" placeholder="admin@company.dz" dir="ltr"></div>
             <div class="form-group"><label class="form-label">${L('كلمة المرور','Mot de passe')} *</label><input class="form-input" id="atPass" type="password" dir="ltr"></div>
             <div class="form-group"><label class="form-label">${L('اسم المسؤول','Nom de l\'administrateur')} *</label><input class="form-input" id="atAdmin" placeholder="${L('محمد...','Mohamed...')}"></div>
@@ -5463,7 +5487,18 @@ function deleteEquip(id,name) {
 }
 
 const RCATS=["دفعة عميل","دفعة مقدمة","دفعة مرحلية","استلام نهائي","إيراد آخر"];
-const ECATS=["مواد البناء","حديد تسليح","أسمنت","رمل وحصى","طوب","رواتب العمال","مستحقات المقاولين","اكراءات المعدات","وقود","صيانة","نقل ومواصلات","مصاريف إدارية","أخرى"];
+const ECATS=[
+  "مواد البناء","حديد تسليح","أسمنت","رمل وحصى","طوب وبلوك",
+  "مواد كهربائية","كابلات وأسلاك","لوحات كهربائية",
+  "مواد السباكة","أنابيب وتوصيلات","صرف صحي",
+  "مواد التكييف والتهوية","مواد الحدادة والمعادن",
+  "مواد النجارة والأبواب","مواد الأرضيات والبلاط",
+  "مواد الدهن والديكور","مواد العزل والحماية",
+  "مواد الطاقة الشمسية","مواد الطرق والتهيئة",
+  "رواتب العمال","مستحقات المقاولين من الباطن",
+  "اكراءات المعدات","وقود","صيانة المعدات",
+  "نقل ومواصلات","مصاريف إدارية","أخرى"
+];
 
 function updateTxCats() {
   const type=document.getElementById('txType')?.value;
@@ -7170,7 +7205,7 @@ function printInvoiceWindow(id) {
     </div>
   </div>
   ${inv.description?`<div style="clear:both;margin-top:16px;padding:10px;background:#f9f9f9;border-radius:6px;font-size:11px;color:#555"><strong>${isAr?'ملاحظات:':'Notes / Conditions:'}</strong><br>${escHtml(inv.description)}</div>`:''}
-  <div class="footer">SmartBTP v20.0 — ${isAr?'منصة إدارة مشاريع البناء الجزائرية':'Plateforme algérienne de gestion BTP'}<br>${isAr?'تم إنشاؤها بتاريخ:':'Généré le:'} ${new Date().toLocaleDateString(isAr?'ar-DZ':'fr-DZ')} — ${escHtml(inv.number)}</div>
+  <div class="footer">SmartBTP v20.0 — ${isAr?'منصة إدارة مشاريع المقاولة الجزائرية':'Plateforme algérienne de gestion BTP'}<br>${isAr?'تم إنشاؤها بتاريخ:':'Généré le:'} ${new Date().toLocaleDateString(isAr?'ar-DZ':'fr-DZ')} — ${escHtml(inv.number)}</div>
   </body></html>`);
   win.document.close();
 }
